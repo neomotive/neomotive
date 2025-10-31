@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarCam", "CarCam\CarCam.csproj", "{628DAC31-E44D-4804-B54A-04441EF3D3A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarCam.TestApp", "CarCam.TestApp\CarCam.TestApp.csproj", "{1BFD20F6-C8D7-C3A8-1A26-B0E2F9AD3FBE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{628DAC31-E44D-4804-B54A-04441EF3D3A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{628DAC31-E44D-4804-B54A-04441EF3D3A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{628DAC31-E44D-4804-B54A-04441EF3D3A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{628DAC31-E44D-4804-B54A-04441EF3D3A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BFD20F6-C8D7-C3A8-1A26-B0E2F9AD3FBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BFD20F6-C8D7-C3A8-1A26-B0E2F9AD3FBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BFD20F6-C8D7-C3A8-1A26-B0E2F9AD3FBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BFD20F6-C8D7-C3A8-1A26-B0E2F9AD3FBE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BE28D921-5773-465F-8926-67B4FA6EDA29}
+	EndGlobalSection
+EndGlobal
