@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/libs/">
     <Project Path="../../Libraries/Neomotive.Camera.USB/Neomotive.Camera.USB.csproj" />
+    <Project Path="../../Libraries/Neomotive.Camera.VideoFile/Neomotive.Camera.VideoFile.csproj" Id="59577ff9-13cd-4755-9748-ac977d97cb1b" />
     <Project Path="../../Libraries/Neomotive.Camera/Neomotive.Camera.csproj" />
     <Project Path="../../Libraries/Neomotive.Contracts/Neomotive.Contracts.csproj" />
     <Project Path="../../Libraries/Neomotive.SpeedLimit/Neomotive.SpeedLimit.csproj" Id="7a6def9e-5e69-4ab1-94a2-6a2dc04cadb1" />

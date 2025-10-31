@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "USB": {
+      "commandName": "Project",
+      "commandLineArgs": "--usb 1"
+    },
+    "File": {
+      "commandName": "Project",
+      "commandLineArgs": "--file F:\\YouTube\\PXL_20231028_223300322.mp4"
+    }
+  }
+}
