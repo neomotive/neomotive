@@ -4,7 +4,7 @@ using OpenCvSharp;
 using OpenCvSharp.Dnn;
 using System.Diagnostics;
 
-namespace CarCam;
+namespace NeoMotive.Services;
 
 public class SpeedLimitService
 {
