@@ -1,14 +1,17 @@
 ﻿using Neomotive.Video;
+using NeoMotive.Services;
 using OpenCvSharp;
 
-Console.WriteLine("Camera Test Application");
-Console.WriteLine("=======================");
+Console.WriteLine("Camera Test Application with Speed Limit Detection");
+Console.WriteLine("===================================================");
 Console.WriteLine();
 
 // Parse command line arguments
 string cameraMode = "usb"; // default
 int cameraIndex = 2;
 string? videoFilePath = null;
+bool enableDetection = false;
+string? modelPath = null;
 
 if (args.Length > 0)
 {
@@ -40,6 +43,23 @@ if (args.Length > 0)
                     return 1;
                 }
                 break;
+            case "--detect":
+                enableDetection = true;
+                break;
+            case "--model":
+                if (i + 1 < args.Length)
+                {
+                    modelPath = args[i + 1];
+                    i++; // Skip next arg
+                }
+                else
+                {
+                    Console.WriteLine("Error: --model requires a file path argument");
+                    Console.WriteLine();
+                    PrintUsage();
+                    return 1;
+                }
+                break;
             case "--help":
             case "-h":
                 PrintUsage();
@@ -63,6 +83,11 @@ else
     Console.WriteLine($"Camera Mode: Video File");
     Console.WriteLine($"File Path: {videoFilePath}");
 }
+Console.WriteLine($"Detection: {(enableDetection ? "Enabled" : "Disabled")}");
+if (enableDetection && modelPath != null)
+{
+    Console.WriteLine($"Model Path: {modelPath}");
+}
 Console.WriteLine("Press ESC in the camera window to exit");
 Console.WriteLine("Starting camera...");
 Console.WriteLine();
@@ -70,14 +95,24 @@ Console.WriteLine();
 Frame? latestFrame = null;
 object frameLock = new object();
 int frameCount = 0;
+int detectionCount = 0;
 
 ICamera? camera = null;
+SpeedLimitService? detector = null;
 try
 {
     // Create camera based on mode
     camera = cameraMode == "usb"
         ? new UsbCamera(cameraIndex: cameraIndex)
         : new VideoFileCamera(videoFilePath!);
+
+    // Create detector if enabled
+    if (enableDetection)
+    {
+        Console.WriteLine("Initializing speed limit detector...");
+        detector = modelPath != null ? new SpeedLimitService(modelPath) : new SpeedLimitService();
+        Console.WriteLine("Detector initialized.");
+    }
 
     // Subscribe to frame captured event
     camera.FrameCaptured += (sender, frame) =>
@@ -109,25 +144,47 @@ try
     // Press ESC key to exit
     while (true)
     {
-        Frame? frameToDisplay = null;
+        Mat? matToDisplay = null;
 
-        // Get the latest frame (thread-safe)
+        // Get and clone the latest frame (thread-safe)
         lock (frameLock)
         {
             if (latestFrame != null)
             {
-                // Keep reference to frame for display
-                frameToDisplay = latestFrame;
+                // Clone the Mat so we own a copy that won't be disposed by the camera thread
+                var mat = latestFrame.ToMat();
+                matToDisplay = mat.Clone();
             }
         }
 
         // Display frame on main thread
-        if (frameToDisplay != null)
+        if (matToDisplay != null)
         {
-            // Get the native Mat from the Frame (no copy, no conversion)
-            var mat = frameToDisplay.ToMat();
-            string windowTitle = cameraMode == "usb" ? $"USB Camera Feed (Index: {cameraIndex})" : "Video File Camera Feed";
-            Cv2.ImShow(windowTitle, mat);
+            try
+            {
+                // Run detection if enabled
+                if (detector != null)
+                {
+                    var detections = detector.CheckForSpeedLimit(matToDisplay, saveToFile: false, drawDetections: true);
+                    if (detections.Count > 0)
+                    {
+                        detectionCount++;
+                        // Detections are already drawn on the mat
+                    }
+                }
+
+                string windowTitle = cameraMode == "usb" ? $"USB Camera Feed (Index: {cameraIndex})" : "Video File Camera Feed";
+                if (enableDetection)
+                {
+                    windowTitle += " - Detection Enabled";
+                }
+                Cv2.ImShow(windowTitle, matToDisplay);
+            }
+            finally
+            {
+                // Dispose our cloned mat
+                matToDisplay.Dispose();
+            }
         }
 
         var key = Cv2.WaitKey(1);
@@ -152,6 +209,10 @@ try
     Cv2.DestroyAllWindows();
 
     Console.WriteLine($"Camera stopped. Total frames captured: {frameCount}");
+    if (enableDetection)
+    {
+        Console.WriteLine($"Frames with detections: {detectionCount}");
+    }
 }
 catch (Exception ex)
 {
@@ -165,6 +226,7 @@ finally
     {
         d.Dispose();
     }
+    detector?.Dispose();
 }
 
 return 0;
@@ -177,11 +239,14 @@ static void PrintUsage()
     Console.WriteLine("Options:");
     Console.WriteLine("  --usb [index]         Use USB camera (default). Optional camera index (default: 2)");
     Console.WriteLine("  --file <path>         Use video file as camera feed (loops continuously)");
+    Console.WriteLine("  --detect              Enable speed limit sign detection");
+    Console.WriteLine("  --model <path>        Path to custom ONNX model (optional, uses default if not specified)");
     Console.WriteLine("  --help, -h            Show this help message");
     Console.WriteLine();
     Console.WriteLine("Examples:");
     Console.WriteLine("  SignCamera.DesktopTest                                    # Use USB camera index 2");
     Console.WriteLine("  SignCamera.DesktopTest --usb 0                            # Use USB camera index 0");
     Console.WriteLine("  SignCamera.DesktopTest --file video.mp4                   # Use video file");
-    Console.WriteLine("  SignCamera.DesktopTest --file \"C:\\Videos\\test.mp4\"       # Use video file with full path");
+    Console.WriteLine("  SignCamera.DesktopTest --file video.mp4 --detect          # Use video file with detection");
+    Console.WriteLine("  SignCamera.DesktopTest --usb 0 --detect --model model.onnx  # USB camera with custom model");
 }

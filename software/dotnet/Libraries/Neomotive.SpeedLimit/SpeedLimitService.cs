@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace NeoMotive.Services;
 
-public class SpeedLimitService
+public class SpeedLimitService : IDisposable
 {
     private const string ModelsFolder = "C:\\repos\\yoshimoshi\\CarCam\\models";
     private readonly string[] classNames = new[]
@@ -15,18 +15,36 @@ public class SpeedLimitService
         "mph55", "mph60", "mph65", "mph70", "mph75", "mph80"
     };
 
-    public void CheckForSpeedLimit(string sourceImagePath)
+    private readonly InferenceSession? _session;
+    private readonly string _inputName;
+    private bool _disposed = false;
+
+    public SpeedLimitService(string? modelPath = null)
     {
-        var modelPath = Path.Combine(ModelsFolder, "speed-limits-us.onnx");
+        modelPath ??= Path.Combine(ModelsFolder, "speed-limits-us.onnx");
         if (!File.Exists(modelPath))
         {
             throw new FileNotFoundException("Model not found", modelPath);
         }
 
-        using var session = new InferenceSession(modelPath);
+        _session = new InferenceSession(modelPath);
+        _inputName = _session.InputMetadata.Keys.First();
+    }
+
+    public void CheckForSpeedLimit(string sourceImagePath)
+    {
+        using var img = Cv2.ImRead(sourceImagePath);
+        CheckForSpeedLimit(img, saveToFile: true);
+    }
+
+    public List<SpeedLimitDetection> CheckForSpeedLimit(Mat img, bool saveToFile = false, bool drawDetections = true)
+    {
+        if (_session == null)
+        {
+            throw new InvalidOperationException("Inference session is not initialized");
+        }
 
         // --- Load and preprocess image ---
-        using var img = Cv2.ImRead(sourceImagePath);
         int originalWidth = img.Width;
         int originalHeight = img.Height;
 
@@ -51,8 +69,7 @@ public class SpeedLimitService
         var inputTensor = new DenseTensor<float>(blobData, new[] { 1, 3, 640, 640 });
 
         // --- Run inference ---
-        string inputName = session.InputMetadata.Keys.First();
-        using var results = session.Run(new[] { NamedOnnxValue.CreateFromTensor(inputName, inputTensor) });
+        using var results = _session.Run(new[] { NamedOnnxValue.CreateFromTensor(_inputName, inputTensor) });
         var outputTensor = results.First().AsTensor<float>();
 
         // YOLOv8 output is typically [1, 16, 8400] - need to transpose
@@ -112,33 +129,68 @@ public class SpeedLimitService
         // --- Apply Non-Max Suppression (NMS) ---
         CvDnn.NMSBoxes(boxes, confidences, confThreshold, 0.45f, out int[] indices);
 
-        // --- Draw detections ---
+        // --- Process detections ---
+        var detections = new List<SpeedLimitDetection>();
         foreach (int idx in indices)
         {
             var box = boxes[idx];
             var label = classNames[classIds[idx]];
             var conf = confidences[idx];
 
-            // Extract speed from label (e.g., "speed_limit_30" -> "30")
+            // Extract speed from label (e.g., "mph30" -> "30")
             var speedMatch = System.Text.RegularExpressions.Regex.Match(label, @"\d+");
-            var speed = speedMatch.Success ? speedMatch.Value : "Unknown";
+            var speed = speedMatch.Success ? int.Parse(speedMatch.Value) : 0;
+
+            var detection = new SpeedLimitDetection
+            {
+                SpeedLimit = speed,
+                Confidence = conf,
+                BoundingBox = box,
+                Label = label
+            };
+            detections.Add(detection);
 
             // Output to Debug
             Debug.WriteLine($"Speed Limit Detected: {speed} mph, Confidence: {conf:P1}");
-
-            // Convert Rect2d to Rect for drawing
-            var drawRect = new Rect((int)box.X, (int)box.Y, (int)box.Width, (int)box.Height);
-            Cv2.Rectangle(img, drawRect, Scalar.Red, 2);
-            Cv2.PutText(img, $"{label} {conf:P1}", new Point((int)box.X, (int)box.Y - 5),
-                HersheyFonts.HersheySimplex, 0.6, Scalar.Yellow, 2);
             Console.WriteLine($"Detected: {label} ({conf:P1})");
+
+            // Draw detections if requested
+            if (drawDetections)
+            {
+                var drawRect = new Rect((int)box.X, (int)box.Y, (int)box.Width, (int)box.Height);
+                Cv2.Rectangle(img, drawRect, Scalar.Red, 2);
+                Cv2.PutText(img, $"{speed} mph {conf:P1}", new Point((int)box.X, (int)box.Y - 5),
+                    HersheyFonts.HersheySimplex, 0.6, Scalar.Yellow, 2);
+            }
         }
 
-        // --- Save result to temp folder ---
-        var tempFolder = Path.GetTempPath();
-        var tempFileName = $"speed_limit_detection_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-        var outputPath = Path.Combine(tempFolder, tempFileName);
-        Cv2.ImWrite(outputPath, img);
-        Console.WriteLine($"Saved annotated image: {outputPath}");
+        // --- Save result to temp folder if requested ---
+        if (saveToFile)
+        {
+            var tempFolder = Path.GetTempPath();
+            var tempFileName = $"speed_limit_detection_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+            var outputPath = Path.Combine(tempFolder, tempFileName);
+            Cv2.ImWrite(outputPath, img);
+            Console.WriteLine($"Saved annotated image: {outputPath}");
+        }
+
+        return detections;
     }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _session?.Dispose();
+            _disposed = true;
+        }
+    }
+}
+
+public class SpeedLimitDetection
+{
+    public int SpeedLimit { get; set; }
+    public float Confidence { get; set; }
+    public Rect2d BoundingBox { get; set; }
+    public string Label { get; set; } = string.Empty;
 }

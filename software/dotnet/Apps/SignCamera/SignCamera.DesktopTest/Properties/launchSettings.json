@@ -6,7 +6,7 @@
     },
     "File": {
       "commandName": "Project",
-      "commandLineArgs": "--file F:\\YouTube\\PXL_20231028_223300322.mp4"
+      "commandLineArgs": "--file F:\\repos\\neomotive\\software\\dotnet\\Apps\\SignCamera\\inputs\\GOPR1643.MP4 --detect --model F:\\repos\\neomotive\\ai-ml\\models\\trained\\speed-limit\\speed-limits-us.onnx"
     }
   }
 }

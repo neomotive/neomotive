@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Libraries\Neomotive.Camera.USB\Neomotive.Camera.USB.csproj" />
     <ProjectReference Include="..\..\..\Libraries\Neomotive.Camera.VideoFile\Neomotive.Camera.VideoFile.csproj" />
+    <ProjectReference Include="..\..\..\Libraries\Neomotive.SpeedLimit\Neomotive.SpeedLimit.csproj" />
   </ItemGroup>
 
 </Project>
