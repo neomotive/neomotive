@@ -3,6 +3,7 @@
     <Project Path="SignCamera.DesktopTest/SignCamera.DesktopTest.csproj" />
     <Project Path="SignCamera.HeadlessTest/SignCamera.HeadlessTest.csproj" />
     <Project Path="SignCamera.InferenceTest/SignCamera.InferenceTest.csproj" />
+    <Project Path="SignCamera.Pi/SignCamera.Pi.csproj" Id="e386b5f1-6914-4212-859b-52c347566822" />
   </Folder>
   <Folder Name="/libs/">
     <Project Path="../../Libraries/Neomotive.Camera.USB/Neomotive.Camera.USB.csproj" />

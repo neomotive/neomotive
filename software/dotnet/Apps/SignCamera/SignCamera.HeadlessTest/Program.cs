@@ -163,7 +163,7 @@ try
     if (enableDetection)
     {
         Console.WriteLine("Initializing speed limit detector...");
-        detector = modelPath != null ? new SpeedLimitService(modelPath) : new SpeedLimitService();
+        detector = modelPath != null ? new SpeedLimitService(modelPath) : new SpeedLimitService("./models");
         Console.WriteLine("Detector initialized");
     }
 

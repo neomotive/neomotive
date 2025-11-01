@@ -1,0 +1,10 @@
+﻿Lifecycle:
+    RestartOnAppFailure: false
+
+Logging:
+    LogLevel:
+        Default: Trace
+
+Neomotive:
+    Camera: File
+    CameraFilePath: ./GOPR1627.MP4

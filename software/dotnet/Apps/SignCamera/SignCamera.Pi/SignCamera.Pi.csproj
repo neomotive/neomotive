@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>App</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Meadow.Foundation.Displays.Ssd130x" Version="2.4.0" />
+    <PackageReference Include="Meadow.Foundation.Graphics.MicroLayout" Version="2.4.0" />
+    <PackageReference Include="Meadow.Linux" Version="2.4.0" />
+  </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Libraries\Neomotive.Camera.USB\Neomotive.Camera.USB.csproj" />
+        <ProjectReference Include="..\..\..\Libraries\Neomotive.Camera.VideoFile\Neomotive.Camera.VideoFile.csproj" />
+        <ProjectReference Include="..\..\..\Libraries\Neomotive.SpeedLimit\Neomotive.SpeedLimit.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="app.config.yaml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+</Project>

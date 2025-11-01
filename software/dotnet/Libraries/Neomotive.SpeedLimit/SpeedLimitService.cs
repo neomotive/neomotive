@@ -8,7 +8,8 @@ namespace NeoMotive.Services;
 
 public class SpeedLimitService : IDisposable
 {
-    private const string ModelsFolder = "C:\\repos\\yoshimoshi\\CarCam\\models";
+    // TODO: this probably needs to come in with the model
+    // if we add additional models (i.e. canada/europe) then we'll need new classes
     private readonly string[] classNames = new[]
     {
         "mph25", "mph30", "mph35", "mph40", "mph45", "mph50",
@@ -19,9 +20,12 @@ public class SpeedLimitService : IDisposable
     private readonly string _inputName;
     private bool _disposed = false;
 
-    public SpeedLimitService(string? modelPath = null)
+    public SpeedLimitService(string modelPath)
     {
-        modelPath ??= Path.Combine(ModelsFolder, "speed-limits-us.onnx");
+        if (string.IsNullOrWhiteSpace(modelPath))
+        {
+            throw new ArgumentException("Model path must be provided", nameof(modelPath));
+        }
         if (!File.Exists(modelPath))
         {
             throw new FileNotFoundException("Model not found", modelPath);

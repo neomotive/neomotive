@@ -22,7 +22,7 @@ Console.WriteLine($"Full path: {randomImage}");
 Console.WriteLine();
 
 // Call the SpeedLimitService
-var service = new SpeedLimitService();
+var service = new SpeedLimitService("./models");
 service.CheckForSpeedLimit(randomImage);
 
 Console.WriteLine();
