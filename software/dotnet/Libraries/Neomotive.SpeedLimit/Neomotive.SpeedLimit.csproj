@@ -9,8 +9,10 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
         <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.23.2" />
-        <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
-        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
+        <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241117" />
+        <!-- Windows runtime included -->
+        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241117" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+        <!-- Linux: Use system-installed OpenCV (install via: apt-get install libopencv-dev) -->
     </ItemGroup>
 
 </Project>
