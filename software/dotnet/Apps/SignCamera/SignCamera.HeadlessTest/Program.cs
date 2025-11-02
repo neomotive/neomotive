@@ -13,6 +13,8 @@ bool enableDetection = false;
 string? modelPath = null;
 int? durationSeconds = null;
 int statusIntervalSeconds = 5; // default: show status every 5 seconds
+float confidenceThreshold = 0.5f; // default: 50% confidence
+int groupingWindowSeconds = 5; // default: 5 second grouping window
 
 if (args.Length > 0)
 {
@@ -89,6 +91,34 @@ if (args.Length > 0)
                     return 1;
                 }
                 break;
+            case "--threshold":
+                if (i + 1 < args.Length && float.TryParse(args[i + 1], out float threshold))
+                {
+                    confidenceThreshold = threshold;
+                    i++; // Skip next arg
+                }
+                else
+                {
+                    Console.WriteLine("Error: --threshold requires a number (0.0-1.0)");
+                    Console.WriteLine();
+                    PrintUsage();
+                    return 1;
+                }
+                break;
+            case "--grouping-window":
+                if (i + 1 < args.Length && int.TryParse(args[i + 1], out int groupWindow))
+                {
+                    groupingWindowSeconds = groupWindow;
+                    i++; // Skip next arg
+                }
+                else
+                {
+                    Console.WriteLine("Error: --grouping-window requires a number (seconds)");
+                    Console.WriteLine();
+                    PrintUsage();
+                    return 1;
+                }
+                break;
             case "--help":
             case "-h":
                 PrintUsage();
@@ -131,6 +161,7 @@ Frame? latestFrame = null;
 object frameLock = new object();
 int frameCount = 0;
 int detectionCount = 0;
+int signDetectionCount = 0; // Grouped/finalized sign detections
 DateTime startTime = DateTime.Now;
 bool shouldExit = false;
 
@@ -163,8 +194,20 @@ try
     if (enableDetection)
     {
         Console.WriteLine("Initializing speed limit detector...");
-        detector = modelPath != null ? new SpeedLimitService(modelPath) : new SpeedLimitService("./models");
+        detector = modelPath != null
+            ? new SpeedLimitService(modelPath, confidenceThreshold, TimeSpan.FromSeconds(groupingWindowSeconds), true)
+            : new SpeedLimitService("./models", confidenceThreshold, TimeSpan.FromSeconds(groupingWindowSeconds), true);
+
+        // Subscribe to sign detection events
+        detector.SignDetected += (sender, group) =>
+        {
+            signDetectionCount++;
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            Console.WriteLine($"[SIGN DETECTED] {timestamp} | {group.SpeedLimit} mph | Confidence: {group.HighestConfidence:P1} | Detections: {group.DetectionCount} | Duration: {(group.LastDetected - group.FirstDetected).TotalSeconds:F1}s");
+        };
+
         Console.WriteLine("Detector initialized");
+        Console.WriteLine($"Threshold: {confidenceThreshold:P0}, Grouping Window: {groupingWindowSeconds}s");
     }
 
     Console.WriteLine();
@@ -244,7 +287,14 @@ try
             var framesSinceLastStatus = frameCount - lastFrameCount;
             var currentFps = framesSinceLastStatus / timeSinceLastStatus;
 
-            Console.WriteLine($"[Status] Runtime: {totalRuntime:F1}s | Frames: {frameCount} | FPS: {currentFps:F1} | Detections: {detectionCount}");
+            if (enableDetection)
+            {
+                Console.WriteLine($"[Status] Runtime: {totalRuntime:F1}s | Frames: {frameCount} | FPS: {currentFps:F1} | Raw Detections: {detectionCount} | Signs: {signDetectionCount}");
+            }
+            else
+            {
+                Console.WriteLine($"[Status] Runtime: {totalRuntime:F1}s | Frames: {frameCount} | FPS: {currentFps:F1}");
+            }
 
             lastStatusUpdate = DateTime.Now;
             lastFrameCount = frameCount;
@@ -278,7 +328,8 @@ try
     Console.WriteLine($"Average FPS: {fps:F1}");
     if (enableDetection)
     {
-        Console.WriteLine($"Frames with detections: {detectionCount}");
+        Console.WriteLine($"Frames with raw detections: {detectionCount}");
+        Console.WriteLine($"Unique signs detected: {signDetectionCount}");
         Console.WriteLine($"Detection rate: {(detectionCount / (double)frameCount * 100):F1}%");
     }
     Console.WriteLine();
@@ -314,13 +365,16 @@ static void PrintUsage()
     Console.WriteLine("  --model <path>             Path to custom ONNX model (optional)");
     Console.WriteLine("  --duration <seconds>       Run for specified duration (default: continuous)");
     Console.WriteLine("  --status-interval <sec>    Status update interval in seconds (default: 5)");
+    Console.WriteLine("  --threshold <0.0-1.0>      Confidence threshold for detections (default: 0.5)");
+    Console.WriteLine("  --grouping-window <sec>    Time window for grouping detections (default: 5)");
     Console.WriteLine("  --help, -h                 Show this help message");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  App                                          # USB camera, no detection");
-    Console.WriteLine("  App --usb 0 --detect                         # USB camera with detection");
-    Console.WriteLine("  App --file video.mp4 --detect                # Video file with detection");
-    Console.WriteLine("  App --file video.mp4 --detect --duration 60  # Run for 60 seconds");
-    Console.WriteLine("  App --usb 0 --detect --model custom.onnx     # Custom model");
-    Console.WriteLine("  App --file video.mp4 --status-interval 10    # Status every 10 seconds");
+    Console.WriteLine("  App                                           # USB camera, no detection");
+    Console.WriteLine("  App --usb 0 --detect                          # USB camera with detection");
+    Console.WriteLine("  App --file video.mp4 --detect                 # Video file with detection");
+    Console.WriteLine("  App --file video.mp4 --detect --duration 60   # Run for 60 seconds");
+    Console.WriteLine("  App --usb 0 --detect --model custom.onnx      # Custom model");
+    Console.WriteLine("  App --file video.mp4 --threshold 0.7          # Higher confidence threshold");
+    Console.WriteLine("  App --file video.mp4 --grouping-window 10     # 10 second grouping window");
 }

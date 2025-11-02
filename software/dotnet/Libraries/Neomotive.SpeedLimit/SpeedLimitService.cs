@@ -20,7 +20,20 @@ public class SpeedLimitService : IDisposable
     private readonly string _inputName;
     private bool _disposed = false;
 
-    public SpeedLimitService(string modelPath)
+    // Detection grouping configuration
+    public float ConfidenceThreshold { get; set; } = 0.5f;
+    public TimeSpan GroupingWindow { get; set; } = TimeSpan.FromSeconds(5);
+    public bool EnableGrouping { get; set; } = true;
+
+    // Active detection groups
+    private readonly Dictionary<int, SpeedLimitDetectionGroup> _activeGroups = new();
+    private readonly Dictionary<int, System.Threading.Timer> _groupTimers = new();
+    private readonly object _groupLock = new object();
+
+    // Event raised when a sign detection group is finalized
+    public event EventHandler<SpeedLimitDetectionGroup>? SignDetected;
+
+    public SpeedLimitService(string modelPath, float confidenceThreshold = 0.5f, TimeSpan? groupingWindow = null, bool enableGrouping = true)
     {
         if (string.IsNullOrWhiteSpace(modelPath))
         {
@@ -33,6 +46,10 @@ public class SpeedLimitService : IDisposable
 
         _session = new InferenceSession(modelPath);
         _inputName = _session.InputMetadata.Keys.First();
+
+        ConfidenceThreshold = confidenceThreshold;
+        GroupingWindow = groupingWindow ?? TimeSpan.FromSeconds(5);
+        EnableGrouping = enableGrouping;
     }
 
     public void CheckForSpeedLimit(string sourceImagePath)
@@ -178,7 +195,98 @@ public class SpeedLimitService : IDisposable
             Console.WriteLine($"Saved annotated image: {outputPath}");
         }
 
+        // --- Process detections for grouping if enabled ---
+        if (EnableGrouping)
+        {
+            foreach (var detection in detections)
+            {
+                if (detection.Confidence >= ConfidenceThreshold)
+                {
+                    ProcessDetectionForGrouping(detection);
+                }
+            }
+        }
+
         return detections;
+    }
+
+    private void ProcessDetectionForGrouping(SpeedLimitDetection detection)
+    {
+        lock (_groupLock)
+        {
+            var speedLimit = detection.SpeedLimit;
+            var now = DateTime.Now;
+
+            if (_activeGroups.TryGetValue(speedLimit, out var group))
+            {
+                // Update existing group
+                group.DetectionCount++;
+                group.LastDetected = now;
+                if (detection.Confidence > group.HighestConfidence)
+                {
+                    group.HighestConfidence = detection.Confidence;
+                }
+
+                // Reset the timer
+                if (_groupTimers.TryGetValue(speedLimit, out var timer))
+                {
+                    timer.Change(GroupingWindow, Timeout.InfiniteTimeSpan);
+                }
+            }
+            else
+            {
+                // Create new group
+                var newGroup = new SpeedLimitDetectionGroup
+                {
+                    SpeedLimit = speedLimit,
+                    HighestConfidence = detection.Confidence,
+                    DetectionCount = 1,
+                    FirstDetected = now,
+                    LastDetected = now
+                };
+                _activeGroups[speedLimit] = newGroup;
+
+                // Create timer to finalize group after grouping window
+                var newTimer = new System.Threading.Timer(
+                    callback: _ => FinalizeGroup(speedLimit),
+                    state: null,
+                    dueTime: GroupingWindow,
+                    period: Timeout.InfiniteTimeSpan
+                );
+                _groupTimers[speedLimit] = newTimer;
+            }
+        }
+    }
+
+    private void FinalizeGroup(int speedLimit)
+    {
+        SpeedLimitDetectionGroup? groupToRaise = null;
+
+        lock (_groupLock)
+        {
+            if (_activeGroups.TryGetValue(speedLimit, out var group))
+            {
+                // Only raise event if confidence exceeds threshold
+                if (group.HighestConfidence >= ConfidenceThreshold)
+                {
+                    groupToRaise = group;
+                }
+
+                // Clean up
+                _activeGroups.Remove(speedLimit);
+                if (_groupTimers.TryGetValue(speedLimit, out var timer))
+                {
+                    timer.Dispose();
+                    _groupTimers.Remove(speedLimit);
+                }
+            }
+        }
+
+        // Raise event outside of lock
+        if (groupToRaise != null)
+        {
+            SignDetected?.Invoke(this, groupToRaise);
+        }
     }
 
     public void Dispose()
@@ -186,6 +294,18 @@ public class SpeedLimitService : IDisposable
         if (!_disposed)
         {
             _session?.Dispose();
+
+            // Dispose all active timers
+            lock (_groupLock)
+            {
+                foreach (var timer in _groupTimers.Values)
+                {
+                    timer?.Dispose();
+                }
+                _groupTimers.Clear();
+                _activeGroups.Clear();
+            }
+
             _disposed = true;
         }
     }
@@ -197,4 +317,13 @@ public class SpeedLimitDetection
     public float Confidence { get; set; }
     public Rect2d BoundingBox { get; set; }
     public string Label { get; set; } = string.Empty;
+}
+
+public class SpeedLimitDetectionGroup
+{
+    public int SpeedLimit { get; set; }
+    public float HighestConfidence { get; set; }
+    public int DetectionCount { get; set; }
+    public DateTime FirstDetected { get; set; }
+    public DateTime LastDetected { get; set; }
 }

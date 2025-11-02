@@ -2,6 +2,6 @@
 
 public interface IDisplayService
 {
-    void ShowStartup();
-    void UpdateSpeedLimit(int speedLimit, double confidence);
+    Task ShowStartup();
+    Task UpdateSpeedLimit(int speedLimit, double confidence);
 }

@@ -42,19 +42,16 @@ public class DisplayService_1306 : IDisplayService
 
         _speedLayout = new AlignmentLayout(0, 0, _screen.Width, _screen.Height);
 
-        _speedLabel = new Label(96, 64, "--")
+        _speedLabel = new Label(96, 64, string.Empty)
         {
             Font = new Font16x24(),
             TextColor = Color.White,
-            BackgroundColor = Color.Black
         };
 
-        _confidenceLabel = new Label(30, 30, "--%")
+        _confidenceLabel = new Label(30, 30, string.Empty)
         {
             Font = new Font8x12(),
-            //            HorizontalAlignment = HorizontalAlignment.Right,
             TextColor = Color.White,
-            BackgroundColor = Color.Black
         };
 
         ((AlignmentLayout)_speedLayout).Add(_speedLabel, AlignmentLayout.DockPosition.Left);
@@ -63,17 +60,43 @@ public class DisplayService_1306 : IDisplayService
         _screen.Controls.Add(_startupLayout, _speedLayout);
     }
 
-    public void ShowStartup()
+    public async Task ShowStartup()
     {
+        _screen.BeginUpdate();
         _speedLayout.IsVisible = false;
         _startupLayout.IsVisible = true;
+        _screen.EndUpdate();
+
+        await Task.Delay(2000);
+
+        _screen.BeginUpdate();
+        _speedLabel.Text = "--";
+        _confidenceLabel.Text = "--%";
+        _speedLayout.IsVisible = true;
+        _startupLayout.IsVisible = false;
+        _screen.EndUpdate();
     }
 
-    public void UpdateSpeedLimit(int speedLimit, double confidence)
+    public async Task UpdateSpeedLimit(int speedLimit, double confidence)
     {
         _startupLayout.IsVisible = false;
-        _speedLabel.Text = speedLimit.ToString();
-        _confidenceLabel.Text = $"{(int)(confidence * 100)}%";
+
+        _screen.BeginUpdate();
         _speedLayout.IsVisible = true;
+        _confidenceLabel.Text = $"{(int)(confidence * 100)}%";
+        _speedLabel.Text = $"{speedLimit}mph";
+
+        _speedLayout.BackgroundColor = Color.White;
+        _confidenceLabel.TextColor = Color.Black;
+        _speedLabel.TextColor = Color.Black;
+        _screen.EndUpdate();
+
+        await Task.Delay(1000);
+
+        _screen.BeginUpdate();
+        _speedLayout.BackgroundColor = Color.Black;
+        _speedLabel.TextColor = Color.White;
+        _confidenceLabel.TextColor = Color.White;
+        _screen.EndUpdate();
     }
 }
