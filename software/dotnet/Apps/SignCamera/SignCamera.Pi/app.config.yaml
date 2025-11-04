@@ -6,5 +6,11 @@ Logging:
         Default: Trace
 
 Neomotive:
-    Camera: File
+    Camera: USB
+    CameraIndex: 0
     CameraFilePath: ./GOPR1627.MP4
+
+    # False positive capture settings for training data collection
+    FalsePositiveThreshold: 0.30
+    FalsePositiveCaptureFolder: ./false_positives
+    MaxFalsePositiveCaptures: 100

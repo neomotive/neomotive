@@ -26,7 +26,7 @@ public class CameraApp : App<RaspberryPi>
         );
 
         var camera = InitializeCamera();
-        _frameProcessor = new CameraFrameProcessor(camera, speedLimitService);
+        _frameProcessor = new CameraFrameProcessor(camera, speedLimitService, _configurationService);
 
         _frameProcessor.SpeedLimitSignDetected += OnSpeedLimitSignDetected;
         return base.Initialize();
@@ -56,7 +56,7 @@ public class CameraApp : App<RaspberryPi>
         }
         else
         {
-            return new UsbCamera();
+            return new UsbCamera(_configurationService.CameraIndex);
         }
     }
 }

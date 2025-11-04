@@ -1,0 +1,24 @@
+[Unit]
+Description=SignCamera Speed Limit Detection Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/neomotive
+ExecStart=/home/pi/.dotnet/dotnet /home/pi/neomotive/App.dll
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Ensure the service has access to I2C and video devices
+SupplementaryGroups=i2c video
+
+# Environment variables (if needed)
+# Environment="LD_LIBRARY_PATH=/usr/local/lib"
+
+[Install]
+WantedBy=multi-user.target
