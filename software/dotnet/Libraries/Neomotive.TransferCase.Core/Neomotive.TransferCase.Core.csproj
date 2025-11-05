@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <RootNamespace>Neoteric.TransferCase</RootNamespace>
+    <Version>1.2</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Meadow.Foundation" Version="2.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Neomotive.Core\Neomotive.Core.csproj" />
+  </ItemGroup>
+
+</Project>
