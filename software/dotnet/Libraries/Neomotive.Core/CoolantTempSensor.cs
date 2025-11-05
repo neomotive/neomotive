@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using Meadow.Hardware;
 using Meadow.Units;
 
@@ -12,6 +12,9 @@ public class CoolantTempSensor
     private double _exponent = 0d;
     private double _factor = 0d;
 
+    /// <summary>
+    /// Retrieves the TimeSpan representing the RefreshPeriod, which is equivalent to _input's SampleInterval.
+    /// </summary>
     public TimeSpan RefreshPeriod => _input.SampleInterval;
 
     public enum SensorCurve
@@ -55,6 +58,9 @@ public class CoolantTempSensor
         _divider = new VoltageDividerPort(_input, r1);
     }
 
+    /// <summary>
+    /// Represents the curve associated with a sensor.
+    /// </summary>
     public SensorCurve Curve
     {
         get => _curve;
@@ -79,6 +85,9 @@ public class CoolantTempSensor
         }
     }
 
+    /// <summary>
+    /// Represents the current temperature.
+    /// </summary>
     public Temperature Temperature
     {
         get => new Temperature(_factor * Math.Pow(_divider.ReadR2Resistance().Ohms, _exponent), Temperature.UnitType.Fahrenheit);

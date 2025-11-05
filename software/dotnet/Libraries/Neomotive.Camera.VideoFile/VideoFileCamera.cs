@@ -1,4 +1,4 @@
-﻿using OpenCvSharp;
+using OpenCvSharp;
 using System.Diagnostics;
 
 namespace Neomotive.Video;
@@ -10,9 +10,19 @@ public class VideoFileCamera : ICamera, IDisposable
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _captureTask;
 
+    /// <summary>
+    /// Indicates whether the object has been disposed.
+    /// Read-only after creation.
+    /// </summary>
     public bool IsDisposed { get; private set; }
+    /// <summary>
+    /// Indicates if the object is currently capturing or not. Once set, it's read-only.
+    /// </summary>
     public bool IsCapturing { get; private set; }
 
+    /// <summary>
+    /// Raised when a frame is captured.
+    /// </summary>
     public event EventHandler<Frame>? FrameCaptured;
 
     public VideoFileCamera(string filePath)
@@ -39,6 +49,13 @@ public class VideoFileCamera : ICamera, IDisposable
         Debug.WriteLine($"Frame count: {_capture.FrameCount}, FPS: {_capture.Fps}");
     }
 
+    /// <summary>
+    /// Starts the capture process. If capturing is already running, an exception will be thrown.
+    /// </summary>
+    /// <remarks>
+    /// Initializes a new CancellationTokenSource and sets IsCapturing to true. Then it runs the CaptureLoop task.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">Thrown when capturing is already running.</exception>
     public async Task StartCapture()
     {
         if (IsCapturing)
@@ -54,6 +71,13 @@ public class VideoFileCamera : ICamera, IDisposable
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the capture process if currently capturing.
+    /// </summary>
+    /// <remarks>
+    /// If not currently capturing, no action is taken.
+    /// </remarks>
+    /// <exception cref="OperationCanceledException">Thrown if _captureTask is canceled.</exception>
     public async Task StopCapture()
     {
         if (!IsCapturing)
@@ -166,6 +190,12 @@ public class VideoFileCamera : ICamera, IDisposable
         }
     }
 
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
+    /// <remarks>
+    /// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method.
+    /// </remarks>
     public void Dispose()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

@@ -1,4 +1,4 @@
-﻿using OpenCvSharp;
+using OpenCvSharp;
 using System.Diagnostics;
 
 namespace Neomotive.Video;
@@ -9,9 +9,18 @@ public class UsbCamera : ICamera, IDisposable
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _captureTask;
 
+    /// <summary>
+    /// Gets a value indicating whether this object has been disposed.
+    /// </summary>
     public bool IsDisposed { get; private set; }
+    /// <summary>
+    /// Gets a value indicating whether the object is currently capturing. This property is read-only.
+    /// </summary>
     public bool IsCapturing { get; private set; }
 
+    /// <summary>
+    /// Raised when a frame is captured.
+    /// </summary>
     public event EventHandler<Frame>? FrameCaptured;
 
     public UsbCamera(int cameraIndex = 3)
@@ -28,6 +37,11 @@ public class UsbCamera : ICamera, IDisposable
 
     }
 
+    /// <summary>
+    /// Initiates the capture operation. If capture is already running, throws an exception.
+    /// </summary>
+    /// <param name="">No parameters for this method.</param>
+    /// <exception cref="InvalidOperationException">Thrown if capture is already running.</exception>
     public async Task StartCapture()
     {
         if (IsCapturing)
@@ -43,6 +57,13 @@ public class UsbCamera : ICamera, IDisposable
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the capture if currently capturing.
+    /// </summary>
+    /// <remarks>
+    /// If not currently capturing, does nothing.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">Thrown when _cancellationTokenSource is already disposed.</exception>
     public async Task StopCapture()
     {
         if (!IsCapturing)
@@ -152,6 +173,13 @@ public class UsbCamera : ICamera, IDisposable
     //     Dispose(disposing: false);
     // }
 
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
+    /// <remarks>
+    /// This method calls the 'Dispose(bool disposing)' method with a value of true for disposing.
+    /// It then suppresses finalization by calling GC.SuppressFinalize on the current object.
+    /// </remarks>
     public void Dispose()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
