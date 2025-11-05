@@ -7,9 +7,14 @@
     <Project Path="Apps/SignCamera/SignCamera.Pi/SignCamera.Pi.csproj" />
   </Folder>
   <Folder Name="/Libraries/">
-    <Project Path="Libraries/Neomotive.Camera.USB/Neomotive.Camera.USB.csproj" />
-    <Project Path="Libraries/Neomotive.Camera.VideoFile/Neomotive.Camera.VideoFile.csproj" />
     <Project Path="Libraries/Neomotive.Core/Neomotive.Core.csproj" />
     <Project Path="Libraries/Neomotive.SpeedLimit/Neomotive.SpeedLimit.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/Cameras/">
+    <Project Path="Libraries/Neomotive.Camera.USB/Neomotive.Camera.USB.csproj" />
+    <Project Path="Libraries/Neomotive.Camera.VideoFile/Neomotive.Camera.VideoFile.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/TransferCase/">
+    <Project Path="Libraries/Neomotive.TransferCase.Core/Neomotive.TransferCase.Core.csproj" />
   </Folder>
 </Solution>
