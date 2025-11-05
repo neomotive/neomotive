@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Neomotive.Contracts\Neomotive.Contracts.csproj" />
+    <ProjectReference Include="..\Neomotive.Core\Neomotive.Core.csproj" />
   </ItemGroup>
 
 </Project>

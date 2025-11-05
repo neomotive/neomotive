@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Apps/" />
+  <Folder Name="/Apps/SignCamera/">
+    <Project Path="Apps/SignCamera/SignCamera.DesktopTest/SignCamera.DesktopTest.csproj" />
+    <Project Path="Apps/SignCamera/SignCamera.HeadlessTest/SignCamera.HeadlessTest.csproj" />
+    <Project Path="Apps/SignCamera/SignCamera.InferenceTest/SignCamera.InferenceTest.csproj" />
+    <Project Path="Apps/SignCamera/SignCamera.Pi/SignCamera.Pi.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/">
+    <Project Path="Libraries/Neomotive.Camera.USB/Neomotive.Camera.USB.csproj" />
+    <Project Path="Libraries/Neomotive.Camera.VideoFile/Neomotive.Camera.VideoFile.csproj" />
+    <Project Path="Libraries/Neomotive.Core/Neomotive.Core.csproj" />
+    <Project Path="Libraries/Neomotive.SpeedLimit/Neomotive.SpeedLimit.csproj" />
+  </Folder>
+</Solution>
