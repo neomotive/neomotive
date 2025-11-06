@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using System.Collections.Generic;
 
 namespace Neomotive.TransferCase;
@@ -8,11 +8,26 @@ public class TransferCaseSettings<TSwitchSetting, TTCaseSettings>
     where TSwitchSetting : ISelectorSwitchVoltageSettings, new()
     where TTCaseSettings : ITransferCaseVoltageSettings, new()
 {
+    /// <summary>
+    /// Indicates whether interlock functionality is enabled. By default, it's set to true.
+    /// </summary>
     public bool InterlockEnabled { get; set; } = true;
+    /// <summary>
+    /// Indicates whether the gear unlock feature is enabled by default.
+    /// </summary>
     public bool GearUnlockEnabled { get; set; } = true;
+    /// <summary>
+    /// Represents the delay in units before unlocking a gear. Default is 0.
+    /// </summary>
     public int GearUnlockDelay { get; set; } = 0;
 
+    /// <summary>
+    /// Represents the ISelectorSwitchVoltageSettings object for switch voltage settings.
+    /// </summary>
     public ISelectorSwitchVoltageSettings SwitchVoltageSettings { get; set; }
+    /// <summary>
+    /// Represents the ITransferCaseVoltageSettings object for controlling transfer case voltage settings.
+    /// </summary>
     public ITransferCaseVoltageSettings TransferCaseVoltageSettings { get; set; }
 
     public TransferCaseSettings(Dictionary<string, string> settings = null)

@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using Neomotive.Video;
 using NeoMotive.Services;
 
@@ -14,6 +14,18 @@ public class CameraApp : App<RaspberryPi>
     private readonly float _confidenceThreshold = 0.5f; // TODO: pull from config
     private readonly int _groupingWindowSeconds = 5; // TODO: pull from config
 
+    /// <summary>
+    /// Initializes the object. Sets up necessary services and initializes camera and frame processor.
+    /// </summary>
+    /// <remarks>
+    /// This method initializes the necessary services, creates a new instance of `CameraFrameProcessor`, and sets up event handling for speed limit sign detection.
+    /// </remarks>
+    /// <exception cref="Exception">Any exception that might occur during the initialization process.</exception>
+    /// <seealso cref="DisplayService_1306"/>
+    /// <seealso cref="ConfigurationService"/>
+    /// <seealso cref="SpeedLimitService"/>
+    /// <seealso cref="CameraFrameProcessor"/>
+    /// <seealso cref="OnSpeedLimitSignDetected"/>
     public override Task Initialize()
     {
         _configurationService = new ConfigurationService();
@@ -39,6 +51,10 @@ public class CameraApp : App<RaspberryPi>
 
     }
 
+    /// <summary>
+    /// Starts processing and shows startup display.
+    /// </summary>
+    /// <exception cref="Exception">Any exceptions that may occur during the method execution.</exception>
     public override async Task Run()
     {
         _ = _displayService.ShowStartup();

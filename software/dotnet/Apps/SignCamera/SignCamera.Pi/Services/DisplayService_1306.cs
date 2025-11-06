@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using Meadow.Foundation.Displays;
 using Meadow.Foundation.Graphics;
 using Meadow.Foundation.Graphics.MicroLayout;
@@ -60,6 +60,14 @@ public class DisplayService_1306 : IDisplayService
         _screen.Controls.Add(_startupLayout, _speedLayout);
     }
 
+    /// <summary>
+    /// Method to show startup screen and set visibility of layouts.
+    /// </summary>
+    /// <remarks>
+    /// The method first sets the visibility of _speedLayout to false and _startupLayout to true, then delays for 2000 milliseconds.
+    /// After that, it sets the text of _speedLabel and _confidenceLabel, sets the visibility of _speedLayout to true and _startupLayout to false.
+    /// </remarks>
+    /// <exception cref="System.Exception">Any exception that might occur during method execution.</exception>
     public async Task ShowStartup()
     {
         _screen.BeginUpdate();
@@ -77,6 +85,12 @@ public class DisplayService_1306 : IDisplayService
         _screen.EndUpdate();
     }
 
+    /// <summary>
+    /// Updates the speed limit and displays it on the screen.
+    /// </summary>
+    /// <param name="speedLimit">The new speed limit in mph.</param>
+    /// <param name="confidence">The confidence level for the update, as a percentage (0-100).</param>
+    /// <remarks>The method sets the visibility of certain layout elements and updates their text color. It also adjusts the background color of some layout elements before and after a delay.</remarks>
     public async Task UpdateSpeedLimit(int speedLimit, double confidence)
     {
         _startupLayout.IsVisible = false;

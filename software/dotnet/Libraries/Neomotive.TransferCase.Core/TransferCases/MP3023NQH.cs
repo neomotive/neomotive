@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using Meadow.Hardware;
 using System.Collections.Generic;
 
@@ -25,6 +25,9 @@ public class MP3023NQH : TransferCaseBase
         _gearSensorConfig = new GearSensorConfig(settings.TransferCaseVoltageSettings);
     }
 
+    /// <summary>
+    /// An array representing the supported gear positions for the transfer case.
+    /// </summary>
     public override TransferCasePosition[] SupportedGears => new TransferCasePosition[]
     {
         TransferCasePosition.Low4,
@@ -59,11 +62,29 @@ public class MP3023NQH : TransferCaseBase
         //  3.4      2.24        2.23   <-- 4HI   3.38
         //  3.5      2.31        2.35   <-- 4HI   3.56
 
+        /// <summary>
+        /// Represents the minimum value for a low rating, set to 0.90 by default.
+        /// </summary>
         public double Min4Low { get; set; } = 0.90;
+        /// <summary>
+        /// Represents a maximum value for low scores, initially set to 0.96.
+        /// </summary>
         public double Max4Low { get; set; } = 0.96;
+        /// <summary>
+        /// Represents a minimum value to a maximum value, initially set to 1.59.
+        /// </summary>
         public double Min2High { get; set; } = 1.59;
+        /// <summary>
+        /// Represents a maximum value of 1.66 for the high limit.
+        /// </summary>
         public double Max2High { get; set; } = 1.66;
+        /// <summary>
+        /// Represents a minimum value for high values, initialized as 2.23.
+        /// </summary>
         public double Min4High { get; set; } = 2.23;
+        /// <summary>
+        /// Represents a maximum value for high readings, initialized to 2.35.
+        /// </summary>
         public double Max4High { get; set; } = 2.35;
 
         public GearSensorConfig(ITransferCaseVoltageSettings settings)
@@ -83,6 +104,13 @@ public class MP3023NQH : TransferCaseBase
             ReportSettings();
         }
 
+        /// <summary>
+        /// Reports the MP3023 voltage settings.
+        /// </summary>
+        /// <remarks>
+        /// Logs the minimum and maximum voltage settings for different levels.
+        /// </remarks>
+        /// <exception cref="Exception">Any exception that may occur during logging.</exception>
         public void ReportSettings()
         {
             Resolver.Log.Info($"MP3023 Voltage Settings:");
@@ -120,6 +148,9 @@ public class MP3023NQH : TransferCaseBase
         return TransferCaseState.Idle;
     }
 
+    /// <summary>
+    /// Returns the current gear in Transfer Case Position. Override from base class.
+    /// </summary>
     public override TransferCasePosition CurrentGear
     {
         get

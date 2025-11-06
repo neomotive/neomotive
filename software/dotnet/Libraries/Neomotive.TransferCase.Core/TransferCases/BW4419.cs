@@ -1,4 +1,4 @@
-﻿using Meadow.Hardware;
+using Meadow.Hardware;
 using System.Collections.Generic;
 
 namespace Neomotive.TransferCase;
@@ -34,6 +34,9 @@ public class BW4419 : TransferCaseBase
         _positionSwitch4 = positionSwitch4;
     }
 
+    /// <summary>
+    /// An array representing the supported gear positions for the transfer case.
+    /// </summary>
     public override TransferCasePosition[] SupportedGears => new TransferCasePosition[]
         {
             TransferCasePosition.High2,
@@ -42,6 +45,9 @@ public class BW4419 : TransferCaseBase
             TransferCasePosition.Low4,
         };
 
+    /// <summary>
+    /// Gets the current gear of the transfer case. This property is an override from the base class.
+    /// </summary>
     public override TransferCasePosition CurrentGear
     {
         get

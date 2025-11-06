@@ -1,4 +1,4 @@
-﻿using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using OpenCvSharp.Dnn;
@@ -21,8 +21,17 @@ public class SpeedLimitService : IDisposable
     private bool _disposed = false;
 
     // Detection grouping configuration
+    /// <summary>
+    /// Represents the minimum confidence threshold for the model's predictions. The default value is 0.5f.
+    /// </summary>
     public float ConfidenceThreshold { get; set; } = 0.5f;
+    /// <summary>
+    /// Represents a TimeSpan with a default value of 5 seconds, used as grouping window.
+    /// </summary>
     public TimeSpan GroupingWindow { get; set; } = TimeSpan.FromSeconds(5);
+    /// <summary>
+    /// Indicates whether grouping is enabled for the related data in this object. Default value is true.
+    /// </summary>
     public bool EnableGrouping { get; set; } = true;
 
     // Active detection groups
@@ -31,6 +40,9 @@ public class SpeedLimitService : IDisposable
     private readonly object _groupLock = new object();
 
     // Event raised when a sign detection group is finalized
+    /// <summary>
+    /// SignDetected event is raised when a speed limit detection event occurs within a SpeedLimitDetectionGroup.
+    /// </summary>
     public event EventHandler<SpeedLimitDetectionGroup>? SignDetected;
 
     public SpeedLimitService(string modelPath, float confidenceThreshold = 0.5f, TimeSpan? groupingWindow = null, bool enableGrouping = true)
@@ -52,6 +64,19 @@ public class SpeedLimitService : IDisposable
         EnableGrouping = enableGrouping;
     }
 
+    /// <summary>
+    /// This method checks for speed limit based on the provided source image path.
+    /// </summary>
+    /// <param name="sourceImagePath">The path to the source image.</param>
+    /// <exception cref="Exception">Any exception that might occur during image reading or processing.</exception>
+    /// <remarks>Internal implementation uses OpenCV library for reading and processing images.</remarks>
+    /// <example>
+    /// Here is an example usage:
+    /// ```csharp
+    /// CheckForSpeedLimit("path/to/myImage.jpg");
+    /// ```
+    /// </example>
+    /// The method internally calls another `CheckForSpeedLimit` overload that accepts an image object and saves the result to a file if specified (saveToFile is set to true in this case).
     public void CheckForSpeedLimit(string sourceImagePath)
     {
         using var img = Cv2.ImRead(sourceImagePath);
@@ -289,6 +314,13 @@ public class SpeedLimitService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Disposes the resources and active timers associated with this instance.
+    /// </summary>
+    /// <remarks>
+    /// Calling this method cancels all active timers and disposes the underlying session if it's not already disposed.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">Thrown if the object has already been disposed.</exception>
     public void Dispose()
     {
         if (!_disposed)
@@ -313,17 +345,44 @@ public class SpeedLimitService : IDisposable
 
 public class SpeedLimitDetection
 {
+    /// <summary>
+    /// Represents the maximum speed limit.
+    /// </summary>
     public int SpeedLimit { get; set; }
+    /// <summary>
+    /// Represents the level of confidence associated with the data.
+    /// </summary>
     public float Confidence { get; set; }
+    /// <summary>
+    /// Gets or sets the bounding box as a Rect2d object.
+    /// </summary>
     public Rect2d BoundingBox { get; set; }
+    /// <summary>
+    /// Gets or sets an empty string for a label.
+    /// </summary>
     public string Label { get; set; } = string.Empty;
 }
 
 public class SpeedLimitDetectionGroup
 {
+    /// <summary>
+    /// Represents the maximum allowed speed limit.
+    /// </summary>
     public int SpeedLimit { get; set; }
+    /// <summary>
+    /// Represents the highest confidence level.
+    /// </summary>
     public float HighestConfidence { get; set; }
+    /// <summary>
+    /// Gets or sets the count of detections.
+    /// </summary>
     public int DetectionCount { get; set; }
+    /// <summary>
+    /// Represents the initial detected date for an entity.
+    /// </summary>
     public DateTime FirstDetected { get; set; }
+    /// <summary>
+    /// Represents the last detected date and time.
+    /// </summary>
     public DateTime LastDetected { get; set; }
 }
