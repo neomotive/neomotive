@@ -2,7 +2,7 @@
   "profiles": {
     "USB": {
       "commandName": "Project",
-      "commandLineArgs": "--usb 1"
+      "commandLineArgs": "--usb 3 --detect --model F:\\repos\\neomotive\\ai-ml\\models\\trained\\speed-limit\\speed-limits-us.onnx --pause"
     },
     "File": {
       "commandName": "Project",

@@ -12,6 +12,7 @@ int cameraIndex = 2;
 string? videoFilePath = null;
 bool enableDetection = false;
 string? modelPath = null;
+bool pauseOnDetection = false;
 
 if (args.Length > 0)
 {
@@ -45,6 +46,9 @@ if (args.Length > 0)
                 break;
             case "--detect":
                 enableDetection = true;
+                break;
+            case "--pause":
+                pauseOnDetection = true;
                 break;
             case "--model":
                 if (i + 1 < args.Length)
@@ -87,6 +91,10 @@ Console.WriteLine($"Detection: {(enableDetection ? "Enabled" : "Disabled")}");
 if (enableDetection && modelPath != null)
 {
     Console.WriteLine($"Model Path: {modelPath}");
+}
+if (pauseOnDetection)
+{
+    Console.WriteLine("Pause on Detection: Enabled (500ms)");
 }
 Console.WriteLine("Press ESC in the camera window to exit");
 Console.WriteLine("Starting camera...");
@@ -163,6 +171,8 @@ try
             try
             {
                 // Run detection if enabled
+                string windowTitle = cameraMode == "usb" ? $"USB Camera Feed (Index: {cameraIndex})" : "Video File Camera Feed";
+
                 if (detector != null)
                 {
                     var detections = detector.CheckForSpeedLimit(matToDisplay, saveToFile: false, drawDetections: true);
@@ -170,10 +180,20 @@ try
                     {
                         detectionCount++;
                         // Detections are already drawn on the mat
+
+                        // Pause if requested to allow viewing the detection
+                        if (pauseOnDetection)
+                        {
+                            if (enableDetection)
+                            {
+                                windowTitle += " - Detection Enabled";
+                            }
+                            Cv2.ImShow(windowTitle, matToDisplay);
+                            Cv2.WaitKey(500); // Pause for 500ms to view detection
+                        }
                     }
                 }
 
-                string windowTitle = cameraMode == "usb" ? $"USB Camera Feed (Index: {cameraIndex})" : "Video File Camera Feed";
                 if (enableDetection)
                 {
                     windowTitle += " - Detection Enabled";
@@ -240,13 +260,15 @@ static void PrintUsage()
     Console.WriteLine("  --usb [index]         Use USB camera (default). Optional camera index (default: 2)");
     Console.WriteLine("  --file <path>         Use video file as camera feed (loops continuously)");
     Console.WriteLine("  --detect              Enable speed limit sign detection");
+    Console.WriteLine("  --pause               Pause for 500ms when detection occurs (helps see what was detected)");
     Console.WriteLine("  --model <path>        Path to custom ONNX model (optional, uses default if not specified)");
     Console.WriteLine("  --help, -h            Show this help message");
     Console.WriteLine();
     Console.WriteLine("Examples:");
-    Console.WriteLine("  SignCamera.DesktopTest                                    # Use USB camera index 2");
-    Console.WriteLine("  SignCamera.DesktopTest --usb 0                            # Use USB camera index 0");
-    Console.WriteLine("  SignCamera.DesktopTest --file video.mp4                   # Use video file");
-    Console.WriteLine("  SignCamera.DesktopTest --file video.mp4 --detect          # Use video file with detection");
-    Console.WriteLine("  SignCamera.DesktopTest --usb 0 --detect --model model.onnx  # USB camera with custom model");
+    Console.WriteLine("  SignCamera.DesktopTest                                       # Use USB camera index 2");
+    Console.WriteLine("  SignCamera.DesktopTest --usb 0                               # Use USB camera index 0");
+    Console.WriteLine("  SignCamera.DesktopTest --file video.mp4                      # Use video file");
+    Console.WriteLine("  SignCamera.DesktopTest --file video.mp4 --detect             # Use video file with detection");
+    Console.WriteLine("  SignCamera.DesktopTest --usb 0 --detect --pause              # USB camera with detection and pause");
+    Console.WriteLine("  SignCamera.DesktopTest --usb 0 --detect --model model.onnx   # USB camera with custom model");
 }

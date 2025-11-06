@@ -65,14 +65,31 @@ public class SpeedLimitService : IDisposable
             throw new InvalidOperationException("Inference session is not initialized");
         }
 
-        // --- Load and preprocess image ---
+        // --- Load and preprocess image with letterboxing ---
         int originalWidth = img.Width;
         int originalHeight = img.Height;
 
-        var inputSize = new Size(640, 640);
+        // Calculate letterbox parameters to maintain aspect ratio
+        int targetSize = 640;
+        float scale = Math.Min((float)targetSize / originalWidth, (float)targetSize / originalHeight);
+        int newWidth = (int)(originalWidth * scale);
+        int newHeight = (int)(originalHeight * scale);
+
+        // Calculate padding to center the image
+        int padLeft = (targetSize - newWidth) / 2;
+        int padTop = (targetSize - newHeight) / 2;
+        int padRight = targetSize - newWidth - padLeft;
+        int padBottom = targetSize - newHeight - padTop;
+
+        // Resize maintaining aspect ratio
         using var resized = new Mat();
-        Cv2.Resize(img, resized, inputSize);
-        Cv2.CvtColor(resized, resized, ColorConversionCodes.BGR2RGB);
+        Cv2.Resize(img, resized, new Size(newWidth, newHeight));
+
+        // Add padding (letterbox) to make it square
+        using var padded = new Mat();
+        Cv2.CopyMakeBorder(resized, padded, padTop, padBottom, padLeft, padRight, BorderTypes.Constant, new Scalar(114, 114, 114));
+
+        Cv2.CvtColor(padded, padded, ColorConversionCodes.BGR2RGB);
 
         // Convert Mat to float array for tensor
         var blobData = new float[1 * 3 * 640 * 640];
@@ -83,7 +100,7 @@ public class SpeedLimitService : IDisposable
                 for (int x = 0; x < 640; x++)
                 {
                     int idx = (c * 640 * 640) + (y * 640) + x;
-                    blobData[idx] = resized.At<Vec3b>(y, x)[c] / 255.0f;
+                    blobData[idx] = padded.At<Vec3b>(y, x)[c] / 255.0f;
                 }
             }
         }
@@ -134,11 +151,24 @@ public class SpeedLimitService : IDisposable
             float confidence = maxClassScore;
             if (confidence < confThreshold) continue;
 
-            // Convert from 640x640 normalized coords to original image coords
-            double cx = x * originalWidth / 640.0;
-            double cy = y * originalHeight / 640.0;
-            double boxW = w * originalWidth / 640.0;
-            double boxH = h * originalHeight / 640.0;
+            // Convert from 640x640 padded coords back to original image coords
+            // First, remove the padding offset
+            double cx_padded = x;
+            double cy_padded = y;
+            double w_padded = w;
+            double h_padded = h;
+
+            // Remove padding offset to get coordinates in the resized (but not padded) space
+            double cx_resized = cx_padded - padLeft;
+            double cy_resized = cy_padded - padTop;
+
+            // Scale back from resized dimensions to original dimensions
+            double cx = cx_resized / scale;
+            double cy = cy_resized / scale;
+            double boxW = w_padded / scale;
+            double boxH = h_padded / scale;
+
+            // Convert center coords to top-left coords
             double left = cx - (boxW / 2);
             double top = cy - (boxH / 2);
 
@@ -173,15 +203,32 @@ public class SpeedLimitService : IDisposable
 
             // Output to Debug
             Debug.WriteLine($"Speed Limit Detected: {speed} mph, Confidence: {conf:P1}");
-            Console.WriteLine($"Detected: {label} ({conf:P1})");
+            Console.WriteLine($"Detected: {label} ({conf:P1}) at ({box.X:F0}, {box.Y:F0}) size ({box.Width:F0}x{box.Height:F0})");
 
             // Draw detections if requested
             if (drawDetections)
             {
                 var drawRect = new Rect((int)box.X, (int)box.Y, (int)box.Width, (int)box.Height);
-                Cv2.Rectangle(img, drawRect, Scalar.Red, 2);
-                Cv2.PutText(img, $"{speed} mph {conf:P1}", new Point((int)box.X, (int)box.Y - 5),
-                    HersheyFonts.HersheySimplex, 0.6, Scalar.Yellow, 2);
+
+                // Draw thicker green rectangle for better visibility
+                Cv2.Rectangle(img, drawRect, new Scalar(0, 255, 0), 3);
+
+                // Draw label with background for better readability
+                var labelText = $"{speed} mph {conf:P1}";
+                var textSize = Cv2.GetTextSize(labelText, HersheyFonts.HersheySimplex, 0.8, 2, out int baseline);
+                var labelPos = new Point((int)box.X, (int)box.Y - 10);
+
+                // Draw background rectangle for text
+                Cv2.Rectangle(img,
+                    new Point(labelPos.X, labelPos.Y - textSize.Height - 5),
+                    new Point(labelPos.X + textSize.Width, labelPos.Y + 5),
+                    new Scalar(0, 255, 0), -1);
+
+                // Draw text
+                Cv2.PutText(img, labelText, labelPos,
+                    HersheyFonts.HersheySimplex, 0.8, new Scalar(0, 0, 0), 2);
+
+                Console.WriteLine($"  -> Drew bounding box at ({drawRect.X}, {drawRect.Y}) size {drawRect.Width}x{drawRect.Height}");
             }
         }
 
