@@ -10,4 +10,6 @@ public interface IConfigurationService
     float FalsePositiveThreshold { get; }
     string FalsePositiveCaptureFolder { get; }
     int MaxFalsePositiveCaptures { get; }
+
+    bool EnableManualCapture { get; }
 }

@@ -15,6 +15,7 @@ public class DisplayService_1306 : IDisplayService
 
     private Label _speedLabel;
     private Label _confidenceLabel;
+    private Label _statusLabel;
 
     public DisplayService_1306(II2cBus i2cBus)
     {
@@ -54,10 +55,26 @@ public class DisplayService_1306 : IDisplayService
             TextColor = Color.White,
         };
 
+        _statusLabel = new Label(30, 30, "*")
+        {
+            Font = new Font8x12(),
+            TextColor = Color.White,
+        };
+
         ((AlignmentLayout)_speedLayout).Add(_speedLabel, AlignmentLayout.DockPosition.Left);
         ((AlignmentLayout)_speedLayout).Add(_confidenceLabel, AlignmentLayout.DockPosition.Right);
+        ((AlignmentLayout)_speedLayout).Add(_statusLabel, AlignmentLayout.DockPosition.TopRight);
 
         _screen.Controls.Add(_startupLayout, _speedLayout);
+
+        _statusLabel.IsVisible = false;
+    }
+
+    public async Task ShowCaptureInProgress()
+    {
+        _statusLabel.IsVisible = true;
+        await Task.Delay(2000);
+        _statusLabel.IsVisible = false;
     }
 
     public async Task ShowStartup()

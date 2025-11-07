@@ -27,6 +27,8 @@ public class ConfigurationService : IConfigurationService
     /// </summary>
     public int MaxFalsePositiveCaptures { get; init; } = 1000;
 
+    public bool EnableManualCapture { get; init; } = false;
+
     public ConfigurationService()
     {
         Resolver.App.Settings.TryGetValue("Neomotive.Camera", out string? cameraType);
@@ -83,6 +85,13 @@ public class ConfigurationService : IConfigurationService
         {
             MaxFalsePositiveCaptures = maxCaptures;
             Resolver.Log.Info($"Max False Positive Captures: {MaxFalsePositiveCaptures}");
+        }
+
+        if (Resolver.App.Settings.TryGetValue("Neomotive.EnableManualCapture", out string? manualCapture)
+            && bool.TryParse(manualCapture, out bool enableManualCapture))
+        {
+            EnableManualCapture = enableManualCapture;
+            Resolver.Log.Info($"Enable Manual Capture: {EnableManualCapture}");
         }
     }
 }

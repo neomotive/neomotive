@@ -14,3 +14,5 @@ Neomotive:
     FalsePositiveThreshold: 0.30
     FalsePositiveCaptureFolder: ./false_positives
     MaxFalsePositiveCaptures: 100
+
+    EnableManualCapture: true
