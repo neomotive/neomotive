@@ -4,9 +4,13 @@
       "commandName": "Project",
       "commandLineArgs": "--usb 3 --detect --model F:\\repos\\neomotive\\ai-ml\\models\\trained\\speed-limit\\speed-limits-us.onnx --pause"
     },
-    "File": {
+    "File70": {
       "commandName": "Project",
       "commandLineArgs": "--file F:\\repos\\neomotive\\software\\dotnet\\Apps\\SignCamera\\inputs\\GOPR1643.MP4 --detect --model F:\\repos\\neomotive\\ai-ml\\models\\trained\\speed-limit\\speed-limits-us.onnx"
+    },
+    "File45": {
+      "commandName": "Project",
+      "commandLineArgs": "--file F:\\repos\\neomotive\\software\\dotnet\\Apps\\SignCamera\\inputs\\GOPR1627.MP4 --detect --model F:\\repos\\neomotive\\ai-ml\\models\\trained\\speed-limit\\speed-limits-us.onnx"
     }
   }
 }

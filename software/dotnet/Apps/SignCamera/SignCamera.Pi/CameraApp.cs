@@ -21,6 +21,15 @@ public class CameraApp : App<RaspberryPi>
         _configurationService = new ConfigurationService();
         _gpioService = new GpioService(Device.Pins.GPIO14); // TX line, pin 8
         _displayService = new DisplayService_1306(Device.CreateI2cBus());
+
+        InitializeFrameProcessor();
+        InitializeManualCapture();
+
+        return base.Initialize();
+    }
+
+    private void InitializeFrameProcessor()
+    {
         var speedLimitService = new SpeedLimitService(
             "./models/speed-limits-us.onnx",
             _confidenceThreshold,
@@ -32,23 +41,25 @@ public class CameraApp : App<RaspberryPi>
         _frameProcessor = new CameraFrameProcessor(camera, speedLimitService, _configurationService);
 
         _frameProcessor.SpeedLimitSignDetected += OnSpeedLimitSignDetected;
+    }
 
+    private void InitializeManualCapture()
+    {
         if (_configurationService.EnableManualCapture
             && _gpioService is not null
             && _gpioService.ManualCameraTriggerPort is not null)
         {
             _gpioService.ManualCameraTriggerPort.Changed += OnManualCameraTriggerPortChanged;
         }
-        return base.Initialize();
     }
 
     private void OnManualCameraTriggerPortChanged(object? sender, Meadow.Hardware.DigitalPortResult e)
     {
         Resolver.Log.Info("Manual camera trigger activated.");
-        _ = _displayService.ShowCaptureInProgress();
+        _displayService.ShowCaptureInProgress(true);
 
-        // TODO: capture and save 10 frames to the "manual-captures" folder
-
+        // Trigger manual capture of frames
+        _frameProcessor.TriggerManualCapture();
     }
 
     private void OnSpeedLimitSignDetected(object? sender, (int Speed, float Confidence) e)

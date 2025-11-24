@@ -20,6 +20,8 @@ public class DisplayService_1306 : IDisplayService
     public DisplayService_1306(II2cBus i2cBus)
     {
         // this display is 128x64
+        Resolver.Log.Info("Creating SSD1306 display...");
+
         var display = new Ssd1306(i2cBus);
         _screen = new DisplayScreen(display);
 
@@ -67,18 +69,18 @@ public class DisplayService_1306 : IDisplayService
 
         _screen.Controls.Add(_startupLayout, _speedLayout);
 
-        _statusLabel.IsVisible = false;
+        //        _statusLabel.IsVisible = false;
     }
 
-    public async Task ShowCaptureInProgress()
+    public void ShowCaptureInProgress(bool show)
     {
-        _statusLabel.IsVisible = true;
-        await Task.Delay(2000);
-        _statusLabel.IsVisible = false;
+        _statusLabel.IsVisible = show;
     }
 
     public async Task ShowStartup()
     {
+        Resolver.Log.Info("Displaying startup screen...");
+
         _screen.BeginUpdate();
         _speedLayout.IsVisible = false;
         _startupLayout.IsVisible = true;
@@ -92,10 +94,14 @@ public class DisplayService_1306 : IDisplayService
         _speedLayout.IsVisible = true;
         _startupLayout.IsVisible = false;
         _screen.EndUpdate();
+
+        Resolver.Log.Info("Done displaying startup screen...");
     }
 
     public async Task UpdateSpeedLimit(int speedLimit, double confidence)
     {
+        Resolver.Log.Info("Displaying speed...");
+
         _startupLayout.IsVisible = false;
 
         _screen.BeginUpdate();

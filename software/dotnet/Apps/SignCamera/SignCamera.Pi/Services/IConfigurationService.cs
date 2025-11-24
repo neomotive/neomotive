@@ -11,5 +11,12 @@ public interface IConfigurationService
     string FalsePositiveCaptureFolder { get; }
     int MaxFalsePositiveCaptures { get; }
 
+    // Positive detection capture settings
+    string PositiveCaptureFolder { get; }
+    int MaxPositiveCaptures { get; }
+
+    // Manual capture settings
     bool EnableManualCapture { get; }
+    string ManualCaptureFolder { get; }
+    int MaxManualCaptures { get; }
 }

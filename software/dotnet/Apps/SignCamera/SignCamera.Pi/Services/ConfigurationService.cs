@@ -27,7 +27,27 @@ public class ConfigurationService : IConfigurationService
     /// </summary>
     public int MaxFalsePositiveCaptures { get; init; } = 1000;
 
+    /// <summary>
+    /// Folder path where positive detection frames will be saved
+    /// </summary>
+    public string PositiveCaptureFolder { get; init; } = "./positives";
+    /// <summary>
+    /// Maximum number of positive captures to prevent disk overflow
+    /// </summary>
+    public int MaxPositiveCaptures { get; init; } = 1000;
+
+    /// <summary>
+    /// Enable manual capture via GPIO trigger
+    /// </summary>
     public bool EnableManualCapture { get; init; } = false;
+    /// <summary>
+    /// Folder path where manual capture frames will be saved
+    /// </summary>
+    public string ManualCaptureFolder { get; init; } = "./manual-captures";
+    /// <summary>
+    /// Maximum number of manual capture sessions to prevent disk overflow
+    /// </summary>
+    public int MaxManualCaptures { get; init; } = 500;
 
     public ConfigurationService()
     {
@@ -87,11 +107,39 @@ public class ConfigurationService : IConfigurationService
             Resolver.Log.Info($"Max False Positive Captures: {MaxFalsePositiveCaptures}");
         }
 
+        // Load positive capture settings
+        if (Resolver.App.Settings.TryGetValue("Neomotive.PositiveCaptureFolder", out string? posFolder))
+        {
+            PositiveCaptureFolder = Path.GetFullPath(posFolder);
+            Resolver.Log.Info($"Positive Capture Folder: {PositiveCaptureFolder}");
+        }
+
+        if (Resolver.App.Settings.TryGetValue("Neomotive.MaxPositiveCaptures", out string? maxPosCapturesString)
+            && int.TryParse(maxPosCapturesString, out int maxPosCaptures))
+        {
+            MaxPositiveCaptures = maxPosCaptures;
+            Resolver.Log.Info($"Max Positive Captures: {MaxPositiveCaptures}");
+        }
+
+        // Load manual capture settings
         if (Resolver.App.Settings.TryGetValue("Neomotive.EnableManualCapture", out string? manualCapture)
             && bool.TryParse(manualCapture, out bool enableManualCapture))
         {
             EnableManualCapture = enableManualCapture;
             Resolver.Log.Info($"Enable Manual Capture: {EnableManualCapture}");
+        }
+
+        if (Resolver.App.Settings.TryGetValue("Neomotive.ManualCaptureFolder", out string? manualFolder))
+        {
+            ManualCaptureFolder = Path.GetFullPath(manualFolder);
+            Resolver.Log.Info($"Manual Capture Folder: {ManualCaptureFolder}");
+        }
+
+        if (Resolver.App.Settings.TryGetValue("Neomotive.MaxManualCaptures", out string? maxManualCapturesString)
+            && int.TryParse(maxManualCapturesString, out int maxManualCaptures))
+        {
+            MaxManualCaptures = maxManualCaptures;
+            Resolver.Log.Info($"Max Manual Captures: {MaxManualCaptures}");
         }
     }
 }

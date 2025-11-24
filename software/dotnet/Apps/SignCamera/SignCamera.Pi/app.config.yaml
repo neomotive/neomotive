@@ -10,9 +10,14 @@ Neomotive:
     CameraIndex: 0
     CameraFilePath: ./GOPR1627.MP4
 
-    # False positive capture settings for training data collection
-    FalsePositiveThreshold: 0.30
-    FalsePositiveCaptureFolder: ./false_positives
+    # Training data capture settings
+    FalsePositiveThreshold: 0.30           # Capture detections between 0.30 and threshold
+    FalsePositiveCaptureFolder: ./false-positives
     MaxFalsePositiveCaptures: 100
 
-    EnableManualCapture: true
+    PositiveCaptureFolder: ./positives     # High-confidence detections
+    MaxPositiveCaptures: 1000
+
+    EnableManualCapture: true              # GPIO-triggered capture
+    ManualCaptureFolder: ./manual-captures
+    MaxManualCaptures: 500
