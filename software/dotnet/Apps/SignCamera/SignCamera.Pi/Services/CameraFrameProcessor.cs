@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using Neomotive.Video;
 using NeoMotive.Services;
 using OpenCvSharp;
@@ -7,6 +7,9 @@ namespace Neomotive.SignCamera;
 
 public class CameraFrameProcessor
 {
+    /// <summary>
+    /// Raised when a Speed Limit Sign is detected, along with its speed and confidence level.
+    /// </summary>
     public event EventHandler<(int Speed, float Confidence)>? SpeedLimitSignDetected;
     public event EventHandler<bool>? ManualCaptureStateChanged;
 
@@ -62,6 +65,13 @@ public class CameraFrameProcessor
         }
     }
 
+    /// <summary>
+    /// Starts processing by subscribing to grouped sign detection events and capturing camera frames.
+    /// </summary>
+    /// <exception cref="Exception">Any exception that might be thrown during the processing loop.</exception>
+    /// <remarks>
+    /// The method stores the latest captured frame for processing in the main loop, as the camera captures frames faster than it can process them.
+    /// </remarks>
     public async Task StartProcessing()
     {
         // Subscribe to grouped sign detection events

@@ -1,4 +1,4 @@
-﻿using Meadow;
+using Meadow;
 using Meadow.Hardware;
 using System;
 using System.Threading.Tasks;
@@ -14,7 +14,13 @@ public enum TransferCaseState
 
 public abstract class TransferCaseBase : ITransferCase
 {
+    /// <summary>
+    /// Raised when the gear is changing in a Transfer Case.
+    /// </summary>
     public event EventHandler<TransferCasePosition>? GearChanging;
+    /// <summary>
+    /// Raised when a gear change occurs in the Transfer Case Position.
+    /// </summary>
     public event EventHandler<TransferCasePosition>? GearChanged;
 
     private readonly IGearSelectionMotor _motor;
@@ -22,9 +28,19 @@ public abstract class TransferCaseBase : ITransferCase
     private readonly IDigitalOutputPort? _hubLockEnable;
     private int _destinationGearIndex = -1;
 
+    /// <summary>
+    /// Represents the current gear in the transfer case.
+    /// </summary>
     public abstract TransferCasePosition CurrentGear { get; }
+    /// <summary>
+    /// \t* An abstract array representing the supported gears for the transfer case.
+    /// \t* Deriving classes should implement this property with their own gear arrangements.
+    /// </summary>
     public abstract TransferCasePosition[] SupportedGears { get; }
 
+    /// <summary>
+    /// Indicates whether the motor is moving, as the shifting state is derived from it.
+    /// </summary>
     public bool IsShifting => _motor.IsMoving;
 
     protected IGearSelectionMotor SelectionMotor => _motor;
@@ -59,6 +75,9 @@ public abstract class TransferCaseBase : ITransferCase
     }
 
     private TransferCaseState _state;
+    /// <summary>
+    /// Represents the current state of the Transfer Case.
+    /// </summary>
     public TransferCaseState State
     {
         get => _state;
@@ -70,6 +89,10 @@ public abstract class TransferCaseBase : ITransferCase
         }
     }
 
+    /// <summary>
+    /// Initiates a long-running control loop using Task.Factory.StartNew with the provided StateMachine.
+    /// </summary>
+    /// <exception cref="System.Exception">Any exceptions that may occur during the execution of the task.</exception>
     public void StartControlLoop()
     {
         Task.Factory.StartNew(StateMachine, TaskCreationOptions.LongRunning);

@@ -1,4 +1,4 @@
-﻿using OpenCvSharp;
+using OpenCvSharp;
 using System.Diagnostics;
 
 namespace Neomotive.Video;
@@ -10,9 +10,18 @@ public class VideoFileCamera : ICamera, IDisposable
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _captureTask;
 
+    /// <summary>
+    /// Indicates if an object has been disposed. Once an object is disposed, it should not be used anymore.
+    /// </summary>
     public bool IsDisposed { get; private set; }
+    /// <summary>
+    /// A read-only boolean property indicating whether the object is currently capturing.
+    /// </summary>
     public bool IsCapturing { get; private set; }
 
+    /// <summary>
+    /// Raised when a frame is captured.
+    /// </summary>
     public event EventHandler<Frame>? FrameCaptured;
 
     public VideoFileCamera(string filePath)
@@ -39,6 +48,11 @@ public class VideoFileCamera : ICamera, IDisposable
         Debug.WriteLine($"Frame count: {_capture.FrameCount}, FPS: {_capture.Fps}");
     }
 
+    /// <summary>
+    /// Initiates the capture process. If capture is already running, throws an exception.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Capture is already running.</exception>
+    /// <remarks>This method starts a capture loop and sets the IsCapturing flag to true.</remarks>
     public async Task StartCapture()
     {
         if (IsCapturing)
@@ -54,6 +68,13 @@ public class VideoFileCamera : ICamera, IDisposable
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the capture if it is currently running.
+    /// </summary>
+    /// <remarks>
+    /// If capture is not currently active, this method does nothing. After stopping the capture task, the _cancellationTokenSource is disposed and set to null.
+    /// </remarks>
+    /// <exception cref="System.Exception">Any exception that might be thrown by the capture task.</exception>
     public async Task StopCapture()
     {
         if (!IsCapturing)
@@ -166,6 +187,11 @@ public class VideoFileCamera : ICamera, IDisposable
         }
     }
 
+    /// <summary>
+    /// This method performs cleanup operations.
+    /// </summary>
+    /// <exception cref="Exception">Any exception that might occur during the cleanup process.</exception>
+    /// <remarks>The Dispose(bool disposing) method contains the actual cleanup code.</remarks>
     public void Dispose()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

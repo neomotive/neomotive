@@ -1,4 +1,4 @@
-﻿using OpenCvSharp;
+using OpenCvSharp;
 using System.Diagnostics;
 
 namespace Neomotive.Video;
@@ -9,9 +9,18 @@ public class UsbCamera : ICamera, IDisposable
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _captureTask;
 
+    /// <summary>
+    /// Indicates whether this object has been disposed.
+    /// </summary>
     public bool IsDisposed { get; private set; }
+    /// <summary>
+    /// Indicates whether or not the object is currently capturing. Once set, this value cannot be changed.
+    /// </summary>
     public bool IsCapturing { get; private set; }
 
+    /// <summary>
+    /// Raised when a frame is captured.
+    /// </summary>
     public event EventHandler<Frame>? FrameCaptured;
 
     public UsbCamera(int cameraIndex = 3)
@@ -28,6 +37,10 @@ public class UsbCamera : ICamera, IDisposable
 
     }
 
+    /// <summary>
+    /// Starts capture operation. If capture is already running, an <see cref="InvalidOperationException"/> is thrown.
+    /// <remarks>This method creates a new cancellation token source and sets the IsCapturing flag to true.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown if capture is already running.</exception>
     public async Task StartCapture()
     {
         if (IsCapturing)
@@ -43,6 +56,13 @@ public class UsbCamera : ICamera, IDisposable
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the capture process.
+    /// </summary>
+    /// <remarks>
+    /// If not currently capturing, does nothing. Cancels the current _captureTask if one exists. Sets IsCapturing to false and disposes _cancellationTokenSource.
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">Thrown if _cancellationTokenSource has already been disposed.</exception>
     public async Task StopCapture()
     {
         if (!IsCapturing)
@@ -152,6 +172,14 @@ public class UsbCamera : ICamera, IDisposable
     //     Dispose(disposing: false);
     // }
 
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">Thrown if the object is already disposed.</exception>
+    /// <remarks>
+    /// The 'Dispose(bool disposing)' method contains cleanup code for managed and unmanaged resources.
+    /// </remarks>
+    /// <seealso cref="System.GC.SuppressFinalize"/>
     public void Dispose()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
