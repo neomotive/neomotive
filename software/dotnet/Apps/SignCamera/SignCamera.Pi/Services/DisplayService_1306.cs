@@ -13,6 +13,7 @@ public class DisplayService_1306 : IDisplayService
     private ILayout _startupLayout;
     private ILayout _speedLayout;
 
+    private Label _titleLabel;
     private Label _speedLabel;
     private Label _confidenceLabel;
     private Label _statusLabel;
@@ -33,14 +34,14 @@ public class DisplayService_1306 : IDisplayService
         _startupLayout = new AlignmentLayout(0, 0, _screen.Width, _screen.Height);
 
         _startupLayout.BackgroundColor = Color.Black;
-        var titleLabel = new Label(_screen.Width, 20, "neomotive")
+        _titleLabel = new Label(_screen.Width, 20, "neomotive")
         {
             Font = new Font12x20(),
             TextColor = Color.White,
             HorizontalAlignment = HorizontalAlignment.Center,
         };
 
-        ((AlignmentLayout)_startupLayout).Add(titleLabel, AlignmentLayout.DockPosition.Center);
+        ((AlignmentLayout)_startupLayout).Add(_titleLabel, AlignmentLayout.DockPosition.Center);
 
 
         _speedLayout = new AlignmentLayout(0, 0, _screen.Width, _screen.Height);
@@ -69,12 +70,21 @@ public class DisplayService_1306 : IDisplayService
 
         _screen.Controls.Add(_startupLayout, _speedLayout);
 
-        //        _statusLabel.IsVisible = false;
+        _statusLabel.IsVisible = false;
+        _speedLayout.IsVisible = false;
     }
 
     public void ShowCaptureInProgress(bool show)
     {
         _statusLabel.IsVisible = show;
+    }
+
+    public void ShowText(string text)
+    {
+        Resolver.Log.Info($"Displaying text: {text}");
+        _speedLayout.IsVisible = false;
+        _startupLayout.IsVisible = true;
+        _titleLabel.Text = text;
     }
 
     public async Task ShowStartup()

@@ -8,11 +8,12 @@ public class CameraApp : App<RaspberryPi>
 {
     private IDisplayService _displayService = default!;
     private IConfigurationService _configurationService = default!;
-    private CameraFrameProcessor _frameProcessor = default!;
+    private CameraFrameProcessor? _frameProcessor;
     private IGpioService _gpioService = default!;
 
     private readonly float _confidenceThreshold = 0.5f; // TODO: pull from config
     private readonly int _groupingWindowSeconds = 5; // TODO: pull from config
+    private readonly bool _displayTest = false; // TODO: pull from config
 
     public override Task Initialize()
     {
@@ -22,8 +23,14 @@ public class CameraApp : App<RaspberryPi>
         _gpioService = new GpioService(Device.Pins.GPIO14); // TX line, pin 8
         _displayService = new DisplayService_1306(Device.CreateI2cBus());
 
-        InitializeFrameProcessor();
-        InitializeManualCapture();
+        if (_displayTest)
+        {
+        }
+        else
+        {
+            InitializeFrameProcessor();
+            InitializeManualCapture();
+        }
 
         return base.Initialize();
     }
@@ -71,10 +78,22 @@ public class CameraApp : App<RaspberryPi>
 
     public override async Task Run()
     {
-        _ = _displayService.ShowStartup();
 
-        await _frameProcessor.StartProcessing();
+        if (_frameProcessor is not null)
+        {
+            _ = _displayService.ShowStartup();
+            await _frameProcessor.StartProcessing();
+        }
+        else if (_displayTest)
+        {
+            var i = 0;
 
+            while (true)
+            {
+                _displayService.ShowText($"Test {i++}");
+                await Task.Delay(1000);
+            }
+        }
     }
 
     private ICamera InitializeCamera()

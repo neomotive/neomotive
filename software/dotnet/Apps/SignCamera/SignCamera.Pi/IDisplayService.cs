@@ -5,4 +5,5 @@ public interface IDisplayService
     Task ShowStartup();
     Task UpdateSpeedLimit(int speedLimit, double confidence);
     void ShowCaptureInProgress(bool show);
+    void ShowText(string text);
 }

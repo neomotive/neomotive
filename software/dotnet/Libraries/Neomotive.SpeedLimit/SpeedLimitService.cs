@@ -52,10 +52,11 @@ public class SpeedLimitService : IDisposable
         EnableGrouping = enableGrouping;
     }
 
-    public void CheckForSpeedLimit(string sourceImagePath)
+    public SpeedLimitDetection CheckForSpeedLimit(string sourceImagePath)
     {
         using var img = Cv2.ImRead(sourceImagePath);
-        CheckForSpeedLimit(img, saveToFile: true);
+        var list = CheckForSpeedLimit(img, saveToFile: true);
+        return list.OrderByDescending(d => d.Confidence).First();
     }
 
     public List<SpeedLimitDetection> CheckForSpeedLimit(Mat img, bool saveToFile = false, bool drawDetections = true)
@@ -356,21 +357,4 @@ public class SpeedLimitService : IDisposable
             _disposed = true;
         }
     }
-}
-
-public class SpeedLimitDetection
-{
-    public int SpeedLimit { get; set; }
-    public float Confidence { get; set; }
-    public Rect2d BoundingBox { get; set; }
-    public string Label { get; set; } = string.Empty;
-}
-
-public class SpeedLimitDetectionGroup
-{
-    public int SpeedLimit { get; set; }
-    public float HighestConfidence { get; set; }
-    public int DetectionCount { get; set; }
-    public DateTime FirstDetected { get; set; }
-    public DateTime LastDetected { get; set; }
 }

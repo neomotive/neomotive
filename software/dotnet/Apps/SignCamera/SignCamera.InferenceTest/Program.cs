@@ -1,6 +1,7 @@
 using NeoMotive.Services;
 
-var imagesFolder = @"C:\repos\yoshimoshi\CarCam\dataset\images\train";
+var imagesFolder = @"F:\repos\huggingface\speed-limit-signs\data\images\train\mph45";
+var modelFile = @"F:\repos\neomotive\ai-ml\models\trained\speed-limit\speed-limits-us.onnx";
 
 // Get all image files from the train folder
 var imageFiles = Directory.GetFiles(imagesFolder, "*.png")
@@ -22,8 +23,11 @@ Console.WriteLine($"Full path: {randomImage}");
 Console.WriteLine();
 
 // Call the SpeedLimitService
-var service = new SpeedLimitService("./models");
-service.CheckForSpeedLimit(randomImage);
+var service = new SpeedLimitService(modelFile);
+var inference = service.CheckForSpeedLimit(randomImage);
+Console.WriteLine("Inference Results:");
+Console.WriteLine($"Detected Speed Limit: {inference.SpeedLimit} mph");
+Console.WriteLine($"Confidence: {inference.Confidence:P2}");
 
 Console.WriteLine();
 Console.WriteLine("Processing complete! Check the output above for the temp file location.");
