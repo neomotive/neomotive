@@ -52,6 +52,33 @@ Arduino Pins:
 
 ## Operation Sequence
 
+```mermaid
+flowchart TD
+    A[Boot Delay] --> B[Measure Initial Temperatures
+    10% duty cycle for 200ms]
+    B --> C{"Estimated Temp
+    ≥ HOT_PLUG_TEMP_THRESHOLD (200°C)?"}
+    C -- Yes --> D[Set duration =
+    HOT_ENGINE_TOTAL_MS]
+    C -- No --> E[Set duration =
+    COLD_ENGINE_TOTAL_MS]
+    D --> F[Wait plug# × STAGGER_DELAY_MS]
+    E --> F
+    F --> G[Phase 1: Full Power
+    100% duty cycle
+    for FULL_POWER_DURATION_MS]
+    G --> H[Phase 2: Reduced Power
+    REDUCED_DUTY_CYCLE
+    for duration − FULL_POWER_DURATION_MS]
+    H --> I[Shut Off Plug]
+    I --> J{All Plugs
+    Finished?}
+    J -- No --> K[Continue monitoring
+    other plugs]
+    K --> J
+    J -- Yes --> L[Enter Low Power Mode]
+```
+
 ### **1. Boot Sequence (1 second)**
 - Initialize all outputs to OFF
 - Initialize inputs for current monitoring
@@ -85,6 +112,19 @@ Arduino Pins:
 - Enter low-power mode
 - Continue fault monitoring and indication
 
+## Troubleshooting
+
+### Different Temperature
+
+*Q: My glow plugs are running too cold (or too warm).  How do I adjust that?*
+
+There are a few factors here.  
+
+First is that we don't know ambient temeprature (a sensor in a furture board would probably be helpful) so we have an assumed ambient temp in `config.h` of `AMBIENT_TEMP` of 25C (77F).  If you're operating in the winter, for example, and it's 0C (32F) then the temp curve calculation will already be off, and the control loop will not run as long as you might want.  You can decrease that ambient temp value which, in turn, will change the hot v cold path the control loop follows. and may make the heating cycle longer.
+
+Second is the `REDUCED_DUTY_CYCLE` value, which defaults to `0.6` (60%).  This is how long, in Phase 2, that the glow plug is Energized.  Think of it as "60% max heat".  By increasing this value, you will increase the heat output of the glow plugs for all of Phase 2.
+
+Third is `COLD_ENGINE_TOTAL_MS` (and `HOT_ENGINE_TOTAL_MS`).  This is the time of the entire heat cycle (Phase 1 + Phase2).  By default `COLD_ENGINE_TOTAL_MS` is 15000, meaing that the entire heat cycle is 15 seconds, so subtract out `FULL_POWER_DURATION_MS` and that tells the duration to run at the reduced duty cycle.  The defaults for cold will be 5 seconds at full power, then 10 seconds at reduced.    You can get 5 seconds more of reduced power by increasing the `FULL_POWER_DURATION_MS` by 5000.
 
 ## License
 
