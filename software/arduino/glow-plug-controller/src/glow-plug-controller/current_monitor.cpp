@@ -14,23 +14,30 @@ void initializeCurrentMonitoring() {
 }
 
 float readVoltageFromADC(int inputPin) {
-  int adcValue = analogRead(inputPin);
+  // Average multiple ADC samples to reduce noise and PWM timing artifacts
+  long adcSum = 0;
+  for (int i = 0; i < ADC_SAMPLE_COUNT; i++) {
+    adcSum += analogRead(inputPin);
+  }
+  int adcValue = adcSum / ADC_SAMPLE_COUNT;
   float arduinoVoltage = (adcValue / ADC_RESOLUTION) * ARDUINO_VREF;
-  
+
   // Convert back to original voltage before voltage divider
   float originalVoltage = arduinoVoltage * (VOLTAGE_DIVIDER_R1 + VOLTAGE_DIVIDER_R2) / VOLTAGE_DIVIDER_R2;
-  
+
   // ALWAYS show detailed debug during current issues
   DEBUG_PRINT("[DEBUG] Pin A");
   DEBUG_PRINT(inputPin - A0);
-  DEBUG_PRINT(" - ADC raw: ");
+  DEBUG_PRINT(" - ADC avg: ");
   DEBUG_PRINT(adcValue);
-  DEBUG_PRINT("/1024, Arduino input: ");
+  DEBUG_PRINT("/1024 (");
+  DEBUG_PRINT(ADC_SAMPLE_COUNT);
+  DEBUG_PRINT(" samples), Arduino input: ");
   DEBUG_PRINT(arduinoVoltage);
   DEBUG_PRINT("V, Reconstructed IS voltage: ");
   DEBUG_PRINT(originalVoltage);
   DEBUG_PRINTLN("V");
-  
+
   return originalVoltage;
 }
 

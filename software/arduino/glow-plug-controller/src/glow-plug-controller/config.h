@@ -22,6 +22,7 @@ const float HOT_PLUG_TEMP_THRESHOLD = 200.0;  // Temperature threshold for "hot"
 const float REDUCED_DUTY_CYCLE = 0.6;         // 60% duty cycle for second phase
 
 // Current monitoring constants
+const int ADC_SAMPLE_COUNT = 10;             // Number of ADC reads to average per measurement
 const float VOLTAGE_DIVIDER_R1 = 4700.0;    // 4.7k to Arduino input
 const float VOLTAGE_DIVIDER_R2 = 1500.0;    // 1.5k to ground
 const float ARDUINO_VREF = 5.0;             // Arduino reference voltage
