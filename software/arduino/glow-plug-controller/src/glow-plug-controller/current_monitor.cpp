@@ -50,7 +50,7 @@ float convertVoltageToCurrent(float senseVoltage) {
   const float CALIBRATION_FACTOR = 1.65; // Empirical correction based on actual measurements
   
   float senseCurrent = senseVoltage / SENSE_RESISTOR;
-  float loadCurrent = senseCurrent * (BTS50010_SENSE_RATIO / 10000.0) * CALIBRATION_FACTOR;
+  float loadCurrent = senseCurrent * BTS50010_SENSE_RATIO * CALIBRATION_FACTOR;
   
   return loadCurrent;
 }
