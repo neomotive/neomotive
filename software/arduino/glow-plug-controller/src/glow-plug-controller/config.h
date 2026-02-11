@@ -14,10 +14,10 @@ const int OUTPUT_PINS[] = {3,5,6,9,10,11};    // pwm outputs
 const int INPUT_PINS[] = {A0,A1,A2,A3,A4,A5}; // voltage sense inputs
 const int NUM_OUTPUTS = sizeof(OUTPUT_PINS) / sizeof(OUTPUT_PINS[0]);
 const int NUM_INPUTS = sizeof(INPUT_PINS) / sizeof(INPUT_PINS[0]);
-const int FULL_POWER_DURATION_MS = 5000;      // 5 seconds at 100% for all plugs
-const int COLD_ENGINE_TOTAL_MS = 15000;       // 15 seconds total for cold engine
-const int HOT_ENGINE_TOTAL_MS = 10000;        // 10 seconds total for hot engine
-const int STAGGER_DELAY_MS = 500;             // 0.5 seconds between starting each plug
+const unsigned long FULL_POWER_DURATION_MS = 5000;      // 5 seconds at 100% for all plugs
+const unsigned long COLD_ENGINE_TOTAL_MS = 15000;       // 15 seconds total for cold engine
+const unsigned long HOT_ENGINE_TOTAL_MS = 10000;        // 10 seconds total for hot engine
+const unsigned long STAGGER_DELAY_MS = 500;             // 0.5 seconds between starting each plug
 const float HOT_PLUG_TEMP_THRESHOLD = 200.0;  // Temperature threshold for "hot" plug
 const float REDUCED_DUTY_CYCLE = 0.6;         // 60% duty cycle for second phase
 
@@ -88,7 +88,7 @@ extern float currentDutyCycle[NUM_OUTPUTS];
 extern OutputState outputStates[NUM_OUTPUTS];
 extern unsigned long outputStartTimes[NUM_OUTPUTS];
 extern unsigned long outputStaggerStartTime[NUM_OUTPUTS];
-extern int outputTotalDuration[NUM_OUTPUTS];
+extern unsigned long outputTotalDuration[NUM_OUTPUTS];
 extern float initialTemperatures[NUM_OUTPUTS];
 extern bool outputFaulted[NUM_OUTPUTS];
 extern int firstFaultedOutput;

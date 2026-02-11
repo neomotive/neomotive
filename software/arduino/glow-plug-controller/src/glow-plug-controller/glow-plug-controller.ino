@@ -29,7 +29,7 @@ float currentDutyCycle[NUM_OUTPUTS];
 OutputState outputStates[NUM_OUTPUTS];
 unsigned long outputStartTimes[NUM_OUTPUTS];
 unsigned long outputStaggerStartTime[NUM_OUTPUTS];
-int outputTotalDuration[NUM_OUTPUTS];
+unsigned long outputTotalDuration[NUM_OUTPUTS];
 float initialTemperatures[NUM_OUTPUTS];
 bool outputFaulted[NUM_OUTPUTS];
 int firstFaultedOutput;
