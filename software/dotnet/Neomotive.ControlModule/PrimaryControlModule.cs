@@ -31,9 +31,16 @@ public class PrimaryControlModule : ControllerBase
     }
 
     protected override Temperature? GetEngineCoolantTemperature()
-    {
-        return new Temperature(50, Temperature.UnitType.Fahrenheit);
-    }
+        => new Temperature(50, Temperature.UnitType.Fahrenheit);
+
+    protected override float? GetEngineRpm()
+        => 768f;
+
+    protected override Speed? GetVehicleSpeed()
+        => new Speed(0, Speed.UnitType.KilometersPerHour);
+
+    protected override float? GetThrottlePosition()
+        => 0f;
 
     /*
     protected override void OnQueryReceived(ICanBus sourceBus, Obd2QueryFrame queryFrame)

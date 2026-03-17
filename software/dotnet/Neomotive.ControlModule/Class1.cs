@@ -14,33 +14,38 @@ public abstract class ControllerBase(short ModuleAddress) : IController
     public const short TesterAddress = 0x7E0;
 
     private readonly List<CanBusMonitor> _busMonitors = new();
-    private byte[] _supportedPidMask;
+    private byte[]? _supportedPidMask;
 
     public abstract string Vin { get; }
     public abstract Pid[] SupportedPids { get; }
 
+    private byte[] SupportedPidMask
+    {
+        get
+        {
+            if (_supportedPidMask is null)
+            {
+                uint mask = 0;
+                foreach (var pid in SupportedPids)
+                {
+                    mask |= 1u << (32 - (byte)pid);
+                }
+                var maskBytes = BitConverter.GetBytes(mask);
+                if (BitConverter.IsLittleEndian) Array.Reverse(maskBytes);
+                _supportedPidMask = maskBytes;
+            }
+            return _supportedPidMask;
+        }
+    }
+
     protected ControllerBase(ICanBus[] canBuses, short moduleAddress) : this(moduleAddress)
     {
-        InitializeSupportedPids();
-
         foreach (var canBus in canBuses)
         {
             var monitor = new CanBusMonitor(canBus);
             monitor.QueryReceived += (_, query) => OnQueryReceived(monitor.Bus, query);
             _busMonitors.Add(monitor);
         }
-    }
-
-    private void InitializeSupportedPids()
-    {
-        uint mask = 0;
-        foreach (var pid in SupportedPids)
-        {
-            mask |= 1u << (32 - (byte)pid);
-        }
-        var maskBytes = BitConverter.GetBytes(mask);
-        if (BitConverter.IsLittleEndian) Array.Reverse(maskBytes);
-        _supportedPidMask = maskBytes;
     }
 
     private void OnQueryReceived(ICanBus sourceBus, Obd2QueryFrame queryFrame)
@@ -74,40 +79,48 @@ public abstract class ControllerBase(short ModuleAddress) : IController
         switch (pid)
         {
             case Pid.SupportedPids_01_20:
-                // always respond with supported PIDs 0x01-0x20; for simplicity, we won't implement higher ranges
-                SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, _supportedPidMask, ModuleAddress));
+                SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, SupportedPidMask, ModuleAddress));
                 break;
             case Pid.SupportedPids_21_40:
-                // TBD: if we implement any PIDs > 0x20, we should update this mask and response
+                // not implemented - no PIDs > 0x20 supported
                 break;
 
-            // check for controller-reported, supported PIDs
             case Pid.EngineCoolantTemperature:
-                if (SupportedPids.Contains(pid))
+                var temp = GetEngineCoolantTemperature();
+                if (temp.HasValue)
                 {
-                    var temp = GetEngineCoolantTemperature();
-                    if (temp.HasValue)
-                    {
-                        // A - 40 = °C
-                        var tempValue = (byte)(temp.Value.Celsius + 40);
-                        SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, new byte[] { tempValue }, ModuleAddress));
-                        return;
-                    }
+                    // A - 40 = °C
+                    var tempValue = (byte)(temp.Value.Celsius + 40);
+                    SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, [tempValue], ModuleAddress));
                 }
                 break;
+
             case Pid.EngineRpm:
-                // (A*256 + B) / 4 = RPM; 0x0C, 0x00 = 768 RPM
-                SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, new byte[] { 0x0C, 0x00 }, ModuleAddress));
+                var rpm = GetEngineRpm();
+                if (rpm.HasValue)
+                {
+                    // (A*256 + B) / 4 = RPM
+                    var raw = (ushort)(rpm.Value * 4);
+                    SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, [(byte)(raw >> 8), (byte)(raw & 0xFF)], ModuleAddress));
+                }
                 break;
 
             case Pid.VehicleSpeed:
-                // A = km/h
-                SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, new byte[] { 0x00 }, ModuleAddress));
+                var speed = GetVehicleSpeed();
+                if (speed.HasValue)
+                {
+                    // A = km/h
+                    SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, [(byte)speed.Value.KilometersPerHour], ModuleAddress));
+                }
                 break;
 
             case Pid.ThrottlePosition:
-                // A * 100/255 = %
-                SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, new byte[] { 0x00 }, ModuleAddress));
+                var throttle = GetThrottlePosition();
+                if (throttle.HasValue)
+                {
+                    // A * 100/255 = %
+                    SendResponse(bus, new Obd2ResponseFrame(Service.Current, pid, [(byte)(throttle.Value * 255f / 100f)], ModuleAddress));
+                }
                 break;
         }
     }
@@ -138,7 +151,10 @@ public abstract class ControllerBase(short ModuleAddress) : IController
         }
     }
 
-    protected virtual Temperature? GetEngineCoolantTemperature() { return null; }
+    protected virtual Temperature? GetEngineCoolantTemperature() => null;
+    protected virtual float? GetEngineRpm() => null;
+    protected virtual Speed? GetVehicleSpeed() => null;
+    protected virtual float? GetThrottlePosition() => null; // percent 0-100
 
     protected void SendResponse(ICanBus bus, Obd2ResponseFrame response)
     {
