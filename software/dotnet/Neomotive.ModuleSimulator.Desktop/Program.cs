@@ -24,9 +24,11 @@ catch (Exception ex)
 
 AnsiConsole.WriteLine();
 
-var log   = new CanPacketLog();
-var bus   = new LoggingCanBus(rawBus, log);
-var state = new SimulatorState();
-var pcm   = new SimulatorPcm(bus, state);
+var log      = new CanPacketLog();
+var bus      = new LoggingCanBus(rawBus, log);
+var pcmState = new SimulatorState();
+var tcuState = new SimulatorTcuState();
+var pcm      = new SimulatorPcm(bus, pcmState);
+var tcu      = new SimulatorTcu(bus, tcuState);
 
-new SimulatorUi().Run(pcm, state, log);
+new SimulatorUi().Run(pcm, pcmState, tcu, tcuState, log);

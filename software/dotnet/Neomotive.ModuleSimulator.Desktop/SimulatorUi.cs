@@ -6,27 +6,44 @@ namespace Neomotive.ModuleSimulator.Desktop;
 
 public class SimulatorUi
 {
-    private static IRenderable BuildLeftPanel()
+    private enum SettingsView { Data, Monitors, Dtcs }
+    private enum SelectedModule { Pcm, Tcu }
+
+    private record DtcHolder(
+        Dictionary<string, byte[]> StoredDtcs,
+        Dictionary<string, byte[]> PendingDtcs,
+        Dictionary<string, byte[]> PermanentDtcs,
+        Action Sync);
+
+    private static IRenderable BuildLeftPanel(SelectedModule selected)
     {
         var tree = new Tree("[bold yellow]Vehicle[/]");
-        var pcm = tree.AddNode("[bold green]PCM[/] [grey]0x7E8[/]");
+        var pcmLabel = selected == SelectedModule.Pcm ? "[bold green]▶ PCM[/]" : "[green]PCM[/]";
+        var pcm = tree.AddNode($"{pcmLabel} [grey]0x7E8[/]");
         pcm.AddNode("[grey]SAE J1979[/]");
-        pcm.AddNode("[grey]500 kbps[/]");
+        var tcuLabel = selected == SelectedModule.Tcu ? "[bold cyan]▶ TCU[/]" : "[cyan]TCU[/]";
+        var tcu = tree.AddNode($"{tcuLabel} [grey]0x7E9[/]");
+        tcu.AddNode("[grey]SAE J1979[/]");
 
         return new Panel(tree)
             .Header("[bold] Modules [/]")
             .Expand();
     }
 
-    private enum SettingsView { Data, Monitors, Dtcs }
+    private static IRenderable BuildSettingsPanel(
+        SimulatorState pcmState, SimulatorTcuState tcuState,
+        SettingsView view, SelectedModule selectedModule)
+    {
+        if (selectedModule == SelectedModule.Tcu)
+            return view == SettingsView.Dtcs ? BuildTcuDtcsView(tcuState) : BuildTcuDataView(tcuState);
 
-    private static IRenderable BuildSettingsPanel(SimulatorState state, SettingsView view) =>
-        view switch
+        return view switch
         {
-            SettingsView.Monitors => BuildMonitorsView(state),
-            SettingsView.Dtcs     => BuildDtcsView(state),
-            _                     => BuildDataView(state),
+            SettingsView.Monitors => BuildMonitorsView(pcmState),
+            SettingsView.Dtcs     => BuildDtcsView(pcmState),
+            _                     => BuildDataView(pcmState),
         };
+    }
 
     private static IRenderable BuildDataView(SimulatorState state)
     {
@@ -44,6 +61,22 @@ public class SimulatorUi
 
         return new Panel(table)
             .Header("[bold] PCM — Data [/]")
+            .Expand();
+    }
+
+    private static IRenderable BuildTcuDataView(SimulatorTcuState state)
+    {
+        var table = new Table()
+            .NoBorder()
+            .Expand()
+            .AddColumn(new TableColumn("[grey]Field[/]").Width(16))
+            .AddColumn("[grey]Value[/]");
+
+        table.AddRow("[grey]Trans Temp[/]", $"[cyan]{state.TransTempCelsius:F1}[/][grey] °C[/]");
+        table.AddRow("[grey]Gear[/]",       $"[cyan]{Markup.Escape(state.GearPosition)}[/]");
+
+        return new Panel(table)
+            .Header("[bold] TCU — Data [/]")
             .Expand();
     }
 
@@ -103,6 +136,32 @@ public class SimulatorUi
             .Expand();
     }
 
+    private static IRenderable BuildTcuDtcsView(SimulatorTcuState state)
+    {
+        var sb = new StringBuilder();
+        var total = state.StoredDtcs.Count + state.PendingDtcs.Count + state.PermanentDtcs.Count;
+
+        if (total == 0)
+        {
+            sb.AppendLine("  [grey]No active DTCs[/]");
+        }
+        else
+        {
+            foreach (var (label, dict) in new (string, Dictionary<string, byte[]>)[] {
+                ("Stored",    state.StoredDtcs),
+                ("Pending",   state.PendingDtcs),
+                ("Permanent", state.PermanentDtcs) })
+            {
+                foreach (var code in dict.Keys.OrderBy(k => k))
+                    sb.AppendLine($"  [red]■[/] [bold red]{code}[/]  [grey]{label}[/]");
+            }
+        }
+
+        return new Panel(new Markup(sb.ToString()))
+            .Header("[bold] TCU — Fault Codes [/]")
+            .Expand();
+    }
+
     private static IRenderable BuildCanLogPanel(CanPacketLog log)
     {
         var packets = log.GetRecent(8);
@@ -148,7 +207,6 @@ public class SimulatorUi
 
         if (!pkt.IsOutgoing)
         {
-            // Incoming OBD2 query: d[0]=length, d[1]=service, d[2]=pid (if length>=2)
             byte len = d[0];
             byte svc = d.Length > 1 ? d[1] : (byte)0;
 
@@ -168,11 +226,14 @@ public class SimulatorUi
                 0x01 => pid switch
                 {
                     0x00 => "Query Supported PIDs",
+                    0x01 => "Query Monitor Status",
                     0x05 => "Query Coolant Temp",
                     0x0C => "Query Engine RPM",
                     0x0D => "Query Vehicle Speed",
                     0x11 => "Query Throttle",
                     0x20 => "Query Supported PIDs 21-40",
+                    0x40 => "Query Supported PIDs 41-60",
+                    0x5C => "Query Trans Fluid Temp",
                     _    => $"Query PID {pid:X2}",
                 },
                 0x09 => pid switch
@@ -186,15 +247,14 @@ public class SimulatorUi
         }
         else
         {
-            // Outgoing response — may be Obd2ResponseFrame or ISO-TP encoded
             byte isoType = (byte)(d[0] & 0xF0);
 
             byte svcByte;
             int  offset;
-            if (isoType == 0x10) { svcByte = d.Length > 2 ? d[2] : (byte)0; offset = 3; }  // first frame
+            if (isoType == 0x10) { svcByte = d.Length > 2 ? d[2] : (byte)0; offset = 3; }
             else if (isoType == 0x20) return "ISO-TP Continuation";
             else if (isoType == 0x30) return "ISO-TP Flow Control";
-            else                      { svcByte = d.Length > 1 ? d[1] : (byte)0; offset = 2; }  // single frame
+            else                      { svcByte = d.Length > 1 ? d[1] : (byte)0; offset = 2; }
 
             byte service = (byte)(svcByte - 0x40);
             return service switch
@@ -203,11 +263,13 @@ public class SimulatorUi
                     ? (d[offset]) switch
                     {
                         0x00 => "Supported PIDs",
+                        0x01 => "Monitor Status",
                         0x05 => "Coolant Temp",
                         0x0C => "Engine RPM",
                         0x0D => "Vehicle Speed",
                         0x11 => "Throttle Position",
                         0x20 => "Supported PIDs 21-40",
+                        0x5C => "Trans Fluid Temp",
                         var p => $"PID {p:X2} Data",
                     }
                     : "Current Data",
@@ -224,7 +286,7 @@ public class SimulatorUi
     private static IRenderable BuildPromptPanel(string input, string? feedback)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("[grey]show data|monitors|dtcs   set vin|rpm|temp|speed|throttle <val>   set monitor <name> ready|incomplete   dtc set [[cat]] <code>   dtc clear <code>|all   exit[/]");
+        sb.AppendLine("[grey]select pcm|tcu   show data|monitors|dtcs   set vin|rpm|temp|speed|throttle <val>   set gear P|R|N|D|1-8   set transtemp <val>   set dtc [[cat]] <code>   set monitor <name> ready|incomplete   clear dtc <code>|all   exit[/]");
         sb.Append($"[bold white]>[/] {Markup.Escape(input)}[white]▌[/]");
         if (feedback != null)
             sb.Append($"   [grey]{Markup.Escape(feedback)}[/]");
@@ -233,55 +295,105 @@ public class SimulatorUi
     }
 
     private static void UpdateLayout(
-        Layout layout, SimulatorState state, CanPacketLog log,
-        string input, string? feedback, SettingsView view)
+        Layout layout,
+        SimulatorState pcmState, SimulatorTcuState tcuState,
+        CanPacketLog log, string input, string? feedback,
+        SettingsView view, SelectedModule selectedModule)
     {
-        layout["Left"].Update(BuildLeftPanel());
-        layout["Settings"].Update(BuildSettingsPanel(state, view));
+        layout["Left"].Update(BuildLeftPanel(selectedModule));
+        layout["Settings"].Update(BuildSettingsPanel(pcmState, tcuState, view, selectedModule));
         layout["CanLog"].Update(BuildCanLogPanel(log));
         layout["Prompt"].Update(BuildPromptPanel(input, feedback));
     }
 
-    private static string? ProcessCommand(string cmd, SimulatorPcm pcm, SimulatorState state)
+    private static string? ProcessCommand(
+        string cmd,
+        SimulatorPcm pcm, SimulatorState pcmState,
+        SimulatorTcu tcu, SimulatorTcuState tcuState,
+        ref SettingsView view, ref SelectedModule selectedModule)
     {
         var parts = cmd.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0) return null;
 
+        var dtcHolder = selectedModule == SelectedModule.Tcu
+            ? new DtcHolder(tcuState.StoredDtcs, tcuState.PendingDtcs, tcuState.PermanentDtcs, () => tcu.SyncDtcsFromState())
+            : new DtcHolder(pcmState.StoredDtcs, pcmState.PendingDtcs, pcmState.PermanentDtcs, () => pcm.SyncDtcsFromState());
+
         switch (parts[0].ToLowerInvariant())
         {
+            case "select" when parts.Length >= 2:
+                switch (parts[1].ToLowerInvariant())
+                {
+                    case "pcm": selectedModule = SelectedModule.Pcm; return "Selected PCM";
+                    case "tcu": selectedModule = SelectedModule.Tcu; return "Selected TCU";
+                    default: return $"Unknown module '{parts[1]}' — use: pcm  or  tcu";
+                }
+
             case "set" when parts.Length >= 4
                          && parts[1].Equals("monitor", StringComparison.OrdinalIgnoreCase):
-                return HandleSetMonitor(parts[2], parts[3], state);
-            case "set" when parts.Length >= 3:
-                return HandleSet(parts[1], parts[2], pcm, state);
-            case "set":
-                return "Usage: set <field> <value>  |  set monitor <name> ready|incomplete";
+                view = SettingsView.Monitors;
+                return HandleSetMonitor(parts[2], parts[3], pcmState);
 
-            case "dtc" when parts.Length >= 3 && parts[1].Equals("set", StringComparison.OrdinalIgnoreCase):
+            case "set" when parts.Length >= 3
+                         && parts[1].Equals("dtc", StringComparison.OrdinalIgnoreCase):
             {
-                // dtc set <code>  OR  dtc set stored|pending|permanent <code>
+                view = SettingsView.Dtcs;
                 var (cat, codeArg) = IsCategory(parts[2]) && parts.Length >= 4
                     ? (parts[2].ToLowerInvariant(), parts[3])
                     : ("stored", parts[2]);
-                return HandleDtcSet(cat, codeArg, pcm, state);
+                return HandleDtcSet(cat, codeArg, dtcHolder);
             }
-            case "dtc" when parts.Length >= 3 && parts[1].Equals("clear", StringComparison.OrdinalIgnoreCase)
-                         && parts[2].Equals("all", StringComparison.OrdinalIgnoreCase):
-                return HandleDtcClearAll(pcm, state);
-            case "dtc" when parts.Length >= 3 && parts[1].Equals("clear", StringComparison.OrdinalIgnoreCase):
-                return HandleDtcClear(parts[2], pcm, state);
-            case "dtc":
-                return "Usage: dtc set [stored|pending|permanent] <code>  |  dtc clear <code>|all";
+
+            case "set" when parts.Length >= 3
+                         && parts[1].Equals("gear", StringComparison.OrdinalIgnoreCase):
+            {
+                var validGears = new[] { "P", "R", "N", "D", "1", "2", "3", "4", "5", "6", "7", "8" };
+                var gear = parts[2].ToUpperInvariant();
+                if (!validGears.Contains(gear))
+                    return $"Invalid gear '{parts[2]}' — use: P R N D 1-8";
+                tcuState.GearPosition = gear;
+                selectedModule = SelectedModule.Tcu;
+                view = SettingsView.Data;
+                return $"Gear = {gear}";
+            }
+
+            case "set" when parts.Length >= 3
+                         && parts[1].Equals("transtemp", StringComparison.OrdinalIgnoreCase):
+            {
+                if (!double.TryParse(parts[2], out var transTemp) || transTemp < -40 || transTemp > 215)
+                    return "Trans temp must be -40 to 215 °C";
+                tcuState.TransTempCelsius = transTemp;
+                selectedModule = SelectedModule.Tcu;
+                view = SettingsView.Data;
+                return $"Trans Temp = {transTemp:F1} °C";
+            }
+
+            case "set" when parts.Length >= 3:
+                return HandleSet(parts[1], parts[2], pcmState);
+            case "set":
+                return "Usage: set <field> <value>  |  set dtc [[cat]] <code>  |  set monitor <name> ready|incomplete";
+
+            case "clear" when parts.Length >= 3
+                           && parts[1].Equals("dtc", StringComparison.OrdinalIgnoreCase)
+                           && parts[2].Equals("all", StringComparison.OrdinalIgnoreCase):
+                view = SettingsView.Dtcs;
+                return HandleDtcClearAll(dtcHolder);
+            case "clear" when parts.Length >= 3
+                           && parts[1].Equals("dtc", StringComparison.OrdinalIgnoreCase):
+                view = SettingsView.Dtcs;
+                return HandleDtcClear(parts[2], dtcHolder);
+            case "clear":
+                return "Usage: clear dtc <code>  |  clear dtc all";
 
             case "help":
-                return "set vin|rpm|temp|speed|throttle <val>  |  dtc set [category] <code>  |  dtc clear <code>|all  |  exit";
+                return "select pcm|tcu  |  show data|monitors|dtcs  |  set vin|rpm|temp|speed|throttle <val>  |  set gear P|R|N|D|1-8  |  set transtemp <val>  |  set dtc [[cat]] <code>  |  clear dtc <code>|all  |  exit";
 
             default:
                 return $"Unknown command '{parts[0]}' — type 'help'";
         }
     }
 
-    private static string HandleSet(string field, string value, SimulatorPcm pcm, SimulatorState state)
+    private static string HandleSet(string field, string value, SimulatorState state)
     {
         switch (field.ToLowerInvariant())
         {
@@ -316,7 +428,7 @@ public class SimulatorUi
                 return $"Throttle = {throttle:F1} %";
 
             default:
-                return $"Unknown field '{field}'";
+                return $"Unknown field '{field}' — use: vin rpm temp speed throttle  (or: gear transtemp for TCU)";
         }
     }
 
@@ -386,54 +498,56 @@ public class SimulatorUi
         s.Equals("pending", StringComparison.OrdinalIgnoreCase) ||
         s.Equals("permanent", StringComparison.OrdinalIgnoreCase);
 
-    private static Dictionary<string, byte[]> GetDtcDict(string category, SimulatorState state) =>
+    private static Dictionary<string, byte[]> GetDtcDict(string category, DtcHolder holder) =>
         category.ToLowerInvariant() switch
         {
-            "pending"   => state.PendingDtcs,
-            "permanent" => state.PermanentDtcs,
-            _           => state.StoredDtcs,
+            "pending"   => holder.PendingDtcs,
+            "permanent" => holder.PermanentDtcs,
+            _           => holder.StoredDtcs,
         };
 
-    private static string HandleDtcSet(string category, string codeStr, SimulatorPcm pcm, SimulatorState state)
+    private static string HandleDtcSet(string category, string codeStr, DtcHolder holder)
     {
         if (!TryParseDtcCode(codeStr, out var code, out var raw))
             return $"Invalid DTC code '{codeStr}' — expected format P0300, C1234, etc.";
 
-        GetDtcDict(category, state)[code] = raw;
-        pcm.SyncDtcsFromState();
+        GetDtcDict(category, holder)[code] = raw;
+        holder.Sync();
         return $"Set {code} ({category})";
     }
 
-    private static string HandleDtcClear(string codeStr, SimulatorPcm pcm, SimulatorState state)
+    private static string HandleDtcClear(string codeStr, DtcHolder holder)
     {
         if (!TryParseDtcCode(codeStr, out var code, out _))
             return $"Invalid DTC code '{codeStr}'";
 
         var cleared = new List<string>();
         foreach (var (label, dict) in new[] {
-            ("stored", state.StoredDtcs), ("pending", state.PendingDtcs), ("permanent", state.PermanentDtcs) })
+            ("stored", holder.StoredDtcs), ("pending", holder.PendingDtcs), ("permanent", holder.PermanentDtcs) })
         {
             if (dict.Remove(code)) cleared.Add(label);
         }
 
         if (cleared.Count == 0) return $"{code} was not set";
-        pcm.SyncDtcsFromState();
+        holder.Sync();
         return $"Cleared {code} ({string.Join(", ", cleared)})";
     }
 
-    private static string HandleDtcClearAll(SimulatorPcm pcm, SimulatorState state)
+    private static string HandleDtcClearAll(DtcHolder holder)
     {
-        var count = state.StoredDtcs.Count + state.PendingDtcs.Count + state.PermanentDtcs.Count;
-        state.StoredDtcs.Clear();
-        state.PendingDtcs.Clear();
-        state.PermanentDtcs.Clear();
-        pcm.SyncDtcsFromState();
+        var count = holder.StoredDtcs.Count + holder.PendingDtcs.Count + holder.PermanentDtcs.Count;
+        holder.StoredDtcs.Clear();
+        holder.PendingDtcs.Clear();
+        holder.PermanentDtcs.Clear();
+        holder.Sync();
         return count > 0 ? $"Cleared {count} DTC(s)" : "No DTCs were set";
     }
 
-    public void Run(SimulatorPcm pcm, SimulatorState state, CanPacketLog log)
+    public void Run(
+        SimulatorPcm pcm, SimulatorState pcmState,
+        SimulatorTcu tcu, SimulatorTcuState tcuState,
+        CanPacketLog log)
     {
-        // Build layout tree
         var layout = new Layout("Root")
             .SplitRows(
                 new Layout("Content"),
@@ -454,6 +568,7 @@ public class SimulatorUi
         string? feedback = null;
         var exit = false;
         var view = SettingsView.Data;
+        var selectedModule = SelectedModule.Pcm;
 
         AnsiConsole.Live(layout)
             .AutoClear(true)
@@ -463,10 +578,9 @@ public class SimulatorUi
             {
                 while (!exit)
                 {
-                    UpdateLayout(layout, state, log, input.ToString(), feedback, view);
+                    UpdateLayout(layout, pcmState, tcuState, log, input.ToString(), feedback, view, selectedModule);
                     ctx.Refresh();
 
-                    // Poll for keystrokes for ~150 ms, then re-render (picks up new CAN packets)
                     var deadline = DateTime.UtcNow.AddMilliseconds(150);
                     while (DateTime.UtcNow < deadline)
                     {
@@ -486,11 +600,11 @@ public class SimulatorUi
                                 input.Clear();
                                 if (cmd is "exit" or "quit")
                                     exit = true;
-                                else if (cmd.Equals("show data",     StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Data;     feedback = null; }
-                                else if (cmd.Equals("show monitors", StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Monitors;  feedback = null; }
-                                else if (cmd.Equals("show dtcs",     StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Dtcs;      feedback = null; }
+                                else if (cmd.Equals("show data",     StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Data;    feedback = null; }
+                                else if (cmd.Equals("show monitors", StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Monitors; feedback = null; }
+                                else if (cmd.Equals("show dtcs",     StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Dtcs;     feedback = null; }
                                 else if (cmd.Length > 0)
-                                    feedback = ProcessCommand(cmd, pcm, state);
+                                    feedback = ProcessCommand(cmd, pcm, pcmState, tcu, tcuState, ref view, ref selectedModule);
                                 break;
 
                             case ConsoleKey.Backspace:
