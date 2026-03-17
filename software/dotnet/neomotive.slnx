@@ -14,6 +14,10 @@
     <Project Path="Libraries/Neomotive.Camera.USB/Neomotive.Camera.USB.csproj" />
     <Project Path="Libraries/Neomotive.Camera.VideoFile/Neomotive.Camera.VideoFile.csproj" />
   </Folder>
+  <Folder Name="/Libraries/ControlModules/">
+    <Project Path="Neomotive.ControlModule/Neomotive.ControlModule.csproj" Id="c12bc292-7ba1-4600-8371-440a47e42429" />
+    <Project Path="Neomotive.PCM/Neomotive.PCM.csproj" Id="77fbcfb0-4e21-46bf-8f23-ad64c9d347f4" />
+  </Folder>
   <Folder Name="/Libraries/TransferCase/">
     <Project Path="Libraries/Neomotive.TransferCase.Core/Neomotive.TransferCase.Core.csproj" />
   </Folder>
@@ -31,10 +35,12 @@
       <Deploy />
     </Project>
     <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Graphics.MicroLayout/Driver/Graphics.MicroLayout.csproj" />
+    <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.Obd2/Driver/Telematics.Obd2.csproj" />
     <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Silk/Driver/Displays.Silk.csproj" />
     <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Ssd130x/Driver/Displays.Ssd130x.csproj">
       <Deploy />
     </Project>
+    <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.IOExpanders.PCanBasic/Driver/ICs.IOExpanders.PCanBasic.csproj" />
     <Project Path="../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />
     <Project Path="../../../wilderness/Meadow.Units/Source/Meadow.Units/Meadow.Units.csproj">
       <Deploy />
