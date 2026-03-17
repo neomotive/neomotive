@@ -1,18 +1,32 @@
-﻿using Meadow.Hardware;
-using Neomotive.ControlModule;
+using ICs.IOExpanders.PCanBasic;
+using Meadow.Hardware;
+using Neomotive.ModuleSimulator.Desktop;
+using Spectre.Console;
 
-internal class Program
+// Header
+AnsiConsole.MarkupLine("[bold yellow]Neomotive Module Simulator[/]  [grey]v0.1[/]");
+AnsiConsole.MarkupLine("[grey]─────────────────────────────[/]");
+
+// Connect to CAN bus (fall back to offline mode if hardware unavailable)
+ICanBus rawBus;
+try
 {
-    private static void Main(string[] args)
-    {
-        var expander = new PCanUsb();
-
-        var bus = expander.CreateCanBus(CanBitrate.Can_500kbps);
-
-        PrimaryControlModule pcm = new PrimaryControlModule(bus);
-
-        Console.WriteLine("PCM simulator running. Type 'exit' to quit.");
-
-        while (Console.ReadLine() != "exit") { }
-    }
+    var expander = new PCanUsb();
+    rawBus = expander.CreateCanBus(CanBitrate.Can_500kbps);
+    AnsiConsole.MarkupLine("[green]✓[/] CAN bus connected [grey](PCanUsb, 500 kbps)[/]");
 }
+catch (Exception ex)
+{
+    AnsiConsole.MarkupLine($"[yellow]⚠[/]  CAN hardware unavailable: [grey]{Markup.Escape(ex.Message)}[/]");
+    AnsiConsole.MarkupLine("[grey]   Running in offline mode — no frames will be sent/received.[/]");
+    rawBus = new NullCanBus();
+}
+
+AnsiConsole.WriteLine();
+
+var log   = new CanPacketLog();
+var bus   = new LoggingCanBus(rawBus, log);
+var state = new SimulatorState();
+var pcm   = new SimulatorPcm(bus, state);
+
+new SimulatorUi().Run(pcm, state, log);
