@@ -16,6 +16,7 @@
   </Folder>
   <Folder Name="/Libraries/ControlModules/">
     <Project Path="Neomotive.ControlModule/Neomotive.ControlModule.csproj" Id="c12bc292-7ba1-4600-8371-440a47e42429" />
+    <Project Path="Neomotive.ModuleSimulator.Desktop/Neomotive.ModuleSimulator.Desktop.csproj" Id="e1361edc-2ace-4264-9971-b0db9049bf70" />
     <Project Path="Neomotive.PCM/Neomotive.PCM.csproj" Id="77fbcfb0-4e21-46bf-8f23-ad64c9d347f4" />
   </Folder>
   <Folder Name="/Libraries/TransferCase/">

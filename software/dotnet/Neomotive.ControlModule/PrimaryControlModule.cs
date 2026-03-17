@@ -42,6 +42,9 @@ public class PrimaryControlModule : ControllerBase
     protected override float? GetThrottlePosition()
         => 0f;
 
+    public void ReportFault(Dtc fault) => SetDtc(fault);
+    public void ClearFault(Dtc fault) => ClearDtc(fault);
+
     /*
     protected override void OnQueryReceived(ICanBus sourceBus, Obd2QueryFrame queryFrame)
     {
