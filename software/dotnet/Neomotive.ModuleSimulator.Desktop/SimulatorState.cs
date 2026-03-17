@@ -12,6 +12,8 @@ public class SimulatorState
     public double SpeedKph { get; set; } = 0.0;
     public float ThrottlePercent { get; set; } = 0f;
 
+    public EmissionsReadinessStatus Readiness { get; } = new EmissionsReadinessStatus();
+
     // all keyed by uppercase code string, e.g. "P0300"
     public readonly Dictionary<string, byte[]> StoredDtcs    = new();
     public readonly Dictionary<string, byte[]> PendingDtcs   = new();

@@ -4,6 +4,14 @@ using Meadow.Units;
 
 namespace Neomotive.ControlModule;
 
+public abstract class TransmissionControlModule : ControllerBase
+{
+    protected TransmissionControlModule(ICanBus[] canBuses, short moduleAddress)
+        : base(canBuses, moduleAddress)
+    {
+    }
+}
+
 public class PrimaryControlModule : ControllerBase
 {
     // Standard PCM/ECM CAN addresses

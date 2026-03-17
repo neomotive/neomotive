@@ -12,6 +12,7 @@ public class SimulatorPcm : ControllerBase
 
     public override Pid[] SupportedPids =>
     [
+        Pid.MonitorStatus,
         Pid.EngineCoolantTemperature,
         Pid.EngineRpm,
         Pid.VehicleSpeed,
@@ -35,6 +36,8 @@ public class SimulatorPcm : ControllerBase
 
     protected override float? GetThrottlePosition()
         => _state.ThrottlePercent;
+
+    protected override EmissionsReadinessStatus GetEmissionsReadiness() => _state.Readiness;
 
     protected override void OnDtcsCleared()
     {

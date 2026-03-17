@@ -18,12 +18,21 @@ public class SimulatorUi
             .Expand();
     }
 
-    private static IRenderable BuildSettingsPanel(SimulatorState state)
-    {
-        var parts = new List<IRenderable>();
+    private enum SettingsView { Data, Monitors, Dtcs }
 
+    private static IRenderable BuildSettingsPanel(SimulatorState state, SettingsView view) =>
+        view switch
+        {
+            SettingsView.Monitors => BuildMonitorsView(state),
+            SettingsView.Dtcs     => BuildDtcsView(state),
+            _                     => BuildDataView(state),
+        };
+
+    private static IRenderable BuildDataView(SimulatorState state)
+    {
         var table = new Table()
             .NoBorder()
+            .Expand()
             .AddColumn(new TableColumn("[grey]Field[/]").Width(16))
             .AddColumn("[grey]Value[/]");
 
@@ -33,15 +42,49 @@ public class SimulatorUi
         table.AddRow("[grey]Speed[/]",        $"[cyan]{state.SpeedKph:F1}[/][grey] km/h[/]");
         table.AddRow("[grey]Throttle[/]",     $"[cyan]{state.ThrottlePercent:F1}[/][grey] %[/]");
 
-        parts.Add(table);
-        parts.Add(new Rule("[grey]Fault Codes[/]").RuleStyle("grey dim"));
+        return new Panel(table)
+            .Header("[bold] PCM — Data [/]")
+            .Expand();
+    }
 
-        var dtcText = new StringBuilder();
-        var totalActive = state.StoredDtcs.Count + state.PendingDtcs.Count + state.PermanentDtcs.Count;
+    private static IRenderable BuildMonitorsView(SimulatorState state)
+    {
+        var r = state.Readiness;
+        bool milOn = state.StoredDtcs.Count > 0;
+        var sb = new StringBuilder();
 
-        if (totalActive == 0)
+        sb.AppendLine($"  [grey]MIL[/]                    {(milOn ? "[bold red]ON[/]" : "[green]OFF[/]")}");
+        sb.AppendLine();
+
+        static string Line(string name, bool supported, bool complete) =>
+            supported
+                ? $"  [grey]{name,-22}[/] {(complete ? "[green]✓ Ready[/]" : "[yellow]✗ Incomplete[/]")}"
+                : $"  [grey]{name,-22} — not supported[/]";
+
+        sb.AppendLine(Line("Misfire",           r.MisfireSupported,                r.MisfireComplete));
+        sb.AppendLine(Line("Fuel System",       r.FuelSystemSupported,             r.FuelSystemComplete));
+        sb.AppendLine(Line("Comprehensive",     r.ComprehensiveComponentSupported, r.ComprehensiveComponentComplete));
+        sb.AppendLine(Line("Catalyst",          r.CatalystSupported,               r.CatalystComplete));
+        sb.AppendLine(Line("Heated Catalyst",   r.HeatedCatalystSupported,         r.HeatedCatalystComplete));
+        sb.AppendLine(Line("Evap System",       r.EvapSystemSupported,             r.EvapSystemComplete));
+        sb.AppendLine(Line("Secondary Air",     r.SecondaryAirSupported,           r.SecondaryAirComplete));
+        sb.AppendLine(Line("O2 Sensor",         r.OxygenSensorSupported,           r.OxygenSensorComplete));
+        sb.AppendLine(Line("O2 Sensor Heater",  r.OxygenSensorHeaterSupported,     r.OxygenSensorHeaterComplete));
+        sb.AppendLine(Line("EGR System",        r.EgrSystemSupported,              r.EgrSystemComplete));
+
+        return new Panel(new Markup(sb.ToString()))
+            .Header("[bold] PCM — Readiness Monitors [/]")
+            .Expand();
+    }
+
+    private static IRenderable BuildDtcsView(SimulatorState state)
+    {
+        var sb = new StringBuilder();
+        var total = state.StoredDtcs.Count + state.PendingDtcs.Count + state.PermanentDtcs.Count;
+
+        if (total == 0)
         {
-            dtcText.AppendLine("  [grey]No active DTCs[/]");
+            sb.AppendLine("  [grey]No active DTCs[/]");
         }
         else
         {
@@ -51,14 +94,12 @@ public class SimulatorUi
                 ("Permanent", state.PermanentDtcs) })
             {
                 foreach (var code in dict.Keys.OrderBy(k => k))
-                    dtcText.AppendLine($"  [red]■[/] [bold red]{code}[/]  [grey]{label}[/]");
+                    sb.AppendLine($"  [red]■[/] [bold red]{code}[/]  [grey]{label}[/]");
             }
         }
 
-        parts.Add(new Markup(dtcText.ToString()));
-
-        return new Panel(new Rows(parts))
-            .Header("[bold] PCM Settings [/]")
+        return new Panel(new Markup(sb.ToString()))
+            .Header("[bold] PCM — Fault Codes [/]")
             .Expand();
     }
 
@@ -183,7 +224,7 @@ public class SimulatorUi
     private static IRenderable BuildPromptPanel(string input, string? feedback)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("[grey]set vin|rpm|temp|speed|throttle <val>    dtc set [[stored|pending|permanent]] <code>    dtc clear <code>|all    exit[/]");
+        sb.AppendLine("[grey]show data|monitors|dtcs   set vin|rpm|temp|speed|throttle <val>   set monitor <name> ready|incomplete   dtc set [[cat]] <code>   dtc clear <code>|all   exit[/]");
         sb.Append($"[bold white]>[/] {Markup.Escape(input)}[white]▌[/]");
         if (feedback != null)
             sb.Append($"   [grey]{Markup.Escape(feedback)}[/]");
@@ -193,10 +234,10 @@ public class SimulatorUi
 
     private static void UpdateLayout(
         Layout layout, SimulatorState state, CanPacketLog log,
-        string input, string? feedback)
+        string input, string? feedback, SettingsView view)
     {
         layout["Left"].Update(BuildLeftPanel());
-        layout["Settings"].Update(BuildSettingsPanel(state));
+        layout["Settings"].Update(BuildSettingsPanel(state, view));
         layout["CanLog"].Update(BuildCanLogPanel(log));
         layout["Prompt"].Update(BuildPromptPanel(input, feedback));
     }
@@ -208,10 +249,13 @@ public class SimulatorUi
 
         switch (parts[0].ToLowerInvariant())
         {
+            case "set" when parts.Length >= 4
+                         && parts[1].Equals("monitor", StringComparison.OrdinalIgnoreCase):
+                return HandleSetMonitor(parts[2], parts[3], state);
             case "set" when parts.Length >= 3:
                 return HandleSet(parts[1], parts[2], pcm, state);
             case "set":
-                return "Usage: set <field> <value>";
+                return "Usage: set <field> <value>  |  set monitor <name> ready|incomplete";
 
             case "dtc" when parts.Length >= 3 && parts[1].Equals("set", StringComparison.OrdinalIgnoreCase):
             {
@@ -299,6 +343,44 @@ public class SimulatorUi
         return true;
     }
 
+    private static string HandleSetMonitor(string monitorName, string stateStr, SimulatorState state)
+    {
+        bool? complete = stateStr.ToLowerInvariant() switch
+        {
+            "ready" or "complete" or "on"   => true,
+            "incomplete" or "off" or "not"  => false,
+            _ => null
+        };
+        if (complete is null)
+            return "State must be: ready  or  incomplete";
+
+        var r = state.Readiness;
+        switch (monitorName.ToLowerInvariant())
+        {
+            case "misfire":       r.MisfireComplete = complete.Value; break;
+            case "fuel":          r.FuelSystemComplete = complete.Value; break;
+            case "comprehensive": r.ComprehensiveComponentComplete = complete.Value; break;
+            case "catalyst":      r.CatalystComplete = complete.Value; break;
+            case "heatedcatalyst" or "hcat": r.HeatedCatalystComplete = complete.Value; break;
+            case "evap":          r.EvapSystemComplete = complete.Value; break;
+            case "secondaryair" or "air": r.SecondaryAirComplete = complete.Value; break;
+            case "o2" or "o2sensor":     r.OxygenSensorComplete = complete.Value; break;
+            case "o2heater":      r.OxygenSensorHeaterComplete = complete.Value; break;
+            case "egr":           r.EgrSystemComplete = complete.Value; break;
+            case "all":
+                r.MisfireComplete = r.FuelSystemComplete = r.ComprehensiveComponentComplete =
+                r.CatalystComplete = r.HeatedCatalystComplete = r.EvapSystemComplete =
+                r.SecondaryAirComplete = r.AcRefrigerantComplete =
+                r.OxygenSensorComplete = r.OxygenSensorHeaterComplete = r.EgrSystemComplete
+                    = complete.Value;
+                break;
+            default:
+                return $"Unknown monitor '{monitorName}'. Use: misfire fuel comprehensive catalyst evap o2 o2heater egr all";
+        }
+
+        return $"Monitor '{monitorName}' set to {(complete.Value ? "ready" : "incomplete")}";
+    }
+
     private static bool IsCategory(string s) =>
         s.Equals("stored", StringComparison.OrdinalIgnoreCase) ||
         s.Equals("pending", StringComparison.OrdinalIgnoreCase) ||
@@ -371,6 +453,7 @@ public class SimulatorUi
         var input    = new StringBuilder();
         string? feedback = null;
         var exit = false;
+        var view = SettingsView.Data;
 
         AnsiConsole.Live(layout)
             .AutoClear(true)
@@ -380,7 +463,7 @@ public class SimulatorUi
             {
                 while (!exit)
                 {
-                    UpdateLayout(layout, state, log, input.ToString(), feedback);
+                    UpdateLayout(layout, state, log, input.ToString(), feedback, view);
                     ctx.Refresh();
 
                     // Poll for keystrokes for ~150 ms, then re-render (picks up new CAN packets)
@@ -403,6 +486,9 @@ public class SimulatorUi
                                 input.Clear();
                                 if (cmd is "exit" or "quit")
                                     exit = true;
+                                else if (cmd.Equals("show data",     StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Data;     feedback = null; }
+                                else if (cmd.Equals("show monitors", StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Monitors;  feedback = null; }
+                                else if (cmd.Equals("show dtcs",     StringComparison.OrdinalIgnoreCase)) { view = SettingsView.Dtcs;      feedback = null; }
                                 else if (cmd.Length > 0)
                                     feedback = ProcessCommand(cmd, pcm, state);
                                 break;
