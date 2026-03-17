@@ -36,6 +36,13 @@ public class SimulatorPcm : ControllerBase
     protected override float? GetThrottlePosition()
         => _state.ThrottlePercent;
 
+    protected override void OnDtcsCleared()
+    {
+        _state.StoredDtcs.Clear();
+        _state.PendingDtcs.Clear();
+        _state.PermanentDtcs.Clear();
+    }
+
     public void SyncDtcsFromState()
     {
         ClearAllDtcs();
