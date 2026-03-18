@@ -9,6 +9,7 @@ public class SimulatorPcm : ControllerBase
     private readonly SimulatorState _state;
 
     public override string Vin => _state.Vin;
+    public override string? EcuName => "NEOMOTIVE_PCM";
 
     public override Pid[] SupportedPids =>
     [

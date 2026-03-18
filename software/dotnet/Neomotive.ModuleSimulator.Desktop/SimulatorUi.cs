@@ -15,15 +15,19 @@ public class SimulatorUi
         Dictionary<string, byte[]> PermanentDtcs,
         Action Sync);
 
-    private static IRenderable BuildLeftPanel(SelectedModule selected)
+    private static IRenderable BuildLeftPanel(SelectedModule selected, SimulatorState pcmState, SimulatorTcuState tcuState)
     {
         var tree = new Tree("[bold yellow]Vehicle[/]");
+
         var pcmLabel = selected == SelectedModule.Pcm ? "[bold green]▶ PCM[/]" : "[green]PCM[/]";
         var pcm = tree.AddNode($"{pcmLabel} [grey]0x7E8[/]");
         pcm.AddNode("[grey]SAE J1979[/]");
+        pcm.AddNode($"[grey]DTCs: {pcmState.StoredDtcs.Count}|{pcmState.PendingDtcs.Count}|{pcmState.PermanentDtcs.Count}[/]");
+
         var tcuLabel = selected == SelectedModule.Tcu ? "[bold cyan]▶ TCU[/]" : "[cyan]TCU[/]";
         var tcu = tree.AddNode($"{tcuLabel} [grey]0x7E9[/]");
         tcu.AddNode("[grey]SAE J1979[/]");
+        tcu.AddNode($"[grey]DTCs: {tcuState.StoredDtcs.Count}|{tcuState.PendingDtcs.Count}|{tcuState.PermanentDtcs.Count}[/]");
 
         return new Panel(tree)
             .Header("[bold] Modules [/]")
@@ -32,20 +36,21 @@ public class SimulatorUi
 
     private static IRenderable BuildSettingsPanel(
         SimulatorState pcmState, SimulatorTcuState tcuState,
+        SimulatorPcm pcm, SimulatorTcu tcu,
         SettingsView view, SelectedModule selectedModule)
     {
         if (selectedModule == SelectedModule.Tcu)
-            return view == SettingsView.Dtcs ? BuildTcuDtcsView(tcuState) : BuildTcuDataView(tcuState);
+            return view == SettingsView.Dtcs ? BuildTcuDtcsView(tcuState) : BuildTcuDataView(tcuState, tcu);
 
         return view switch
         {
             SettingsView.Monitors => BuildMonitorsView(pcmState),
             SettingsView.Dtcs     => BuildDtcsView(pcmState),
-            _                     => BuildDataView(pcmState),
+            _                     => BuildDataView(pcmState, pcm),
         };
     }
 
-    private static IRenderable BuildDataView(SimulatorState state)
+    private static IRenderable BuildDataView(SimulatorState state, SimulatorPcm pcm)
     {
         var table = new Table()
             .NoBorder()
@@ -53,6 +58,9 @@ public class SimulatorUi
             .AddColumn(new TableColumn("[grey]Field[/]").Width(16))
             .AddColumn("[grey]Value[/]");
 
+        table.AddRow("[grey]ECU Name[/]",    pcm.EcuName is { } n ? $"[cyan]{Markup.Escape(n)}[/]" : "[grey]—[/]");
+        table.AddRow("[grey]Cal ID[/]",      pcm.CalibrationId is { } c ? $"[cyan]{Markup.Escape(c)}[/]" : "[grey]—[/]");
+        table.AddRow("[grey]CVN[/]",         pcm.CalibrationVerificationNumber is { } v ? $"[cyan]0x{v:X8}[/]" : "[grey]—[/]");
         table.AddRow("[grey]VIN[/]",          $"[cyan]{Markup.Escape(state.Vin)}[/]");
         table.AddRow("[grey]Coolant Temp[/]", $"[cyan]{state.CoolantTempCelsius:F1}[/][grey] °C[/]");
         table.AddRow("[grey]Engine RPM[/]",   $"[cyan]{state.Rpm:F0}[/][grey] rpm[/]");
@@ -64,7 +72,7 @@ public class SimulatorUi
             .Expand();
     }
 
-    private static IRenderable BuildTcuDataView(SimulatorTcuState state)
+    private static IRenderable BuildTcuDataView(SimulatorTcuState state, SimulatorTcu tcu)
     {
         var table = new Table()
             .NoBorder()
@@ -72,6 +80,9 @@ public class SimulatorUi
             .AddColumn(new TableColumn("[grey]Field[/]").Width(16))
             .AddColumn("[grey]Value[/]");
 
+        table.AddRow("[grey]ECU Name[/]", tcu.EcuName is { } n ? $"[cyan]{Markup.Escape(n)}[/]" : "[grey]—[/]");
+        table.AddRow("[grey]Cal ID[/]",   tcu.CalibrationId is { } c ? $"[cyan]{Markup.Escape(c)}[/]" : "[grey]—[/]");
+        table.AddRow("[grey]CVN[/]",      tcu.CalibrationVerificationNumber is { } v ? $"[cyan]0x{v:X8}[/]" : "[grey]—[/]");
         table.AddRow("[grey]Trans Temp[/]", $"[cyan]{state.TransTempCelsius:F1}[/][grey] °C[/]");
         table.AddRow("[grey]Gear[/]",       $"[cyan]{Markup.Escape(state.GearPosition)}[/]");
 
@@ -240,6 +251,9 @@ public class SimulatorUi
                 {
                     0x00 => "Query Veh Info PIDs",
                     0x02 => "Query VIN",
+                    0x04 => "Query Cal ID",
+                    0x06 => "Query CVN",
+                    0x0A => "Query ECU Name",
                     _    => $"Query Veh Info {pid:X2}",
                 },
                 _ => $"Service {svc:X2} PID {pid:X2}",
@@ -276,7 +290,14 @@ public class SimulatorUi
                 0x03 => $"Stored DTCs ({(d.Length > offset ? d[offset] : 0)})",
                 0x04 => "DTCs Cleared",
                 0x07 => $"Pending DTCs ({(d.Length > offset ? d[offset] : 0)})",
-                0x09 => d.Length > offset && d[offset] == 0x02 ? "VIN" : "Vehicle Info",
+                0x09 => d.Length > offset ? d[offset] switch
+                    {
+                        0x02 => "VIN",
+                        0x04 => "Cal ID",
+                        0x06 => "CVN",
+                        0x0A => "ECU Name",
+                        _    => "Vehicle Info",
+                    } : "Vehicle Info",
                 0x0A => $"Permanent DTCs ({(d.Length > offset ? d[offset] : 0)})",
                 _    => $"Response {svcByte:X2}",
             };
@@ -297,11 +318,12 @@ public class SimulatorUi
     private static void UpdateLayout(
         Layout layout,
         SimulatorState pcmState, SimulatorTcuState tcuState,
+        SimulatorPcm pcm, SimulatorTcu tcu,
         CanPacketLog log, string input, string? feedback,
         SettingsView view, SelectedModule selectedModule)
     {
-        layout["Left"].Update(BuildLeftPanel(selectedModule));
-        layout["Settings"].Update(BuildSettingsPanel(pcmState, tcuState, view, selectedModule));
+        layout["Left"].Update(BuildLeftPanel(selectedModule, pcmState, tcuState));
+        layout["Settings"].Update(BuildSettingsPanel(pcmState, tcuState, pcm, tcu, view, selectedModule));
         layout["CanLog"].Update(BuildCanLogPanel(log));
         layout["Prompt"].Update(BuildPromptPanel(input, feedback));
     }
@@ -578,7 +600,7 @@ public class SimulatorUi
             {
                 while (!exit)
                 {
-                    UpdateLayout(layout, pcmState, tcuState, log, input.ToString(), feedback, view, selectedModule);
+                    UpdateLayout(layout, pcmState, tcuState, pcm, tcu, log, input.ToString(), feedback, view, selectedModule);
                     ctx.Refresh();
 
                     var deadline = DateTime.UtcNow.AddMilliseconds(150);

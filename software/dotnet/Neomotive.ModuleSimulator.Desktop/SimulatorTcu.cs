@@ -10,6 +10,7 @@ public class SimulatorTcu : TransmissionControlModule
     private readonly SimulatorTcuState _state;
 
     public override string Vin => "AWWWWWWWWWWW0YEAH";
+    public override string? EcuName => "NEOMOTIVE_TCU";
 
     public override Pid[] SupportedPids =>
     [
