@@ -1,24 +1,16 @@
 using Meadow.Foundation.Telematics.OBD2;
 using Meadow.Hardware;
 using Meadow.Units;
+using System;
 
 namespace Neomotive.ModuleSimulator.Desktop;
 
-public class SimulatorPcm : ControllerBase
+public class SimulatorPcm : PcmBase
 {
     private readonly SimulatorState _state;
 
     public override string Vin => _state.Vin;
     public override string? EcuName => "NEOMOTIVE_PCM";
-
-    public override Pid[] SupportedPids =>
-    [
-        Pid.MonitorStatus,
-        Pid.EngineCoolantTemperature,
-        Pid.EngineRpm,
-        Pid.VehicleSpeed,
-        Pid.ThrottlePosition,
-    ];
 
     public SimulatorPcm(ICanBus canBus, SimulatorState state)
         : base([canBus], 0x7E8)
@@ -38,13 +30,30 @@ public class SimulatorPcm : ControllerBase
     protected override float? GetThrottlePosition()
         => _state.ThrottlePercent;
 
-    protected override EmissionsReadinessStatus GetEmissionsReadiness() => _state.Readiness;
+    protected override EmissionsReadinessStatus GetEmissionsReadiness()
+        => _state.Readiness;
+
+    protected override TimeSpan GetTimeSinceEndineStarted()
+        => DateTime.UtcNow - _state.EngineStartedAt;
+
+    protected override TimeSpan GetTimeWithMilOn()
+        => _state.TimeWithMilOn;
+
+    protected override TimeSpan GetTimeSinceDtcsCleared()
+        => DateTime.UtcNow - _state.DtcsClearedAt;
+
+    protected override Length GetDistanceSinceDtcsCleared()
+        => new Length(_state.DistanceSinceDtcsClearedKm, Length.UnitType.Kilometers);
+
+    protected override Length GetDistanceWithMilOn()
+        => new Length(_state.DistanceWithMilOnKm, Length.UnitType.Kilometers);
 
     protected override void OnDtcsCleared()
     {
         _state.StoredDtcs.Clear();
         _state.PendingDtcs.Clear();
         _state.PermanentDtcs.Clear();
+        _state.DtcsClearedAt = DateTime.UtcNow;
     }
 
     public void SyncDtcsFromState()

@@ -1,4 +1,5 @@
 using Meadow.Foundation.Telematics.OBD2;
+using System;
 
 namespace Neomotive.ModuleSimulator.Desktop;
 
@@ -11,6 +12,13 @@ public class SimulatorState
     public float Rpm { get; set; } = 800f;
     public double SpeedKph { get; set; } = 0.0;
     public float ThrottlePercent { get; set; } = 0f;
+
+    // PCM time/distance metrics
+    public DateTime EngineStartedAt { get; set; } = DateTime.UtcNow;
+    public DateTime DtcsClearedAt { get; set; } = DateTime.UtcNow;
+    public TimeSpan TimeWithMilOn { get; set; } = TimeSpan.Zero;
+    public double DistanceSinceDtcsClearedKm { get; set; } = 0.0;
+    public double DistanceWithMilOnKm { get; set; } = 0.0;
 
     public EmissionsReadinessStatus Readiness { get; } = new EmissionsReadinessStatus();
 
