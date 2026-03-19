@@ -1,4 +1,4 @@
-using Meadow.Foundation.Telematics.OBD2;
+using Meadow.Foundation.Telematics.J1979;
 using System;
 
 namespace Neomotive.ModuleSimulator.Desktop;
