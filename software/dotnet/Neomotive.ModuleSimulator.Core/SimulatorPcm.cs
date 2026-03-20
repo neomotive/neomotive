@@ -2,7 +2,7 @@ using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using Meadow.Units;
 
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 public class SimulatorPcm : PcmBase
 {

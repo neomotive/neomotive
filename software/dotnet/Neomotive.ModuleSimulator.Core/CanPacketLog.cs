@@ -1,4 +1,4 @@
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 public record CanPacketEntry(DateTime Timestamp, int Id, byte[] Data, bool IsOutgoing);
 

@@ -16,7 +16,9 @@
   </Folder>
   <Folder Name="/Libraries/ControlModules/">
     <Project Path="Neomotive.ControlModule/Neomotive.ControlModule.csproj" Id="c12bc292-7ba1-4600-8371-440a47e42429" />
+    <Project Path="Neomotive.ModuleSimulator.Core/Neomotive.ModuleSimulator.Core.csproj" Id="a5fc049b-a64b-46ce-b055-87866c611072" />
     <Project Path="Neomotive.ModuleSimulator.Desktop/Neomotive.ModuleSimulator.Desktop.csproj" Id="e1361edc-2ace-4264-9971-b0db9049bf70" />
+    <Project Path="Neomotive.ModuleSimulator.UI/Neomotive.ModuleSimulator.UI.csproj" Id="fd7b8979-c0a4-4464-a02a-d9b762a05492" />
   </Folder>
   <Folder Name="/Libraries/TransferCase/">
     <Project Path="Libraries/Neomotive.TransferCase.Core/Neomotive.TransferCase.Core.csproj" />
@@ -40,7 +42,7 @@
     <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Ssd130x/Driver/Displays.Ssd130x.csproj">
       <Deploy />
     </Project>
-    <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.IOExpanders.PCanBasic/Driver/ICs.IOExpanders.PCanBasic.csproj" />
+    <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.PCanBasic/Driver/ICs.CAN.PCanBasic.csproj" />
     <Project Path="../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />
     <Project Path="../../../wilderness/Meadow.Units/Source/Meadow.Units/Meadow.Units.csproj">
       <Deploy />

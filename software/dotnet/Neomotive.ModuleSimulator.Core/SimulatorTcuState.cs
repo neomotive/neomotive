@@ -1,4 +1,4 @@
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 public class SimulatorTcuState
 {
@@ -6,8 +6,8 @@ public class SimulatorTcuState
     public string GearPosition { get; set; } = "P";
 
     // all keyed by uppercase code string, e.g. "P0700"
-    public readonly Dictionary<string, byte[]> StoredDtcs    = new();
-    public readonly Dictionary<string, byte[]> PendingDtcs   = new();
+    public readonly Dictionary<string, byte[]> StoredDtcs = new();
+    public readonly Dictionary<string, byte[]> PendingDtcs = new();
     public readonly Dictionary<string, byte[]> PermanentDtcs = new();
 
     public static readonly KnownDtc[] KnownDtcs =

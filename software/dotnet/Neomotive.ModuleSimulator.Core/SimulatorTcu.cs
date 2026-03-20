@@ -3,7 +3,7 @@ using Meadow.Hardware;
 using Meadow.Units;
 using Neomotive.ControlModule;
 
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 public class SimulatorTcu : TransmissionControlModule
 {

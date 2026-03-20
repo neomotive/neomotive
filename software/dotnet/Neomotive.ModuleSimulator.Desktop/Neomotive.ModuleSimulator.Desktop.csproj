@@ -13,8 +13,9 @@
   </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.IOExpanders.PCanBasic\Driver\ICs.IOExpanders.PCanBasic.csproj" />
+        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.PCanBasic\Driver\ICs.CAN.PCanBasic.csproj" />
         <ProjectReference Include="..\Neomotive.ControlModule\Neomotive.ControlModule.csproj" />
+        <ProjectReference Include="..\Neomotive.ModuleSimulator.Core\Neomotive.ModuleSimulator.Core.csproj" />
     </ItemGroup>
 
 </Project>

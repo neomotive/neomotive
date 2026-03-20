@@ -1,6 +1,6 @@
 using Meadow.Hardware;
 
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 /// <summary>
 /// Wraps an ICanBus to log all received and transmitted frames to a CanPacketLog.

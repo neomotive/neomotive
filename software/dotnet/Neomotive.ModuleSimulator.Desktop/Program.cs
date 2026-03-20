@@ -1,5 +1,6 @@
-using ICs.IOExpanders.PCanBasic;
+using Meadow.Foundation.ICs.CAN;
 using Meadow.Hardware;
+using Neomotive.ModuleSimulator;
 using Neomotive.ModuleSimulator.Desktop;
 using Spectre.Console;
 
@@ -24,11 +25,11 @@ catch (Exception ex)
 
 AnsiConsole.WriteLine();
 
-var log      = new CanPacketLog();
-var bus      = new LoggingCanBus(rawBus, log);
+var log = new CanPacketLog();
+var bus = new LoggingCanBus(rawBus, log);
 var pcmState = new SimulatorState();
 var tcuState = new SimulatorTcuState();
-var pcm      = new SimulatorPcm(bus, pcmState);
-var tcu      = new SimulatorTcu(bus, tcuState);
+var pcm = new SimulatorPcm(bus, pcmState);
+var tcu = new SimulatorTcu(bus, tcuState);
 
 new SimulatorUi().Run(pcm, pcmState, tcu, tcuState, log);

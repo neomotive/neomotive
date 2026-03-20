@@ -1,7 +1,6 @@
 using Meadow.Foundation.Telematics.J1979;
-using System;
 
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 public record KnownDtc(string Code, string Description, byte[] RawBytes);
 
@@ -23,8 +22,8 @@ public class SimulatorState
     public EmissionsReadinessStatus Readiness { get; } = new EmissionsReadinessStatus();
 
     // all keyed by uppercase code string, e.g. "P0300"
-    public readonly Dictionary<string, byte[]> StoredDtcs    = new();
-    public readonly Dictionary<string, byte[]> PendingDtcs   = new();
+    public readonly Dictionary<string, byte[]> StoredDtcs = new();
+    public readonly Dictionary<string, byte[]> PendingDtcs = new();
     public readonly Dictionary<string, byte[]> PermanentDtcs = new();
 
     public static readonly KnownDtc[] KnownDtcs =

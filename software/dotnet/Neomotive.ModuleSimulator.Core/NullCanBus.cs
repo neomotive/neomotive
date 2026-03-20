@@ -1,6 +1,6 @@
 using Meadow.Hardware;
 
-namespace Neomotive.ModuleSimulator.Desktop;
+namespace Neomotive.ModuleSimulator;
 
 /// <summary>
 /// A no-op CAN bus for running the simulator without hardware.
