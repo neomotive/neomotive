@@ -9,89 +9,7 @@
         CanResize="False"
         Background="#111418">
 
-    <Window.Styles>
-
-        <Style Selector="Border.module">
-            <Setter Property="Background"      Value="#1C2028" />
-            <Setter Property="BorderBrush"     Value="#2E3440" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius"    Value="3" />
-            <Setter Property="Padding"         Value="8,6" />
-            <Setter Property="Margin"          Value="0,0,0,5" />
-            <Setter Property="Cursor"          Value="Hand" />
-        </Style>
-        <Style Selector="Border.module.selected">
-            <Setter Property="Background"  Value="#1A2A1A" />
-            <Setter Property="BorderBrush" Value="#4A7C4A" />
-        </Style>
-
-        <Style Selector="Button.tab">
-            <Setter Property="Background"      Value="Transparent" />
-            <Setter Property="Foreground"      Value="#556070" />
-            <Setter Property="BorderThickness" Value="0,0,0,2" />
-            <Setter Property="BorderBrush"     Value="Transparent" />
-            <Setter Property="Padding"         Value="12,4" />
-            <Setter Property="CornerRadius"    Value="0" />
-            <Setter Property="FontSize"        Value="11" />
-            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
-        </Style>
-        <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#C0C8D4" />
-        </Style>
-        <Style Selector="Button.tab.active">
-            <Setter Property="Foreground"  Value="#E0E5EC" />
-            <Setter Property="BorderBrush" Value="#4A7C59" />
-            <Setter Property="FontWeight"  Value="SemiBold" />
-        </Style>
-        <Style Selector="Button.tab.active:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#E0E5EC" />
-        </Style>
-
-        <!-- Known DTC toggle buttons -->
-        <Style Selector="Button.dtc">
-            <Setter Property="Background"      Value="#1A1E26" />
-            <Setter Property="BorderBrush"     Value="#2E3440" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius"    Value="3" />
-            <Setter Property="Padding"         Value="7,3" />
-            <Setter Property="Margin"          Value="0,0,4,0" />
-            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
-            <Setter Property="FontSize"        Value="11" />
-            <Setter Property="Foreground"      Value="#556070" />
-        </Style>
-        <Style Selector="Button.dtc:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#222830" />
-        </Style>
-        <Style Selector="Button.dtc.active">
-            <Setter Property="Background"  Value="#3A1A1A" />
-            <Setter Property="BorderBrush" Value="#8A3030" />
-            <Setter Property="Foreground"  Value="#E06060" />
-        </Style>
-        <Style Selector="Button.dtc.active:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#4A2020" />
-        </Style>
-
-        <!-- Small action buttons (clear per-row, clear all) -->
-        <Style Selector="Button.action-sm">
-            <Setter Property="Background"      Value="Transparent" />
-            <Setter Property="BorderBrush"     Value="#3A4050" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius"    Value="3" />
-            <Setter Property="Padding"         Value="5,1" />
-            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
-            <Setter Property="FontSize"        Value="10" />
-            <Setter Property="Foreground"      Value="#556070" />
-        </Style>
-        <Style Selector="Button.action-sm:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2A1A1A" />
-            <Setter Property="Foreground" Value="#E06060" />
-        </Style>
-
-    </Window.Styles>
-
-    <!-- Root: 3 rows — main | CAN log | command bar -->
+    <!-- Root: main content | CAN log | command bar -->
     <Grid RowDefinitions="*, 96, 30">
 
         <!-- ══════════════════════════════════════════════════════════════════
@@ -99,7 +17,7 @@
              ══════════════════════════════════════════════════════════════════ -->
         <Grid Grid.Row="0" ColumnDefinitions="155, *">
 
-            <!-- Left panel -->
+            <!-- ── Left panel ──────────────────────────────────────────── -->
             <Border Grid.Column="0"
                     Background="#141820"
                     BorderBrush="#2E3440"
@@ -107,13 +25,7 @@
                     Padding="8,10">
                 <StackPanel>
 
-                    <TextBlock Text="MODULES"
-                               Foreground="#384050"
-                               FontSize="9"
-                               FontFamily="Consolas,Cascadia Code,monospace"
-                               FontWeight="Bold"
-                               LetterSpacing="2"
-                               Margin="2,0,0,8" />
+                    <TextBlock Classes="heading" Text="MODULES" Margin="2,0,0,8" />
 
                     <!-- PCM -->
                     <Border Classes="module"
@@ -121,21 +33,11 @@
                             PointerPressed="OnPcmPressed">
                         <StackPanel Spacing="2">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="PCM"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontWeight="SemiBold" FontSize="12"
-                                           Foreground="#6DBF67" />
-                                <TextBlock Text="0x7E8"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#344050"
-                                           VerticalAlignment="Center" />
+                                <TextBlock Classes="pcm-name" Text="PCM" />
+                                <TextBlock Classes="muted xs" Text="0x7E8" VerticalAlignment="Center" />
                             </StackPanel>
-                            <TextBlock Text="SAE J1979"
-                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                       FontSize="9" Foreground="#344050" />
-                            <TextBlock Text="{Binding PcmDtcCounts, StringFormat='DTCs: {0}'}"
-                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                       FontSize="9" Foreground="#344050" />
+                            <TextBlock Classes="muted xs" Text="SAE J1979" />
+                            <TextBlock Classes="muted xs" Text="{Binding PcmDtcCounts, StringFormat='DTCs: {0}'}" />
                         </StackPanel>
                     </Border>
 
@@ -145,28 +47,18 @@
                             PointerPressed="OnTcuPressed">
                         <StackPanel Spacing="2">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="TCU"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontWeight="SemiBold" FontSize="12"
-                                           Foreground="#6BB8D4" />
-                                <TextBlock Text="0x7E9"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#344050"
-                                           VerticalAlignment="Center" />
+                                <TextBlock Classes="tcu-name" Text="TCU" />
+                                <TextBlock Classes="muted xs" Text="0x7E9" VerticalAlignment="Center" />
                             </StackPanel>
-                            <TextBlock Text="SAE J1979"
-                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                       FontSize="9" Foreground="#344050" />
-                            <TextBlock Text="{Binding TcuDtcCounts, StringFormat='DTCs: {0}'}"
-                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                       FontSize="9" Foreground="#344050" />
+                            <TextBlock Classes="muted xs" Text="SAE J1979" />
+                            <TextBlock Classes="muted xs" Text="{Binding TcuDtcCounts, StringFormat='DTCs: {0}'}" />
                         </StackPanel>
                     </Border>
 
                 </StackPanel>
             </Border>
 
-            <!-- Right: tab bar + content -->
+            <!-- ── Right: tab bar + content ────────────────────────────── -->
             <Grid Grid.Column="1" RowDefinitions="28, *">
 
                 <!-- Tab bar -->
@@ -180,9 +72,7 @@
                         <Button Content="DTCs"     Classes="tab" Classes.active="{Binding IsDtcsView}"     Click="OnShowDtcs" />
                         <Button Content="Inputs"   Classes="tab" Classes.active="{Binding IsInputsView}"   Click="OnShowInputs" />
                         <Button Content="Config"   Classes="tab" Classes.active="{Binding IsConfigView}"   Click="OnShowConfig" />
-                        <TextBlock Text="{Binding SettingsPanelTitle}"
-                                   FontFamily="Consolas,Cascadia Code,monospace"
-                                   FontSize="10" Foreground="#344050"
+                        <TextBlock Classes="muted xs" Text="{Binding SettingsPanelTitle}"
                                    VerticalAlignment="Center" Margin="12,0,0,0" />
                     </StackPanel>
                 </Border>
@@ -196,12 +86,8 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="local:DataFieldItem">
                                     <Grid ColumnDefinitions="140, *" Margin="0,0,0,3">
-                                        <TextBlock Grid.Column="0" Text="{Binding Field}"
-                                                   FontFamily="Consolas,Cascadia Code,monospace"
-                                                   FontSize="11" Foreground="#4A5568" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Value}"
-                                                   FontFamily="Consolas,Cascadia Code,monospace"
-                                                   FontSize="11" Foreground="#88C0D0" />
+                                        <TextBlock Grid.Column="0" Classes="label" Text="{Binding Field}" />
+                                        <TextBlock Grid.Column="1" Classes="value" Text="{Binding Value}" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -211,37 +97,19 @@
                     <!-- ── MONITORS VIEW ──────────────────────────────── -->
                     <ScrollViewer IsVisible="{Binding IsMonitorsView}" Padding="12,8">
                         <StackPanel Spacing="4">
-                            <!-- MIL -->
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
-                                <TextBlock Text="MIL"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="11" Foreground="#4A5568" Width="140" />
-                                <TextBlock Text="ON"  FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="11" FontWeight="Bold" Foreground="#E06060"
-                                           IsVisible="{Binding MilOn}" />
-                                <TextBlock Text="OFF" FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="11" Foreground="#6DBF67"
-                                           IsVisible="{Binding MilOff}" />
+                                <TextBlock Classes="label" Text="MIL" Width="140" />
+                                <TextBlock Classes="mil-on"  Text="ON"  IsVisible="{Binding MilOn}" />
+                                <TextBlock Classes="mil-off" Text="OFF" IsVisible="{Binding MilOff}" />
                             </StackPanel>
                             <ItemsControl ItemsSource="{Binding Monitors}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="local:MonitorItem">
                                         <Grid ColumnDefinitions="140, *" Margin="0,0,0,2">
-                                            <TextBlock Grid.Column="0" Text="{Binding Name}"
-                                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                                       FontSize="11" Foreground="#4A5568" />
-                                            <TextBlock Grid.Column="1" Text="— not supported"
-                                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                                       FontSize="11" Foreground="#2E3A4A"
-                                                       IsVisible="{Binding IsNotSupported}" />
-                                            <TextBlock Grid.Column="1" Text="✓ Ready"
-                                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                                       FontSize="11" Foreground="#6DBF67"
-                                                       IsVisible="{Binding IsReady}" />
-                                            <TextBlock Grid.Column="1" Text="✗ Incomplete"
-                                                       FontFamily="Consolas,Cascadia Code,monospace"
-                                                       FontSize="11" Foreground="#D4A050"
-                                                       IsVisible="{Binding IsIncomplete}" />
+                                            <TextBlock Grid.Column="0" Classes="label" Text="{Binding Name}" />
+                                            <TextBlock Grid.Column="1" Classes="muted"       Text="— not supported" IsVisible="{Binding IsNotSupported}" />
+                                            <TextBlock Grid.Column="1" Classes="ok"          Text="✓ Ready"         IsVisible="{Binding IsReady}" />
+                                            <TextBlock Grid.Column="1" Classes="warn"        Text="✗ Incomplete"    IsVisible="{Binding IsIncomplete}" />
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -250,49 +118,27 @@
                     </ScrollViewer>
 
                     <!-- ── DTCs VIEW ──────────────────────────────────── -->
-                    <Grid IsVisible="{Binding IsDtcsView}"
-                          RowDefinitions="*, Auto">
+                    <Grid IsVisible="{Binding IsDtcsView}" RowDefinitions="*, Auto">
 
-                        <!-- Active DTCs list -->
                         <ScrollViewer Grid.Row="0" Padding="12,8,12,4">
                             <StackPanel>
-                                <TextBlock Text="No active DTCs"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="11" Foreground="#4A5568"
-                                           IsVisible="{Binding HasNoDtcs}" />
+                                <TextBlock Classes="label" Text="No active DTCs" IsVisible="{Binding HasNoDtcs}" />
                                 <StackPanel IsVisible="{Binding HasDtcs}" Spacing="2">
-                                    <!-- Header -->
                                     <Grid ColumnDefinitions="72, 78, *, 28" Margin="0,0,0,4">
-                                        <TextBlock Grid.Column="0" Text="Code"
-                                                   FontFamily="Consolas,Cascadia Code,monospace"
-                                                   FontSize="10" Foreground="#344050" FontWeight="Bold" />
-                                        <TextBlock Grid.Column="1" Text="Category"
-                                                   FontFamily="Consolas,Cascadia Code,monospace"
-                                                   FontSize="10" Foreground="#344050" FontWeight="Bold" />
-                                        <TextBlock Grid.Column="2" Text="Description"
-                                                   FontFamily="Consolas,Cascadia Code,monospace"
-                                                   FontSize="10" Foreground="#344050" FontWeight="Bold" />
+                                        <TextBlock Grid.Column="0" Classes="muted xs" Text="Code"        FontWeight="Bold" />
+                                        <TextBlock Grid.Column="1" Classes="muted xs" Text="Category"    FontWeight="Bold" />
+                                        <TextBlock Grid.Column="2" Classes="muted xs" Text="Description" FontWeight="Bold" />
                                     </Grid>
                                     <ItemsControl ItemsSource="{Binding Dtcs}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="local:DtcItem">
                                                 <Grid ColumnDefinitions="72, 78, *, 28" Margin="0,0,0,2">
-                                                    <TextBlock Grid.Column="0" Text="{Binding Code}"
-                                                               FontFamily="Consolas,Cascadia Code,monospace"
-                                                               FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="#E06060" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding Category}"
-                                                               FontFamily="Consolas,Cascadia Code,monospace"
-                                                               FontSize="11" Foreground="#4A5568" />
-                                                    <TextBlock Grid.Column="2" Text="{Binding Description}"
-                                                               FontFamily="Consolas,Cascadia Code,monospace"
-                                                               FontSize="11" Foreground="#C8CDD6" />
-                                                    <Button Grid.Column="3" Content="✕"
-                                                            Classes="action-sm"
-                                                            Tag="{Binding Code}"
-                                                            Click="OnClearDtcButton"
-                                                            HorizontalAlignment="Center"
-                                                            VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="0" Classes="error" Text="{Binding Code}" />
+                                                    <TextBlock Grid.Column="1" Classes="label" Text="{Binding Category}" />
+                                                    <TextBlock Grid.Column="2"                 Text="{Binding Description}" />
+                                                    <Button    Grid.Column="3" Classes="action-sm" Content="✕"
+                                                               Tag="{Binding Code}" Click="OnClearDtcButton"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -308,19 +154,10 @@
                                 BorderThickness="0,1,0,0"
                                 Padding="12,6">
                             <Grid RowDefinitions="Auto, Auto">
-                                <!-- Label + Clear All -->
-                                <StackPanel Grid.Row="0" Orientation="Horizontal"
-                                            Spacing="8" Margin="0,0,0,5">
-                                    <TextBlock Text="KNOWN DTCs"
-                                               FontFamily="Consolas,Cascadia Code,monospace"
-                                               FontSize="9" FontWeight="Bold"
-                                               Foreground="#344050" LetterSpacing="2"
-                                               VerticalAlignment="Center" />
-                                    <Button Content="Clear All"
-                                            Classes="action-sm"
-                                            Click="OnClearAllDtcs" />
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,5">
+                                    <TextBlock Classes="heading" Text="KNOWN DTCs" VerticalAlignment="Center" />
+                                    <Button Classes="action-sm" Content="Clear All" Click="OnClearAllDtcs" />
                                 </StackPanel>
-                                <!-- DTC toggle buttons -->
                                 <ItemsControl Grid.Row="1" ItemsSource="{Binding KnownDtcButtons}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -329,14 +166,10 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="local:DtcButtonItem">
-                                            <Button Classes="dtc"
-                                                    Classes.active="{Binding IsActive}"
-                                                    Tag="{Binding Code}"
-                                                    Click="OnToggleDtcButton"
+                                            <Button Classes="dtc" Classes.active="{Binding IsActive}"
+                                                    Tag="{Binding Code}" Click="OnToggleDtcButton"
                                                     ToolTip.Tip="{Binding Description}">
-                                                <TextBlock Text="{Binding Code}"
-                                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                                           FontSize="11" />
+                                                <TextBlock Text="{Binding Code}" />
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -348,21 +181,14 @@
 
                     <!-- ── INPUTS VIEW ──────────────────────────────── -->
                     <ScrollViewer IsVisible="{Binding IsInputsView}" Padding="12,8">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Inputs will go here"
-                                        FontFamily="Consolas,Cascadia Code,monospace"
-                                        FontSize="11" Foreground="#4A5568" Width="140" />
-                        </StackPanel>
+                        <TextBlock Classes="label" Text="Inputs will go here" />
                     </ScrollViewer>
 
                     <!-- ── CONFIG VIEW ──────────────────────────────── -->
-                    <ScrollViewer IsVisible="{Binding IsInputsView}" Padding="12,8">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Config will go here"
-                                        FontFamily="Consolas,Cascadia Code,monospace"
-                                        FontSize="11" Foreground="#4A5568" Width="140" />
-                        </StackPanel>
+                    <ScrollViewer IsVisible="{Binding IsConfigView}" Padding="12,8">
+                        <TextBlock Classes="label" Text="Config will go here" />
                     </ScrollViewer>
+
                 </Grid>
             </Grid>
         </Grid>
@@ -377,45 +203,23 @@
                 Padding="12,6">
             <Grid RowDefinitions="16, *">
 
-                <TextBlock Grid.Row="0"
-                           Text="CAN PACKETS"
-                           FontFamily="Consolas,Cascadia Code,monospace"
-                           FontSize="9" FontWeight="Bold"
-                           Foreground="#384050" LetterSpacing="2" />
+                <TextBlock Grid.Row="0" Classes="heading" Text="CAN PACKETS" />
 
-                <TextBlock Grid.Row="1"
+                <TextBlock Grid.Row="1" Classes="dim"
                            Text="Waiting for CAN frames..."
-                           FontFamily="Consolas,Cascadia Code,monospace"
-                           FontSize="11" Foreground="#2A3540" FontStyle="Italic"
                            IsVisible="{Binding HasNoCanPackets}"
                            VerticalAlignment="Center" />
 
-                <ItemsControl Grid.Row="1"
-                              ItemsSource="{Binding CanLogItems}"
-                              IsVisible="{Binding HasCanPackets}">
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding CanLogItems}" IsVisible="{Binding HasCanPackets}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="local:CanLogItem">
                             <Grid ColumnDefinitions="100, 38, 28, 185, *" Margin="0,1">
-                                <TextBlock Grid.Column="0" Text="{Binding Time}"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#344050" />
-                                <TextBlock Grid.Column="1" Text="{Binding Id}"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#C8CDD6" />
-                                <TextBlock Grid.Column="2" Text="TX"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#5E9FE0"
-                                           IsVisible="{Binding IsOutgoing}" />
-                                <TextBlock Grid.Column="2" Text="RX"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#C8A040"
-                                           IsVisible="{Binding !IsOutgoing}" />
-                                <TextBlock Grid.Column="3" Text="{Binding Data}"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#344050" />
-                                <TextBlock Grid.Column="4" Text="{Binding Description}"
-                                           FontFamily="Consolas,Cascadia Code,monospace"
-                                           FontSize="10" Foreground="#C8CDD6" />
+                                <TextBlock Grid.Column="0" Classes="muted sm" Text="{Binding Time}" />
+                                <TextBlock Grid.Column="1" Classes="sm"       Text="{Binding Id}" />
+                                <TextBlock Grid.Column="2" Classes="tx sm"    Text="TX" IsVisible="{Binding IsOutgoing}" />
+                                <TextBlock Grid.Column="2" Classes="rx sm"    Text="RX" IsVisible="{Binding !IsOutgoing}" />
+                                <TextBlock Grid.Column="3" Classes="muted sm" Text="{Binding Data}" />
+                                <TextBlock Grid.Column="4" Classes="sm"       Text="{Binding Description}" />
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -433,10 +237,7 @@
                 BorderThickness="0,1,0,0"
                 Padding="10,4">
             <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                <TextBlock Text=">"
-                           FontFamily="Consolas,Cascadia Code,monospace"
-                           FontSize="12" Foreground="#6DBF67"
-                           VerticalAlignment="Center" />
+                <TextBlock Classes="ok" Text=">" FontSize="12" VerticalAlignment="Center" />
                 <TextBox x:Name="CommandInput"
                          Text="{Binding CommandInput}"
                          FontFamily="Consolas,Cascadia Code,monospace"
@@ -445,10 +246,7 @@
                          CaretBrush="#6DBF67"
                          MinWidth="350" VerticalAlignment="Center"
                          KeyDown="OnCommandKeyDown" />
-                <TextBlock Text="{Binding FeedbackText}"
-                           FontFamily="Consolas,Cascadia Code,monospace"
-                           FontSize="11" Foreground="#4A5568"
-                           VerticalAlignment="Center" />
+                <TextBlock Classes="label" Text="{Binding FeedbackText}" VerticalAlignment="Center" />
             </StackPanel>
         </Border>
 

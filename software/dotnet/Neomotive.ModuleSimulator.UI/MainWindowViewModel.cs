@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using Meadow.Foundation.ICs.CAN;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
@@ -39,6 +40,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private SettingsView _view = SettingsView.Data;
     private SelectedModule _selectedModule = SelectedModule.Pcm;
+    private DateTime _lastCanTimestamp = DateTime.MinValue;
 
     public MainWindowViewModel()
     {
@@ -63,6 +65,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _tcu = new SimulatorTcu(bus, _tcuState);
 
         Refresh();
+
+        // CAN log is the only thing that changes without user interaction
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        timer.Tick += (_, _) => RefreshCanLog();
+        timer.Start();
     }
 
     // ── Module display ────────────────────────────────────────────────────────
@@ -281,13 +288,24 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(HasNoDtcs));
         OnPropertyChanged(nameof(HasDtcs));
         KnownDtcButtons = BuildDtcButtons();
+    }
 
-        var canLog = BuildCanLog();
-        CanLogItems = canLog;
-        HasNoCanPackets = canLog.Count == 0;
-        HasCanPackets = canLog.Count > 0;
-        OnPropertyChanged(nameof(HasNoCanPackets));
-        OnPropertyChanged(nameof(HasCanPackets));
+    private void RefreshCanLog()
+    {
+        var packets = _log.GetRecent(6);
+        var latest = packets.Count > 0 ? packets[^1].Timestamp : DateTime.MinValue;
+        if (latest == _lastCanTimestamp) return;
+        _lastCanTimestamp = latest;
+
+        CanLogItems = BuildCanLog();
+        var hasPackets = CanLogItems.Count > 0;
+        if (HasCanPackets != hasPackets)
+        {
+            HasCanPackets = hasPackets;
+            HasNoCanPackets = !hasPackets;
+            OnPropertyChanged(nameof(HasCanPackets));
+            OnPropertyChanged(nameof(HasNoCanPackets));
+        }
     }
 
     // ── Data builders ─────────────────────────────────────────────────────────
