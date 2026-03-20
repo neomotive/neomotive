@@ -105,12 +105,17 @@
                             <ItemsControl ItemsSource="{Binding Monitors}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="local:MonitorItem">
-                                        <Grid ColumnDefinitions="140, *" Margin="0,0,0,2">
-                                            <TextBlock Grid.Column="0" Classes="label" Text="{Binding Name}" />
-                                            <TextBlock Grid.Column="1" Classes="muted"       Text="— not supported" IsVisible="{Binding IsNotSupported}" />
-                                            <TextBlock Grid.Column="1" Classes="ok"          Text="✓ Ready"         IsVisible="{Binding IsReady}" />
-                                            <TextBlock Grid.Column="1" Classes="warn"        Text="✗ Incomplete"    IsVisible="{Binding IsIncomplete}" />
-                                        </Grid>
+                                        <Button Classes="monitor-row"
+                                                IsEnabled="{Binding Supported}"
+                                                Tag="{Binding Key}"
+                                                Click="OnToggleMonitor">
+                                            <Grid ColumnDefinitions="140, *">
+                                                <TextBlock Grid.Column="0" Classes="label" Text="{Binding Name}" />
+                                                <TextBlock Grid.Column="1" Classes="muted" Text="— not supported" IsVisible="{Binding IsNotSupported}" />
+                                                <TextBlock Grid.Column="1" Classes="ok"   Text="✓ Ready"         IsVisible="{Binding IsReady}" />
+                                                <TextBlock Grid.Column="1" Classes="warn" Text="✗ Incomplete"    IsVisible="{Binding IsIncomplete}" />
+                                            </Grid>
+                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

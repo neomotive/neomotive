@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 namespace Neomotive.ModuleSimulator.UI;
 
 public record DataFieldItem(string Field, string Value);
-public record MonitorItem(string Name, bool Supported, bool Complete)
+public record MonitorItem(string Key, string Name, bool Supported, bool Complete)
 {
     public bool IsNotSupported => !Supported;
     public bool IsReady => Supported && Complete;
@@ -262,6 +262,25 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Refresh();
     }
 
+    public void ToggleMonitor(string key)
+    {
+        var r = _pcmState.Readiness;
+        switch (key)
+        {
+            case "misfire":      if (r.MisfireSupported)                r.MisfireComplete                = !r.MisfireComplete;                break;
+            case "fuel":         if (r.FuelSystemSupported)             r.FuelSystemComplete             = !r.FuelSystemComplete;             break;
+            case "comprehensive":if (r.ComprehensiveComponentSupported) r.ComprehensiveComponentComplete = !r.ComprehensiveComponentComplete; break;
+            case "catalyst":     if (r.CatalystSupported)               r.CatalystComplete               = !r.CatalystComplete;               break;
+            case "hcat":         if (r.HeatedCatalystSupported)         r.HeatedCatalystComplete         = !r.HeatedCatalystComplete;         break;
+            case "evap":         if (r.EvapSystemSupported)             r.EvapSystemComplete             = !r.EvapSystemComplete;             break;
+            case "air":          if (r.SecondaryAirSupported)           r.SecondaryAirComplete           = !r.SecondaryAirComplete;           break;
+            case "o2":           if (r.OxygenSensorSupported)           r.OxygenSensorComplete           = !r.OxygenSensorComplete;           break;
+            case "o2heater":     if (r.OxygenSensorHeaterSupported)     r.OxygenSensorHeaterComplete     = !r.OxygenSensorHeaterComplete;     break;
+            case "egr":          if (r.EgrSystemSupported)              r.EgrSystemComplete              = !r.EgrSystemComplete;              break;
+        }
+        Refresh();
+    }
+
     // ── Refresh ───────────────────────────────────────────────────────────────
 
     private void Refresh()
@@ -342,16 +361,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var r = _pcmState.Readiness;
         return
         [
-            new("Misfire",          r.MisfireSupported,                r.MisfireComplete),
-            new("Fuel System",      r.FuelSystemSupported,             r.FuelSystemComplete),
-            new("Comprehensive",    r.ComprehensiveComponentSupported, r.ComprehensiveComponentComplete),
-            new("Catalyst",         r.CatalystSupported,               r.CatalystComplete),
-            new("Heated Catalyst",  r.HeatedCatalystSupported,         r.HeatedCatalystComplete),
-            new("Evap System",      r.EvapSystemSupported,             r.EvapSystemComplete),
-            new("Secondary Air",    r.SecondaryAirSupported,           r.SecondaryAirComplete),
-            new("O2 Sensor",        r.OxygenSensorSupported,           r.OxygenSensorComplete),
-            new("O2 Sensor Heater", r.OxygenSensorHeaterSupported,     r.OxygenSensorHeaterComplete),
-            new("EGR System",       r.EgrSystemSupported,              r.EgrSystemComplete),
+            new("misfire",     "Misfire",          r.MisfireSupported,                r.MisfireComplete),
+            new("fuel",        "Fuel System",      r.FuelSystemSupported,             r.FuelSystemComplete),
+            new("comprehensive","Comprehensive",   r.ComprehensiveComponentSupported, r.ComprehensiveComponentComplete),
+            new("catalyst",    "Catalyst",         r.CatalystSupported,               r.CatalystComplete),
+            new("hcat",        "Heated Catalyst",  r.HeatedCatalystSupported,         r.HeatedCatalystComplete),
+            new("evap",        "Evap System",      r.EvapSystemSupported,             r.EvapSystemComplete),
+            new("air",         "Secondary Air",    r.SecondaryAirSupported,           r.SecondaryAirComplete),
+            new("o2",          "O2 Sensor",        r.OxygenSensorSupported,           r.OxygenSensorComplete),
+            new("o2heater",    "O2 Sensor Heater", r.OxygenSensorHeaterSupported,     r.OxygenSensorHeaterComplete),
+            new("egr",         "EGR System",       r.EgrSystemSupported,              r.EgrSystemComplete),
         ];
     }
 

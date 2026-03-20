@@ -146,6 +146,25 @@
             <Setter Property="Background" Value="#4A2020" />
         </Style>
 
+        <!-- ── Monitor row toggle ──────────────────────────────────────────── -->
+
+        <Style Selector="Button.monitor-row">
+            <Setter Property="Background"               Value="Transparent" />
+            <Setter Property="BorderThickness"          Value="0" />
+            <Setter Property="Padding"                  Value="0" />
+            <Setter Property="HorizontalAlignment"      Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Margin"                   Value="0,0,0,2" />
+            <Setter Property="Cursor"                   Value="Hand" />
+        </Style>
+        <Style Selector="Button.monitor-row:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1A2030" />
+        </Style>
+        <Style Selector="Button.monitor-row:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor"     Value="Arrow" />
+        </Style>
+
         <!-- ── Small action buttons ────────────────────────────────────────── -->
 
         <Style Selector="Button.action-sm">

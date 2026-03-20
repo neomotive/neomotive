@@ -23,6 +23,12 @@ public partial class MainWindow : Window
     private void OnShowInputs(object? sender, RoutedEventArgs e) => Vm.ShowInputs();
     private void OnShowConfig(object? sender, RoutedEventArgs e) => Vm.ShowConfig();
 
+    private void OnToggleMonitor(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string key })
+            Vm.ToggleMonitor(key);
+    }
+
     private void OnToggleDtcButton(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string code })
