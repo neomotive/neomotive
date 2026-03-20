@@ -1,4 +1,3 @@
-using Avalonia.Threading;
 using Meadow.Foundation.ICs.CAN;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
@@ -18,11 +17,12 @@ public record MonitorItem(string Name, bool Supported, bool Complete)
     public bool IsIncomplete => Supported && !Complete;
 }
 public record DtcItem(string Code, string Category, string Description);
+public record DtcButtonItem(string Code, string Description, bool IsActive);
 public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, string Description);
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private enum SettingsView { Data, Monitors, Dtcs }
+    private enum SettingsView { Data, Monitors, Dtcs, Inputs, Config }
     private enum SelectedModule { Pcm, Tcu }
 
     private record DtcHolder(
@@ -62,10 +62,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _pcm = new SimulatorPcm(bus, _pcmState);
         _tcu = new SimulatorTcu(bus, _tcuState);
 
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
-        timer.Tick += (_, _) => Refresh();
-        timer.Start();
-
         Refresh();
     }
 
@@ -81,6 +77,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsDataView => _view == SettingsView.Data;
     public bool IsMonitorsView => _view == SettingsView.Monitors;
     public bool IsDtcsView => _view == SettingsView.Dtcs;
+    public bool IsInputsView => _view == SettingsView.Inputs;
+    public bool IsConfigView => _view == SettingsView.Config;
     public bool ShowMonitorsTab => _selectedModule == SelectedModule.Pcm;
 
     public string SettingsPanelTitle => (_selectedModule, _view) switch
@@ -88,6 +86,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         (SelectedModule.Pcm, SettingsView.Data) => "PCM — Data",
         (SelectedModule.Pcm, SettingsView.Monitors) => "PCM — Readiness Monitors",
         (SelectedModule.Pcm, SettingsView.Dtcs) => "PCM — Fault Codes",
+        (SelectedModule.Pcm, SettingsView.Inputs) => "Configure Inputs",
+        (SelectedModule.Pcm, SettingsView.Config) => "System Config",
         (SelectedModule.Tcu, SettingsView.Dtcs) => "TCU — Fault Codes",
         _ => "TCU — Data",
     };
@@ -125,6 +125,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
         private set { _dtcs = value; OnPropertyChanged(); }
     }
 
+    private IReadOnlyList<DtcButtonItem> _knownDtcButtons = [];
+    public IReadOnlyList<DtcButtonItem> KnownDtcButtons
+    {
+        get => _knownDtcButtons;
+        private set { _knownDtcButtons = value; OnPropertyChanged(); }
+    }
+
     // ── CAN log ───────────────────────────────────────────────────────────────
 
     public bool HasNoCanPackets { get; private set; } = true;
@@ -160,6 +167,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void ShowData() { _view = SettingsView.Data; Refresh(); }
     public void ShowMonitors() { _view = SettingsView.Monitors; Refresh(); }
     public void ShowDtcs() { _view = SettingsView.Dtcs; Refresh(); }
+    public void ShowInputs() { _view = SettingsView.Inputs; Refresh(); }
+    public void ShowConfig() { _view = SettingsView.Config; Refresh(); }
 
     public void ExecuteCommand()
     {
@@ -176,6 +185,75 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public void ClearCommand() => CommandInput = "";
+
+    public void ToggleKnownDtc(string code)
+    {
+        Dictionary<string, byte[]> stored;
+        KnownDtc[] known;
+        Action sync;
+
+        if (_selectedModule == SelectedModule.Tcu)
+        {
+            stored = _tcuState.StoredDtcs;
+            known = SimulatorTcuState.KnownDtcs;
+            sync = _tcu.SyncDtcsFromState;
+        }
+        else
+        {
+            stored = _pcmState.StoredDtcs;
+            known = SimulatorState.KnownDtcs;
+            sync = _pcm.SyncDtcsFromState;
+        }
+
+        if (stored.ContainsKey(code))
+            stored.Remove(code);
+        else
+        {
+            var dtc = known.FirstOrDefault(d => d.Code == code);
+            if (dtc != null) stored[code] = dtc.RawBytes;
+        }
+
+        sync();
+        Refresh();
+    }
+
+    public void ClearDtc(string code)
+    {
+        if (_selectedModule == SelectedModule.Tcu)
+        {
+            _tcuState.StoredDtcs.Remove(code);
+            _tcuState.PendingDtcs.Remove(code);
+            _tcuState.PermanentDtcs.Remove(code);
+            _tcu.SyncDtcsFromState();
+        }
+        else
+        {
+            _pcmState.StoredDtcs.Remove(code);
+            _pcmState.PendingDtcs.Remove(code);
+            _pcmState.PermanentDtcs.Remove(code);
+            _pcm.SyncDtcsFromState();
+        }
+        Refresh();
+    }
+
+    public void ClearAllDtcs()
+    {
+        if (_selectedModule == SelectedModule.Tcu)
+        {
+            _tcuState.StoredDtcs.Clear();
+            _tcuState.PendingDtcs.Clear();
+            _tcuState.PermanentDtcs.Clear();
+            _tcu.SyncDtcsFromState();
+        }
+        else
+        {
+            _pcmState.StoredDtcs.Clear();
+            _pcmState.PendingDtcs.Clear();
+            _pcmState.PermanentDtcs.Clear();
+            _pcm.SyncDtcsFromState();
+        }
+        Refresh();
+    }
 
     // ── Refresh ───────────────────────────────────────────────────────────────
 
@@ -202,6 +280,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         HasDtcs = dtcList.Count > 0;
         OnPropertyChanged(nameof(HasNoDtcs));
         OnPropertyChanged(nameof(HasDtcs));
+        KnownDtcButtons = BuildDtcButtons();
 
         var canLog = BuildCanLog();
         CanLogItems = canLog;
@@ -288,9 +367,28 @@ public class MainWindowViewModel : INotifyPropertyChanged
         return items;
     }
 
+    private IReadOnlyList<DtcButtonItem> BuildDtcButtons()
+    {
+        KnownDtc[] known;
+        Dictionary<string, byte[]> stored;
+
+        if (_selectedModule == SelectedModule.Tcu)
+        {
+            known = SimulatorTcuState.KnownDtcs;
+            stored = _tcuState.StoredDtcs;
+        }
+        else
+        {
+            known = SimulatorState.KnownDtcs;
+            stored = _pcmState.StoredDtcs;
+        }
+
+        return known.Select(d => new DtcButtonItem(d.Code, d.Description, stored.ContainsKey(d.Code))).ToList();
+    }
+
     private IReadOnlyList<CanLogItem> BuildCanLog()
     {
-        return _log.GetRecent(8).Select(pkt => new CanLogItem(
+        return _log.GetRecent(6).Select(pkt => new CanLogItem(
             pkt.Timestamp.ToString("HH:mm:ss.fff"),
             pkt.Id.ToString("X3"),
             pkt.IsOutgoing,
