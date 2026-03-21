@@ -54,6 +54,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public MainWindowViewModel()
     {
         _config = ConfigManager.Load();
+        if (_config.QuickDtcs.Count == 0)
+            SeedDefaultQuickDtcs();
         ICanBus rawBus;
         try
         {
@@ -368,6 +370,22 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Action sync = _selectedModule == SelectedModule.Tcu ? _tcu.SyncDtcsFromState : _pcm.SyncDtcsFromState;
         sync();
         Refresh();
+    }
+
+    private void SeedDefaultQuickDtcs()
+    {
+        QuickDtcConfig[] defaults =
+        [
+            new() { Code = "P0300", Description = "Random Misfire" },
+            new() { Code = "P0420", Description = "Catalyst Efficiency Low" },
+            new() { Code = "P0171", Description = "System Too Lean (B1)" },
+            new() { Code = "P0172", Description = "System Too Rich (B1)" },
+            new() { Code = "P0442", Description = "EVAP Small Leak" },
+            new() { Code = "P0455", Description = "EVAP Gross Leak" },
+        ];
+        foreach (var d in defaults)
+            _config.QuickDtcs.Add(d);
+        ConfigManager.Save(_config);
     }
 
     public void CycleDtcCategory(string code)
