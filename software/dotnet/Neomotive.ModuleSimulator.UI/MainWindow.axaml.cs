@@ -43,6 +43,24 @@ public partial class MainWindow : Window
 
     private void OnClearAllDtcs(object? sender, RoutedEventArgs e) => Vm.ClearAllDtcs();
 
+    private void OnRemoveDtcFromList(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code })
+            Vm.RemoveDtcFromList(code);
+    }
+
+    private void OnDeactivateDtc(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code })
+            Vm.DeactivateDtc(code);
+    }
+
+    private void OnActivateDtc(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code })
+            Vm.ActivateDtc(code);
+    }
+
     private void OnAddQuickDtc(object? sender, RoutedEventArgs e)    => Vm.AddQuickDtc();
     private void OnRemoveQuickDtc(object? sender, RoutedEventArgs e)
     {

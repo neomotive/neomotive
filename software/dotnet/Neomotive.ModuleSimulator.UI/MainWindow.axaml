@@ -127,9 +127,10 @@
 
                         <ScrollViewer Grid.Row="0" Padding="12,8,12,4">
                             <StackPanel>
-                                <TextBlock Classes="label" Text="No active DTCs" IsVisible="{Binding HasNoDtcs}" />
+                                <TextBlock Classes="dim" Text="No DTCs — add quick DTCs in the Config tab"
+                                           IsVisible="{Binding HasNoDtcs}" />
                                 <StackPanel IsVisible="{Binding HasDtcs}" Spacing="2">
-                                    <Grid ColumnDefinitions="72, 78, *, 28" Margin="0,0,0,4">
+                                    <Grid ColumnDefinitions="72, 78, *, Auto" Margin="0,0,0,4">
                                         <TextBlock Grid.Column="0" Classes="muted xs" Text="Code"        FontWeight="Bold" />
                                         <TextBlock Grid.Column="1" Classes="muted xs" Text="Category"    FontWeight="Bold" />
                                         <TextBlock Grid.Column="2" Classes="muted xs" Text="Description" FontWeight="Bold" />
@@ -137,13 +138,36 @@
                                     <ItemsControl ItemsSource="{Binding Dtcs}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="local:DtcItem">
-                                                <Grid ColumnDefinitions="72, 78, *, 28" Margin="0,0,0,2">
-                                                    <TextBlock Grid.Column="0" Classes="error" Text="{Binding Code}" />
-                                                    <TextBlock Grid.Column="1" Classes="label" Text="{Binding Category}" />
-                                                    <TextBlock Grid.Column="2"                 Text="{Binding Description}" />
-                                                    <Button    Grid.Column="3" Classes="action-sm" Content="✕"
-                                                               Tag="{Binding Code}" Click="OnClearDtcButton"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <Grid ColumnDefinitions="72, 78, *, Auto" Margin="0,0,0,2">
+                                                    <TextBlock Grid.Column="0"
+                                                               Classes.error="{Binding IsActive}"
+                                                               Classes.label="{Binding IsInactive}"
+                                                               Text="{Binding Code}" />
+                                                    <TextBlock Grid.Column="1" Classes="label"
+                                                               Text="{Binding Category}"
+                                                               IsVisible="{Binding IsActive}" />
+                                                    <TextBlock Grid.Column="2"
+                                                               Classes.muted="{Binding IsInactive}"
+                                                               Text="{Binding Description}" />
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal"
+                                                                Spacing="2" VerticalAlignment="Center">
+                                                        <!-- Quick DTC active: [x] removes and deactivates -->
+                                                        <Button Classes="action-sm" Content="✕"
+                                                                Tag="{Binding Code}" Click="OnClearDtcButton"
+                                                                IsVisible="{Binding IsQuick}" />
+                                                        <!-- Command DTC: [X] removes from list entirely -->
+                                                        <Button Classes="action-sm" Content="✕"
+                                                                Tag="{Binding Code}" Click="OnRemoveDtcFromList"
+                                                                IsVisible="{Binding IsCommand}" />
+                                                        <!-- Command DTC active: [−] deactivates but keeps in list -->
+                                                        <Button Classes="action-sm" Content="−"
+                                                                Tag="{Binding Code}" Click="OnDeactivateDtc"
+                                                                IsVisible="{Binding IsCommandActive}" />
+                                                        <!-- Command DTC inactive: [+] reactivates -->
+                                                        <Button Classes="action-sm" Content="+"
+                                                                Tag="{Binding Code}" Click="OnActivateDtc"
+                                                                IsVisible="{Binding IsCommandInactive}" />
+                                                    </StackPanel>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

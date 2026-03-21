@@ -18,7 +18,13 @@ public record MonitorItem(string Key, string Name, bool Supported, bool Complete
     public bool IsReady => Supported && Complete;
     public bool IsIncomplete => Supported && !Complete;
 }
-public record DtcItem(string Code, string Category, string Description);
+public record DtcItem(string Code, string Category, string Description, bool IsActive, bool IsQuick)
+{
+    public bool IsInactive     => !IsActive;
+    public bool IsCommand      => !IsQuick;
+    public bool IsCommandActive   => !IsQuick && IsActive;
+    public bool IsCommandInactive => !IsQuick && !IsActive;
+}
 public record DtcButtonItem(string Code, string Description, bool IsActive);
 public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, string Description);
 
@@ -43,6 +49,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private SelectedModule _selectedModule = SelectedModule.Pcm;
     private DateTime _lastCanTimestamp = DateTime.MinValue;
     private readonly SimulatorConfig _config;
+    private readonly HashSet<string> _commandDtcCodes = new();
 
     public MainWindowViewModel()
     {
@@ -310,6 +317,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     public void ClearAllDtcs()
     {
+        _commandDtcCodes.Clear();
         if (_selectedModule == SelectedModule.Tcu)
         {
             _tcuState.StoredDtcs.Clear();
@@ -324,6 +332,41 @@ public class MainWindowViewModel : INotifyPropertyChanged
             _pcmState.PermanentDtcs.Clear();
             _pcm.SyncDtcsFromState();
         }
+        Refresh();
+    }
+
+    public void RemoveDtcFromList(string code)
+    {
+        _commandDtcCodes.Remove(code);
+        ClearDtc(code);
+    }
+
+    public void DeactivateDtc(string code)
+    {
+        if (_selectedModule == SelectedModule.Tcu)
+        {
+            _tcuState.StoredDtcs.Remove(code);
+            _tcuState.PendingDtcs.Remove(code);
+            _tcuState.PermanentDtcs.Remove(code);
+            _tcu.SyncDtcsFromState();
+        }
+        else
+        {
+            _pcmState.StoredDtcs.Remove(code);
+            _pcmState.PendingDtcs.Remove(code);
+            _pcmState.PermanentDtcs.Remove(code);
+            _pcm.SyncDtcsFromState();
+        }
+        Refresh();
+    }
+
+    public void ActivateDtc(string code)
+    {
+        if (!TryParseDtcCode(code, out var normalized, out var raw)) return;
+        var stored = _selectedModule == SelectedModule.Tcu ? _tcuState.StoredDtcs : _pcmState.StoredDtcs;
+        stored[normalized] = raw;
+        Action sync = _selectedModule == SelectedModule.Tcu ? _tcu.SyncDtcsFromState : _pcm.SyncDtcsFromState;
+        sync();
         Refresh();
     }
 
@@ -444,30 +487,50 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private IReadOnlyList<DtcItem> BuildDtcs()
     {
         Dictionary<string, byte[]> stored, pending, permanent;
-        KnownDtc[] known;
+        KnownDtc[] staticKnown;
 
         if (_selectedModule == SelectedModule.Tcu)
         {
             stored = _tcuState.StoredDtcs; pending = _tcuState.PendingDtcs;
-            permanent = _tcuState.PermanentDtcs; known = SimulatorTcuState.KnownDtcs;
+            permanent = _tcuState.PermanentDtcs; staticKnown = SimulatorTcuState.KnownDtcs;
         }
         else
         {
             stored = _pcmState.StoredDtcs; pending = _pcmState.PendingDtcs;
-            permanent = _pcmState.PermanentDtcs; known = SimulatorState.KnownDtcs;
+            permanent = _pcmState.PermanentDtcs; staticKnown = SimulatorState.KnownDtcs;
         }
 
         var items = new List<DtcItem>();
+        var addedCodes = new HashSet<string>();
+
+        // Command DTCs: always shown (active or inactive) until explicitly removed
+        foreach (var code in _commandDtcCodes.OrderBy(c => c))
+        {
+            var isStored    = stored.ContainsKey(code);
+            var isPending   = pending.ContainsKey(code);
+            var isPermanent = permanent.ContainsKey(code);
+            var isActive    = isStored || isPending || isPermanent;
+            var category    = isStored ? "Stored" : isPending ? "Pending" : isPermanent ? "Permanent" : "";
+            var desc        = staticKnown.FirstOrDefault(d => d.Code == code)?.Description ?? code;
+            items.Add(new DtcItem(code, category, desc, isActive, IsQuick: false));
+            addedCodes.Add(code);
+        }
+
+        // Quick/other active DTCs: only shown when active
         foreach (var (label, dict) in new (string, Dictionary<string, byte[]>)[]
             { ("Stored", stored), ("Pending", pending), ("Permanent", permanent) })
         {
             foreach (var (code, raw) in dict.OrderBy(kvp => kvp.Key))
             {
-                var desc = known.FirstOrDefault(d => d.Code == code)?.Description
+                if (addedCodes.Contains(code)) continue;
+                var desc = _config.QuickDtcs.FirstOrDefault(d => d.Code == code)?.Description
+                    ?? staticKnown.FirstOrDefault(d => d.Code == code)?.Description
                     ?? new Dtc(raw).ToReadableErrorCode();
-                items.Add(new DtcItem(code, label, desc));
+                items.Add(new DtcItem(code, label, desc, IsActive: true, IsQuick: true));
+                addedCodes.Add(code);
             }
         }
+
         return items;
     }
 
@@ -521,7 +584,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
                     var (cat, codeArg) = IsCategory(parts[2]) && parts.Length >= 4
                         ? (parts[2].ToLowerInvariant(), parts[3])
                         : ("stored", parts[2]);
-                    return HandleDtcSet(cat, codeArg, dtcHolder);
+                    var result = HandleDtcSet(cat, codeArg, dtcHolder);
+                    if (TryParseDtcCode(codeArg, out var normalized, out _))
+                        _commandDtcCodes.Add(normalized);
+                    return result;
                 }
 
             case "set" when parts.Length >= 3 && parts[1].Equals("gear", StringComparison.OrdinalIgnoreCase):
@@ -553,10 +619,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
             case "clear" when parts.Length >= 3 && parts[1].Equals("dtc", StringComparison.OrdinalIgnoreCase) && parts[2].Equals("all", StringComparison.OrdinalIgnoreCase):
                 _view = SettingsView.Dtcs;
+                _commandDtcCodes.Clear();
                 return HandleDtcClearAll(dtcHolder);
 
             case "clear" when parts.Length >= 3 && parts[1].Equals("dtc", StringComparison.OrdinalIgnoreCase):
                 _view = SettingsView.Dtcs;
+                if (TryParseDtcCode(parts[2], out var clearedCode, out _))
+                    _commandDtcCodes.Remove(clearedCode);
                 return HandleDtcClear(parts[2], dtcHolder);
 
             case "clear":
