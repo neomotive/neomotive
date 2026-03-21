@@ -47,6 +47,11 @@
                                         <Button Classes="action-sm" Content="+"
                                                 Tag="{Binding Code}" Click="OnActivate"
                                                 IsVisible="{Binding IsCommandInactive}" />
+                                        <!-- Command DTC: [★] save to quick list -->
+                                        <Button Classes="action-sm" Content="★"
+                                                Tag="{Binding Code}" Click="OnSaveToQuick"
+                                                IsVisible="{Binding IsCommand}"
+                                                ToolTip.Tip="Save to quick DTCs" />
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

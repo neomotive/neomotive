@@ -370,6 +370,27 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Refresh();
     }
 
+    public void SaveToQuick(string code)
+    {
+        if (_config.QuickDtcs.Any(d => d.Code == code)) return;
+
+        // FIFO: drop oldest entry when at capacity
+        if (_config.QuickDtcs.Count >= 10)
+            _config.QuickDtcs.RemoveAt(0);
+
+        var staticKnown = _selectedModule == SelectedModule.Tcu
+            ? (KnownDtc[])SimulatorTcuState.KnownDtcs
+            : SimulatorState.KnownDtcs;
+        var desc = staticKnown.FirstOrDefault(d => d.Code == code)?.Description ?? "";
+
+        _config.QuickDtcs.Add(new QuickDtcConfig { Code = code, Description = desc });
+        ConfigManager.Save(_config);
+        _commandDtcCodes.Remove(code);
+        NotifyConfigChanged();
+        KnownDtcButtons = BuildDtcButtons();
+        Refresh();
+    }
+
     public void ToggleMonitor(string key)
     {
         var r = _pcmState.Readiness;

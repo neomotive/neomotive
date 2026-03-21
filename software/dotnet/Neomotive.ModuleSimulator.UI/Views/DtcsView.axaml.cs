@@ -39,5 +39,11 @@ public partial class DtcsView : UserControl
             Vm.ActivateDtc(code);
     }
 
+    private void OnSaveToQuick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code })
+            Vm.SaveToQuick(code);
+    }
+
     private void OnClearAll(object? sender, RoutedEventArgs e) => Vm.ClearAllDtcs();
 }
