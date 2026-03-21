@@ -4,6 +4,7 @@ using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -41,9 +42,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private SettingsView _view = SettingsView.Data;
     private SelectedModule _selectedModule = SelectedModule.Pcm;
     private DateTime _lastCanTimestamp = DateTime.MinValue;
+    private readonly SimulatorConfig _config;
 
     public MainWindowViewModel()
     {
+        _config = ConfigManager.Load();
         ICanBus rawBus;
         try
         {
@@ -193,32 +196,94 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     public void ClearCommand() => CommandInput = "";
 
+    // ── Config tab ────────────────────────────────────────────────────────────
+
+    public ObservableCollection<QuickDtcConfig> ConfigDtcs => _config.QuickDtcs;
+    public bool CanAddDtc                              => _config.QuickDtcs.Count < 10;
+    public bool ConfigAtMax                            => _config.QuickDtcs.Count >= 10;
+    public bool HasNoQuickDtcs                         => _config.QuickDtcs.Count == 0;
+
+    private string _newDtcCode = "";
+    public string NewDtcCode
+    {
+        get => _newDtcCode;
+        set { _newDtcCode = value; OnPropertyChanged(); }
+    }
+
+    private string _newDtcDescription = "";
+    public string NewDtcDescription
+    {
+        get => _newDtcDescription;
+        set { _newDtcDescription = value; OnPropertyChanged(); }
+    }
+
+    private string _configFeedback = "";
+    public string ConfigFeedback
+    {
+        get => _configFeedback;
+        set { _configFeedback = value; OnPropertyChanged(); }
+    }
+
+    public void AddQuickDtc()
+    {
+        if (!TryParseDtcCode(_newDtcCode, out var code, out _))
+        {
+            ConfigFeedback = $"Invalid code '{_newDtcCode}' — use format P0300";
+            return;
+        }
+        if (_config.QuickDtcs.Any(d => d.Code == code))
+        {
+            ConfigFeedback = $"{code} is already in the list";
+            return;
+        }
+        if (_config.QuickDtcs.Count >= 10)
+        {
+            ConfigFeedback = "Maximum of 10 quick DTCs reached";
+            return;
+        }
+
+        var desc = string.IsNullOrWhiteSpace(_newDtcDescription) ? code : _newDtcDescription.Trim();
+        _config.QuickDtcs.Add(new QuickDtcConfig { Code = code, Description = desc });
+        ConfigManager.Save(_config);
+
+        NewDtcCode        = "";
+        NewDtcDescription = "";
+        ConfigFeedback    = $"Added {code}";
+
+        NotifyConfigChanged();
+        KnownDtcButtons = BuildDtcButtons();
+    }
+
+    public void RemoveQuickDtc(string code)
+    {
+        var entry = _config.QuickDtcs.FirstOrDefault(d => d.Code == code);
+        if (entry == null) return;
+
+        _config.QuickDtcs.Remove(entry);
+        ConfigManager.Save(_config);
+        ConfigFeedback = $"Removed {code}";
+
+        NotifyConfigChanged();
+        KnownDtcButtons = BuildDtcButtons();
+    }
+
+    private void NotifyConfigChanged()
+    {
+        OnPropertyChanged(nameof(ConfigDtcs));
+        OnPropertyChanged(nameof(CanAddDtc));
+        OnPropertyChanged(nameof(ConfigAtMax));
+        OnPropertyChanged(nameof(HasNoQuickDtcs));
+    }
+
     public void ToggleKnownDtc(string code)
     {
-        Dictionary<string, byte[]> stored;
-        KnownDtc[] known;
-        Action sync;
-
-        if (_selectedModule == SelectedModule.Tcu)
-        {
-            stored = _tcuState.StoredDtcs;
-            known = SimulatorTcuState.KnownDtcs;
-            sync = _tcu.SyncDtcsFromState;
-        }
-        else
-        {
-            stored = _pcmState.StoredDtcs;
-            known = SimulatorState.KnownDtcs;
-            sync = _pcm.SyncDtcsFromState;
-        }
+        var stored = _selectedModule == SelectedModule.Tcu ? _tcuState.StoredDtcs : _pcmState.StoredDtcs;
+        Action sync = _selectedModule == SelectedModule.Tcu ? _tcu.SyncDtcsFromState : _pcm.SyncDtcsFromState;
 
         if (stored.ContainsKey(code))
             stored.Remove(code);
-        else
-        {
-            var dtc = known.FirstOrDefault(d => d.Code == code);
-            if (dtc != null) stored[code] = dtc.RawBytes;
-        }
+        else if (TryParseDtcCode(code, out var normalized, out var raw))
+            stored[normalized] = raw;
 
         sync();
         Refresh();
@@ -292,6 +357,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsDataView));
         OnPropertyChanged(nameof(IsMonitorsView));
         OnPropertyChanged(nameof(IsDtcsView));
+        OnPropertyChanged(nameof(IsInputsView));
+        OnPropertyChanged(nameof(IsConfigView));
         OnPropertyChanged(nameof(ShowMonitorsTab));
         OnPropertyChanged(nameof(SettingsPanelTitle));
         OnPropertyChanged(nameof(MilOn));
@@ -406,21 +473,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private IReadOnlyList<DtcButtonItem> BuildDtcButtons()
     {
-        KnownDtc[] known;
-        Dictionary<string, byte[]> stored;
-
-        if (_selectedModule == SelectedModule.Tcu)
-        {
-            known = SimulatorTcuState.KnownDtcs;
-            stored = _tcuState.StoredDtcs;
-        }
-        else
-        {
-            known = SimulatorState.KnownDtcs;
-            stored = _pcmState.StoredDtcs;
-        }
-
-        return known.Select(d => new DtcButtonItem(d.Code, d.Description, stored.ContainsKey(d.Code))).ToList();
+        var stored = _selectedModule == SelectedModule.Tcu ? _tcuState.StoredDtcs : _pcmState.StoredDtcs;
+        return _config.QuickDtcs
+            .Select(d => new DtcButtonItem(d.Code, d.Description, stored.ContainsKey(d.Code)))
+            .ToList();
     }
 
     private IReadOnlyList<CanLogItem> BuildCanLog()

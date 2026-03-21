@@ -160,7 +160,7 @@
                                 Padding="12,6">
                             <Grid RowDefinitions="Auto, Auto">
                                 <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,5">
-                                    <TextBlock Classes="heading" Text="KNOWN DTCs" VerticalAlignment="Center" />
+                                    <TextBlock Classes="heading" Text="QUICK DTCs" VerticalAlignment="Center" />
                                     <Button Classes="action-sm" Content="Clear All" Click="OnClearAllDtcs" />
                                 </StackPanel>
                                 <ItemsControl Grid.Row="1" ItemsSource="{Binding KnownDtcButtons}">
@@ -190,9 +190,71 @@
                     </ScrollViewer>
 
                     <!-- ── CONFIG VIEW ──────────────────────────────── -->
-                    <ScrollViewer IsVisible="{Binding IsConfigView}" Padding="12,8">
-                        <TextBlock Classes="label" Text="Config will go here" />
-                    </ScrollViewer>
+                    <Grid IsVisible="{Binding IsConfigView}" RowDefinitions="*, Auto">
+
+                        <!-- Current quick DTC list -->
+                        <ScrollViewer Grid.Row="0" Padding="12,8,12,4">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                                    <TextBlock Classes="heading" Text="QUICK DTCs" VerticalAlignment="Center" />
+                                    <TextBlock Classes="muted xs"
+                                               Text="{Binding ConfigDtcs.Count, StringFormat='{}{0}/10'}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBlock Classes="muted" Text="No quick DTCs configured. Add one below."
+                                           IsVisible="{Binding HasNoQuickDtcs}"
+                                           FontStyle="Italic" />
+
+                                <ItemsControl ItemsSource="{Binding ConfigDtcs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:QuickDtcConfig">
+                                            <Grid ColumnDefinitions="72, *, 28" Margin="0,0,0,3">
+                                                <TextBlock Grid.Column="0" Classes="error" Text="{Binding Code}" />
+                                                <TextBlock Grid.Column="1" Classes="label" Text="{Binding Description}" />
+                                                <Button    Grid.Column="2" Classes="action-sm" Content="✕"
+                                                           Tag="{Binding Code}" Click="OnRemoveQuickDtc"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Add new quick DTC -->
+                        <Border Grid.Row="1"
+                                Background="#0E1115"
+                                BorderBrush="#2E3440"
+                                BorderThickness="0,1,0,0"
+                                Padding="12,8">
+                            <StackPanel Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Classes="label" Text="Code" VerticalAlignment="Center" Width="36" />
+                                    <TextBox Text="{Binding NewDtcCode}"
+                                             FontFamily="Consolas,Cascadia Code,monospace"
+                                             FontSize="11" Foreground="#E0E5EC"
+                                             Background="#1A1E26" BorderBrush="#2E3440"
+                                             Width="70" MaxLength="5"
+                                             Watermark="P0300"
+                                             VerticalAlignment="Center" />
+                                    <TextBlock Classes="label" Text="Description" VerticalAlignment="Center" />
+                                    <TextBox Text="{Binding NewDtcDescription}"
+                                             FontFamily="Consolas,Cascadia Code,monospace"
+                                             FontSize="11" Foreground="#E0E5EC"
+                                             Background="#1A1E26" BorderBrush="#2E3440"
+                                             MinWidth="220"
+                                             Watermark="(optional)"
+                                             VerticalAlignment="Center" />
+                                    <Button Classes="action-sm" Content="Add"
+                                            IsEnabled="{Binding CanAddDtc}"
+                                            Click="OnAddQuickDtc" />
+                                </StackPanel>
+                                <TextBlock Classes="label" Text="{Binding ConfigFeedback}" />
+                            </StackPanel>
+                        </Border>
+
+                    </Grid>
 
                 </Grid>
             </Grid>

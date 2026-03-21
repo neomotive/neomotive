@@ -43,6 +43,13 @@ public partial class MainWindow : Window
 
     private void OnClearAllDtcs(object? sender, RoutedEventArgs e) => Vm.ClearAllDtcs();
 
+    private void OnAddQuickDtc(object? sender, RoutedEventArgs e)    => Vm.AddQuickDtc();
+    private void OnRemoveQuickDtc(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code })
+            Vm.RemoveQuickDtc(code);
+    }
+
     private void OnCommandKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter) { Vm.ExecuteCommand(); e.Handled = true; }
