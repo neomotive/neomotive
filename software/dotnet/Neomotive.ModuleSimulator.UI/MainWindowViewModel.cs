@@ -370,6 +370,44 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Refresh();
     }
 
+    public void CycleDtcCategory(string code)
+    {
+        Dictionary<string, byte[]> stored, pending, permanent;
+        Action sync;
+
+        if (_selectedModule == SelectedModule.Tcu)
+        {
+            stored = _tcuState.StoredDtcs; pending = _tcuState.PendingDtcs;
+            permanent = _tcuState.PermanentDtcs; sync = _tcu.SyncDtcsFromState;
+        }
+        else
+        {
+            stored = _pcmState.StoredDtcs; pending = _pcmState.PendingDtcs;
+            permanent = _pcmState.PermanentDtcs; sync = _pcm.SyncDtcsFromState;
+        }
+
+        if (!TryParseDtcCode(code, out var normalized, out _)) return;
+
+        if (stored.TryGetValue(normalized, out var raw))
+        {
+            stored.Remove(normalized);
+            pending[normalized] = raw;
+        }
+        else if (pending.TryGetValue(normalized, out raw))
+        {
+            pending.Remove(normalized);
+            permanent[normalized] = raw;
+        }
+        else if (permanent.TryGetValue(normalized, out raw))
+        {
+            permanent.Remove(normalized);
+            stored[normalized] = raw;
+        }
+
+        sync();
+        Refresh();
+    }
+
     public void SaveToQuick(string code)
     {
         if (_config.QuickDtcs.Any(d => d.Code == code)) return;

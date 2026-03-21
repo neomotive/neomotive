@@ -182,5 +182,22 @@
             <Setter Property="Foreground" Value="#E06060" />
         </Style>
 
+        <!-- ── Category cycle button ────────────────────────────────────────── -->
+
+        <Style Selector="Button.category">
+            <Setter Property="Background"      Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding"         Value="0" />
+            <Setter Property="Foreground"      Value="#4A5568" />
+            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"        Value="11" />
+            <Setter Property="Cursor"          Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style Selector="Button.category:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#88C0D0" />
+        </Style>
+
     </Application.Styles>
 </Application>

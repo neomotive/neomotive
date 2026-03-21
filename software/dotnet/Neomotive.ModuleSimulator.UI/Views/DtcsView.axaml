@@ -23,9 +23,12 @@
                                                Classes.error="{Binding IsActive}"
                                                Classes.label="{Binding IsInactive}"
                                                Text="{Binding Code}" />
-                                    <TextBlock Grid.Column="1" Classes="label"
-                                               Text="{Binding Category}"
-                                               IsVisible="{Binding IsActive}" />
+                                    <Button Grid.Column="1" Classes="category"
+                                            Content="{Binding Category}"
+                                            Tag="{Binding Code}"
+                                            Click="OnCycleCategory"
+                                            IsVisible="{Binding IsActive}"
+                                            ToolTip.Tip="Click to cycle: Stored → Pending → Permanent" />
                                     <TextBlock Grid.Column="2"
                                                Classes.muted="{Binding IsInactive}"
                                                Text="{Binding Description}" />

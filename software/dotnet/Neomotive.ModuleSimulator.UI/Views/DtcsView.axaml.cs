@@ -39,6 +39,12 @@ public partial class DtcsView : UserControl
             Vm.ActivateDtc(code);
     }
 
+    private void OnCycleCategory(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string code })
+            Vm.CycleDtcCategory(code);
+    }
+
     private void OnSaveToQuick(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string code })
