@@ -2,6 +2,7 @@ using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using Meadow.Units;
 using Neomotive.ControlModule;
+using System.Linq;
 
 namespace Neomotive.ModuleSimulator;
 
@@ -36,12 +37,12 @@ public class SimulatorTcu : TransmissionControlModule
 
     public void SyncDtcsFromState()
     {
-        ClearAllDtcs();
-        foreach (var raw in _state.StoredDtcs.Values)
-            SetDtc(new Dtc(raw));
-        foreach (var raw in _state.PendingDtcs.Values)
-            SetPendingDtc(new Dtc(raw));
-        foreach (var raw in _state.PermanentDtcs.Values)
-            SetPermanentDtc(new Dtc(raw));
+        foreach (var dtc in GetStoredDtcs().ToList())    ClearDtc(dtc);
+        foreach (var dtc in GetPendingDtcs().ToList())   ClearPendingDtc(dtc);
+        foreach (var dtc in GetPermanentDtcs().ToList()) ClearPermanentDtc(dtc);
+
+        foreach (var raw in _state.StoredDtcs.Values)    SetDtc(new Dtc(raw));
+        foreach (var raw in _state.PendingDtcs.Values)   SetPendingDtc(new Dtc(raw));
+        foreach (var raw in _state.PermanentDtcs.Values) SetPermanentDtc(new Dtc(raw));
     }
 }

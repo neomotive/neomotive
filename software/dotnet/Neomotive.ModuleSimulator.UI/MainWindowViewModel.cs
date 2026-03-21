@@ -325,14 +325,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
             _tcuState.StoredDtcs.Clear();
             _tcuState.PendingDtcs.Clear();
             _tcuState.PermanentDtcs.Clear();
-            _tcu.SyncDtcsFromState();
+            _tcu.ClearAllDtcs(); // base method: wipes store + freeze frame atomically
         }
         else
         {
             _pcmState.StoredDtcs.Clear();
             _pcmState.PendingDtcs.Clear();
             _pcmState.PermanentDtcs.Clear();
-            _pcm.SyncDtcsFromState();
+            _pcm.ClearAllDtcs(); // base method: wipes store + freeze frame atomically
         }
         Refresh();
     }
