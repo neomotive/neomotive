@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI"
+        xmlns:views="clr-namespace:Neomotive.ModuleSimulator.UI.Views"
         x:Class="Neomotive.ModuleSimulator.UI.MainWindow"
         x:DataType="local:MainWindowViewModel"
         Title="Neomotive Module Simulator"
@@ -17,17 +18,15 @@
              ══════════════════════════════════════════════════════════════════ -->
         <Grid Grid.Row="0" ColumnDefinitions="155, *">
 
-            <!-- ── Left panel ──────────────────────────────────────────── -->
+            <!-- ── Left panel: module selector ────────────────────────────── -->
             <Border Grid.Column="0"
                     Background="#141820"
                     BorderBrush="#2E3440"
                     BorderThickness="0,0,1,0"
                     Padding="8,10">
                 <StackPanel>
-
                     <TextBlock Classes="heading" Text="MODULES" Margin="2,0,0,8" />
 
-                    <!-- PCM -->
                     <Border Classes="module"
                             Classes.selected="{Binding IsPcmSelected}"
                             PointerPressed="OnPcmPressed">
@@ -41,7 +40,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- TCU -->
                     <Border Classes="module"
                             Classes.selected="{Binding IsTcuSelected}"
                             PointerPressed="OnTcuPressed">
@@ -54,11 +52,10 @@
                             <TextBlock Classes="muted xs" Text="{Binding TcuDtcCounts, StringFormat='DTCs: {0}'}" />
                         </StackPanel>
                     </Border>
-
                 </StackPanel>
             </Border>
 
-            <!-- ── Right: tab bar + content ────────────────────────────── -->
+            <!-- ── Right: tab bar + content ───────────────────────────────── -->
             <Grid Grid.Column="1" RowDefinitions="28, *">
 
                 <!-- Tab bar -->
@@ -77,210 +74,15 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Content -->
+                <!-- Content views -->
                 <Grid Grid.Row="1">
-
-                    <!-- ── DATA VIEW ──────────────────────────────────── -->
-                    <ScrollViewer IsVisible="{Binding IsDataView}" Padding="12,8">
-                        <ItemsControl ItemsSource="{Binding DataFields}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="local:DataFieldItem">
-                                    <Grid ColumnDefinitions="140, *" Margin="0,0,0,3">
-                                        <TextBlock Grid.Column="0" Classes="label" Text="{Binding Field}" />
-                                        <TextBlock Grid.Column="1" Classes="value" Text="{Binding Value}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-
-                    <!-- ── MONITORS VIEW ──────────────────────────────── -->
-                    <ScrollViewer IsVisible="{Binding IsMonitorsView}" Padding="12,8">
-                        <StackPanel Spacing="4">
-                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
-                                <TextBlock Classes="label" Text="MIL" Width="140" />
-                                <TextBlock Classes="mil-on"  Text="ON"  IsVisible="{Binding MilOn}" />
-                                <TextBlock Classes="mil-off" Text="OFF" IsVisible="{Binding MilOff}" />
-                            </StackPanel>
-                            <ItemsControl ItemsSource="{Binding Monitors}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="local:MonitorItem">
-                                        <Button Classes="monitor-row"
-                                                IsEnabled="{Binding Supported}"
-                                                Tag="{Binding Key}"
-                                                Click="OnToggleMonitor">
-                                            <Grid ColumnDefinitions="140, *">
-                                                <TextBlock Grid.Column="0" Classes="label" Text="{Binding Name}" />
-                                                <TextBlock Grid.Column="1" Classes="muted" Text="— not supported" IsVisible="{Binding IsNotSupported}" />
-                                                <TextBlock Grid.Column="1" Classes="ok"   Text="✓ Ready"         IsVisible="{Binding IsReady}" />
-                                                <TextBlock Grid.Column="1" Classes="warn" Text="✗ Incomplete"    IsVisible="{Binding IsIncomplete}" />
-                                            </Grid>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- ── DTCs VIEW ──────────────────────────────────── -->
-                    <Grid IsVisible="{Binding IsDtcsView}" RowDefinitions="*, Auto">
-
-                        <ScrollViewer Grid.Row="0" Padding="12,8,12,4">
-                            <StackPanel>
-                                <TextBlock Classes="dim" Text="No DTCs — add quick DTCs in the Config tab"
-                                           IsVisible="{Binding HasNoDtcs}" />
-                                <StackPanel IsVisible="{Binding HasDtcs}" Spacing="2">
-                                    <Grid ColumnDefinitions="72, 78, *, Auto" Margin="0,0,0,4">
-                                        <TextBlock Grid.Column="0" Classes="muted xs" Text="Code"        FontWeight="Bold" />
-                                        <TextBlock Grid.Column="1" Classes="muted xs" Text="Category"    FontWeight="Bold" />
-                                        <TextBlock Grid.Column="2" Classes="muted xs" Text="Description" FontWeight="Bold" />
-                                    </Grid>
-                                    <ItemsControl ItemsSource="{Binding Dtcs}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="local:DtcItem">
-                                                <Grid ColumnDefinitions="72, 78, *, Auto" Margin="0,0,0,2">
-                                                    <TextBlock Grid.Column="0"
-                                                               Classes.error="{Binding IsActive}"
-                                                               Classes.label="{Binding IsInactive}"
-                                                               Text="{Binding Code}" />
-                                                    <TextBlock Grid.Column="1" Classes="label"
-                                                               Text="{Binding Category}"
-                                                               IsVisible="{Binding IsActive}" />
-                                                    <TextBlock Grid.Column="2"
-                                                               Classes.muted="{Binding IsInactive}"
-                                                               Text="{Binding Description}" />
-                                                    <StackPanel Grid.Column="3" Orientation="Horizontal"
-                                                                Spacing="2" VerticalAlignment="Center">
-                                                        <!-- Quick DTC active: [x] removes and deactivates -->
-                                                        <Button Classes="action-sm" Content="✕"
-                                                                Tag="{Binding Code}" Click="OnClearDtcButton"
-                                                                IsVisible="{Binding IsQuick}" />
-                                                        <!-- Command DTC: [X] removes from list entirely -->
-                                                        <Button Classes="action-sm" Content="✕"
-                                                                Tag="{Binding Code}" Click="OnRemoveDtcFromList"
-                                                                IsVisible="{Binding IsCommand}" />
-                                                        <!-- Command DTC active: [−] deactivates but keeps in list -->
-                                                        <Button Classes="action-sm" Content="−"
-                                                                Tag="{Binding Code}" Click="OnDeactivateDtc"
-                                                                IsVisible="{Binding IsCommandActive}" />
-                                                        <!-- Command DTC inactive: [+] reactivates -->
-                                                        <Button Classes="action-sm" Content="+"
-                                                                Tag="{Binding Code}" Click="OnActivateDtc"
-                                                                IsVisible="{Binding IsCommandInactive}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </StackPanel>
-                        </ScrollViewer>
-
-                        <!-- Known DTC buttons + Clear All -->
-                        <Border Grid.Row="1"
-                                Background="#0E1115"
-                                BorderBrush="#2E3440"
-                                BorderThickness="0,1,0,0"
-                                Padding="12,6">
-                            <Grid RowDefinitions="Auto, Auto">
-                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,5">
-                                    <TextBlock Classes="heading" Text="QUICK DTCs" VerticalAlignment="Center" />
-                                    <Button Classes="action-sm" Content="Clear All" Click="OnClearAllDtcs" />
-                                </StackPanel>
-                                <ItemsControl Grid.Row="1" ItemsSource="{Binding KnownDtcButtons}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="local:DtcButtonItem">
-                                            <Button Classes="dtc" Classes.active="{Binding IsActive}"
-                                                    Tag="{Binding Code}" Click="OnToggleDtcButton"
-                                                    ToolTip.Tip="{Binding Description}">
-                                                <TextBlock Text="{Binding Code}" />
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Grid>
-                        </Border>
-
-                    </Grid>
-
-                    <!-- ── INPUTS VIEW ──────────────────────────────── -->
-                    <ScrollViewer IsVisible="{Binding IsInputsView}" Padding="12,8">
-                        <TextBlock Classes="label" Text="Inputs will go here" />
-                    </ScrollViewer>
-
-                    <!-- ── CONFIG VIEW ──────────────────────────────── -->
-                    <Grid IsVisible="{Binding IsConfigView}" RowDefinitions="*, Auto">
-
-                        <!-- Current quick DTC list -->
-                        <ScrollViewer Grid.Row="0" Padding="12,8,12,4">
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-                                    <TextBlock Classes="heading" Text="QUICK DTCs" VerticalAlignment="Center" />
-                                    <TextBlock Classes="muted xs"
-                                               Text="{Binding ConfigDtcs.Count, StringFormat='{}{0}/10'}"
-                                               VerticalAlignment="Center" />
-                                </StackPanel>
-
-                                <TextBlock Classes="muted" Text="No quick DTCs configured. Add one below."
-                                           IsVisible="{Binding HasNoQuickDtcs}"
-                                           FontStyle="Italic" />
-
-                                <ItemsControl ItemsSource="{Binding ConfigDtcs}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="local:QuickDtcConfig">
-                                            <Grid ColumnDefinitions="72, *, 28" Margin="0,0,0,3">
-                                                <TextBlock Grid.Column="0" Classes="error" Text="{Binding Code}" />
-                                                <TextBlock Grid.Column="1" Classes="label" Text="{Binding Description}" />
-                                                <Button    Grid.Column="2" Classes="action-sm" Content="✕"
-                                                           Tag="{Binding Code}" Click="OnRemoveQuickDtc"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
-
-                        <!-- Add new quick DTC -->
-                        <Border Grid.Row="1"
-                                Background="#0E1115"
-                                BorderBrush="#2E3440"
-                                BorderThickness="0,1,0,0"
-                                Padding="12,8">
-                            <StackPanel Spacing="6">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Classes="label" Text="Code" VerticalAlignment="Center" Width="36" />
-                                    <TextBox Text="{Binding NewDtcCode}"
-                                             FontFamily="Consolas,Cascadia Code,monospace"
-                                             FontSize="11" Foreground="#E0E5EC"
-                                             Background="#1A1E26" BorderBrush="#2E3440"
-                                             Width="70" MaxLength="5"
-                                             Watermark="P0300"
-                                             VerticalAlignment="Center" />
-                                    <TextBlock Classes="label" Text="Description" VerticalAlignment="Center" />
-                                    <TextBox Text="{Binding NewDtcDescription}"
-                                             FontFamily="Consolas,Cascadia Code,monospace"
-                                             FontSize="11" Foreground="#E0E5EC"
-                                             Background="#1A1E26" BorderBrush="#2E3440"
-                                             MinWidth="220"
-                                             Watermark="(optional)"
-                                             VerticalAlignment="Center" />
-                                    <Button Classes="action-sm" Content="Add"
-                                            IsEnabled="{Binding CanAddDtc}"
-                                            Click="OnAddQuickDtc" />
-                                </StackPanel>
-                                <TextBlock Classes="label" Text="{Binding ConfigFeedback}" />
-                            </StackPanel>
-                        </Border>
-
-                    </Grid>
-
+                    <views:DataView     IsVisible="{Binding IsDataView}" />
+                    <views:MonitorsView IsVisible="{Binding IsMonitorsView}" />
+                    <views:DtcsView     IsVisible="{Binding IsDtcsView}" />
+                    <views:InputsView   IsVisible="{Binding IsInputsView}" />
+                    <views:ConfigView   IsVisible="{Binding IsConfigView}" />
                 </Grid>
+
             </Grid>
         </Grid>
 
@@ -293,7 +95,6 @@
                 BorderThickness="0,1,0,1"
                 Padding="12,6">
             <Grid RowDefinitions="16, *">
-
                 <TextBlock Grid.Row="0" Classes="heading" Text="CAN PACKETS" />
 
                 <TextBlock Grid.Row="1" Classes="dim"
@@ -315,7 +116,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
             </Grid>
         </Border>
 

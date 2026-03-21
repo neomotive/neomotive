@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI"
+             x:Class="Neomotive.ModuleSimulator.UI.Views.DataView"
+             x:DataType="local:MainWindowViewModel">
+    <ScrollViewer Padding="12,8">
+        <ItemsControl ItemsSource="{Binding DataFields}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="local:DataFieldItem">
+                    <Grid ColumnDefinitions="140, *" Margin="0,0,0,3">
+                        <TextBlock Grid.Column="0" Classes="label" Text="{Binding Field}" />
+                        <TextBlock Grid.Column="1" Classes="value" Text="{Binding Value}" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>

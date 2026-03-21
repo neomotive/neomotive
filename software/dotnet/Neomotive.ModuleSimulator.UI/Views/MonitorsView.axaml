@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI"
+             x:Class="Neomotive.ModuleSimulator.UI.Views.MonitorsView"
+             x:DataType="local:MainWindowViewModel">
+    <ScrollViewer Padding="12,8">
+        <StackPanel Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
+                <TextBlock Classes="label" Text="MIL" Width="140" />
+                <TextBlock Classes="mil-on"  Text="ON"  IsVisible="{Binding MilOn}" />
+                <TextBlock Classes="mil-off" Text="OFF" IsVisible="{Binding MilOff}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Monitors}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:MonitorItem">
+                        <Button Classes="monitor-row"
+                                IsEnabled="{Binding Supported}"
+                                Tag="{Binding Key}"
+                                Click="OnToggleMonitor">
+                            <Grid ColumnDefinitions="140, *">
+                                <TextBlock Grid.Column="0" Classes="label" Text="{Binding Name}" />
+                                <TextBlock Grid.Column="1" Classes="muted" Text="— not supported" IsVisible="{Binding IsNotSupported}" />
+                                <TextBlock Grid.Column="1" Classes="ok"   Text="✓ Ready"          IsVisible="{Binding IsReady}" />
+                                <TextBlock Grid.Column="1" Classes="warn" Text="✗ Incomplete"     IsVisible="{Binding IsIncomplete}" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

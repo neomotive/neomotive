@@ -17,60 +17,15 @@ public partial class MainWindow : Window
     private void OnPcmPressed(object? sender, PointerPressedEventArgs e) => Vm.SelectPcm();
     private void OnTcuPressed(object? sender, PointerPressedEventArgs e) => Vm.SelectTcu();
 
-    private void OnShowData(object? sender, RoutedEventArgs e) => Vm.ShowData();
+    private void OnShowData(object? sender, RoutedEventArgs e)     => Vm.ShowData();
     private void OnShowMonitors(object? sender, RoutedEventArgs e) => Vm.ShowMonitors();
-    private void OnShowDtcs(object? sender, RoutedEventArgs e) => Vm.ShowDtcs();
-    private void OnShowInputs(object? sender, RoutedEventArgs e) => Vm.ShowInputs();
-    private void OnShowConfig(object? sender, RoutedEventArgs e) => Vm.ShowConfig();
-
-    private void OnToggleMonitor(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string key })
-            Vm.ToggleMonitor(key);
-    }
-
-    private void OnToggleDtcButton(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string code })
-            Vm.ToggleKnownDtc(code);
-    }
-
-    private void OnClearDtcButton(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string code })
-            Vm.ClearDtc(code);
-    }
-
-    private void OnClearAllDtcs(object? sender, RoutedEventArgs e) => Vm.ClearAllDtcs();
-
-    private void OnRemoveDtcFromList(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string code })
-            Vm.RemoveDtcFromList(code);
-    }
-
-    private void OnDeactivateDtc(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string code })
-            Vm.DeactivateDtc(code);
-    }
-
-    private void OnActivateDtc(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string code })
-            Vm.ActivateDtc(code);
-    }
-
-    private void OnAddQuickDtc(object? sender, RoutedEventArgs e)    => Vm.AddQuickDtc();
-    private void OnRemoveQuickDtc(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string code })
-            Vm.RemoveQuickDtc(code);
-    }
+    private void OnShowDtcs(object? sender, RoutedEventArgs e)     => Vm.ShowDtcs();
+    private void OnShowInputs(object? sender, RoutedEventArgs e)   => Vm.ShowInputs();
+    private void OnShowConfig(object? sender, RoutedEventArgs e)   => Vm.ShowConfig();
 
     private void OnCommandKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter) { Vm.ExecuteCommand(); e.Handled = true; }
-        else if (e.Key == Key.Escape) { Vm.ClearCommand(); e.Handled = true; }
+        if (e.Key == Key.Enter)       { Vm.ExecuteCommand(); e.Handled = true; }
+        else if (e.Key == Key.Escape) { Vm.ClearCommand();   e.Handled = true; }
     }
 }
