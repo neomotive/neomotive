@@ -71,7 +71,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         _log = new CanPacketLog();
         var bus = new LoggingCanBus(rawBus, _log);
-        _pcmState = new SimulatorState();
+        _pcmState = new SimulatorState { Vin = _config.Vin };
         _tcuState = new SimulatorTcuState();
         _pcm = new SimulatorPcm(bus, _pcmState);
         _tcu = new SimulatorTcu(bus, _tcuState);
@@ -218,6 +218,26 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsMetric));
         DataFields = BuildDataFields();
     }
+
+    public string ConfigVin
+    {
+        get => _config.Vin;
+        set
+        {
+            var v = value?.ToUpperInvariant().Trim() ?? "";
+            if (v.Length < 1 || v.Length > 17) return;
+            _config.Vin = v;
+            _pcmState.Vin = v;
+            ConfigManager.Save(_config);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasConfigVinNote));
+            OnPropertyChanged(nameof(ConfigVinFeedback));
+            DataFields = BuildDataFields();
+        }
+    }
+
+    public bool HasConfigVinNote => _config.Vin.Length != 17;
+    public string ConfigVinFeedback => $"Note: standard VINs are 17 characters ({_config.Vin.Length}/17)";
 
     public ObservableCollection<QuickDtcConfig> ConfigDtcs => _config.QuickDtcs;
     public bool CanAddDtc                              => _config.QuickDtcs.Count < 10;

@@ -18,6 +18,7 @@ public class QuickDtcConfig
 public class SimulatorConfig
 {
     public UnitsOfMeasure Units { get; set; } = UnitsOfMeasure.Imperial;
+    public string Vin { get; set; } = "AWWWWWWWWWWW0YEAH";
     public ObservableCollection<QuickDtcConfig> QuickDtcs { get; set; } = [];
 }
 
