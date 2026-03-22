@@ -9,6 +9,9 @@ public partial class ConfigView : UserControl
 
     public ConfigView() => InitializeComponent();
 
+    private void OnSetImperial(object? sender, RoutedEventArgs e) => Vm.SetUnits(UnitsOfMeasure.Imperial);
+    private void OnSetMetric(object? sender, RoutedEventArgs e)   => Vm.SetUnits(UnitsOfMeasure.Metric);
+
     private void OnAddQuickDtc(object? sender, RoutedEventArgs e) => Vm.AddQuickDtc();
 
     private void OnRemoveQuickDtc(object? sender, RoutedEventArgs e)

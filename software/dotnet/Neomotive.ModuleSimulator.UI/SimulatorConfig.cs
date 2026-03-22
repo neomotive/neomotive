@@ -7,6 +7,8 @@ using System.Text.Json;
 
 namespace Neomotive.ModuleSimulator.UI;
 
+public enum UnitsOfMeasure { Imperial, Metric }
+
 public class QuickDtcConfig
 {
     public string Code { get; set; } = "";
@@ -15,6 +17,7 @@ public class QuickDtcConfig
 
 public class SimulatorConfig
 {
+    public UnitsOfMeasure Units { get; set; } = UnitsOfMeasure.Imperial;
     public ObservableCollection<QuickDtcConfig> QuickDtcs { get; set; } = [];
 }
 

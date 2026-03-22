@@ -207,6 +207,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     // ── Config tab ────────────────────────────────────────────────────────────
 
+    public bool IsImperial => _config.Units == UnitsOfMeasure.Imperial;
+    public bool IsMetric   => _config.Units == UnitsOfMeasure.Metric;
+
+    public void SetUnits(UnitsOfMeasure units)
+    {
+        _config.Units = units;
+        ConfigManager.Save(_config);
+        OnPropertyChanged(nameof(IsImperial));
+        OnPropertyChanged(nameof(IsMetric));
+        DataFields = BuildDataFields();
+    }
+
     public ObservableCollection<QuickDtcConfig> ConfigDtcs => _config.QuickDtcs;
     public bool CanAddDtc                              => _config.QuickDtcs.Count < 10;
     public bool ConfigAtMax                            => _config.QuickDtcs.Count >= 10;
@@ -518,17 +530,29 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private IReadOnlyList<DataFieldItem> BuildDataFields()
     {
+        bool imperial = _config.Units == UnitsOfMeasure.Imperial;
+
         if (_selectedModule == SelectedModule.Tcu)
         {
+            var transTemp = imperial
+                ? $"{_tcuState.TransTempCelsius * 9.0 / 5.0 + 32:F1} °F"
+                : $"{_tcuState.TransTempCelsius:F1} °C";
             return
             [
                 new("ECU Name",  _tcu.EcuName ?? "—"),
                 new("Cal ID",    _tcu.CalibrationId ?? "—"),
                 new("CVN",       _tcu.CalibrationVerificationNumber is { } v ? $"0x{v:X8}" : "—"),
-                new("Trans Temp",$"{_tcuState.TransTempCelsius:F1} °C"),
+                new("Trans Temp", transTemp),
                 new("Gear",      _tcuState.GearPosition),
             ];
         }
+
+        var coolant = imperial
+            ? $"{_pcmState.CoolantTempCelsius * 9.0 / 5.0 + 32:F1} °F"
+            : $"{_pcmState.CoolantTempCelsius:F1} °C";
+        var speed = imperial
+            ? $"{_pcmState.SpeedKph * 0.621371:F1} mph"
+            : $"{_pcmState.SpeedKph:F1} km/h";
 
         return
         [
@@ -536,9 +560,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
             new("Cal ID",      _pcm.CalibrationId ?? "—"),
             new("CVN",         _pcm.CalibrationVerificationNumber is { } cv ? $"0x{cv:X8}" : "—"),
             new("VIN",         _pcmState.Vin),
-            new("Coolant Temp",$"{_pcmState.CoolantTempCelsius:F1} °C"),
+            new("Coolant Temp", coolant),
             new("Engine RPM",  $"{_pcmState.Rpm:F0} rpm"),
-            new("Speed",       $"{_pcmState.SpeedKph:F1} km/h"),
+            new("Speed",       speed),
             new("Throttle",    $"{_pcmState.ThrottlePercent:F1} %"),
         ];
     }
