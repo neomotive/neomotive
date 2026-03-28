@@ -12,6 +12,16 @@ Arduino/C: when boot time is important and complex logic isn't required.
 [Meadow F7](https://www.wildernesslabs.co)/C#: when boot time isn't critical, or I need more features and complexity
 Raspberry Pi/C#: when I need lots of compute power or need lots of logic/library support
 
+## CAN Bus / OBDII
+
+Part of the neomotive project is a full J1979 CAN Bus Module simulator, Scan Tool, and the tools to create your own working modules!  These features are currently in-progress.
+
+### Simulator
+
+The desktop version of the simulator is an Avalonia application that uses a PCan Basic USB module from PEAK Systems.
+
+![](./docs/can/simulator-screen1.png)
+
 ## Modules
 
 For lack of a better name, each project that creates hardware to solve a specific problem is called a "Module".  There is a folder for them, and that is currently divided by the general technology used for each.  Some have custom PCBs, some were wired and hand soldered on perf board.
