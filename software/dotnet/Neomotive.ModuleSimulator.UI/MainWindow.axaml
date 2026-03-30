@@ -95,27 +95,38 @@
                 BorderThickness="0,1,0,1"
                 Padding="12,6">
             <Grid RowDefinitions="16, *">
-                <TextBlock Grid.Row="0" Classes="heading" Text="CAN PACKETS" />
+                <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                    <TextBlock Grid.Column="0" Classes="heading" Text="CAN PACKETS" />
+                    <Button Grid.Column="1" Classes="action-sm" Content="Clear"
+                            IsVisible="{Binding HasCanPackets}"
+                            Click="OnClearCanLog"
+                            VerticalAlignment="Center" />
+                </Grid>
 
                 <TextBlock Grid.Row="1" Classes="dim"
                            Text="Waiting for CAN frames..."
                            IsVisible="{Binding HasNoCanPackets}"
                            VerticalAlignment="Center" />
 
-                <ItemsControl Grid.Row="1" ItemsSource="{Binding CanLogItems}" IsVisible="{Binding HasCanPackets}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="local:CanLogItem">
-                            <Grid ColumnDefinitions="100, 38, 28, 185, *" Margin="0,1">
-                                <TextBlock Grid.Column="0" Classes="muted sm" Text="{Binding Time}" />
-                                <TextBlock Grid.Column="1" Classes="sm"       Text="{Binding Id}" />
-                                <TextBlock Grid.Column="2" Classes="tx sm"    Text="TX" IsVisible="{Binding IsOutgoing}" />
-                                <TextBlock Grid.Column="2" Classes="rx sm"    Text="RX" IsVisible="{Binding !IsOutgoing}" />
-                                <TextBlock Grid.Column="3" Classes="muted sm" Text="{Binding Data}" />
-                                <TextBlock Grid.Column="4" Classes="sm"       Text="{Binding Description}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer Grid.Row="1" x:Name="CanLogScroller"
+                              IsVisible="{Binding HasCanPackets}"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding CanLogItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:CanLogItem">
+                                <Grid ColumnDefinitions="100, 38, 28, 185, *" Margin="0,1">
+                                    <TextBlock Grid.Column="0" Classes="muted sm" Text="{Binding Time}" />
+                                    <TextBlock Grid.Column="1" Classes="sm"       Text="{Binding Id}" />
+                                    <TextBlock Grid.Column="2" Classes="tx sm"    Text="TX" IsVisible="{Binding IsOutgoing}" />
+                                    <TextBlock Grid.Column="2" Classes="rx sm"    Text="RX" IsVisible="{Binding !IsOutgoing}" />
+                                    <TextBlock Grid.Column="3" Classes="muted sm" Text="{Binding Data}" />
+                                    <TextBlock Grid.Column="4" Classes="sm"       Text="{Binding Description}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </Grid>
         </Border>
 

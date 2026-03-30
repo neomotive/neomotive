@@ -20,6 +20,21 @@
                        IsVisible="{Binding HasConfigVinNote}"
                        FontStyle="Italic" Margin="0,0,0,12" />
 
+            <!-- CAN log -->
+            <TextBlock Classes="heading" Text="CAN LOG" Margin="0,0,0,6" />
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                <TextBlock Classes="label" Text="Max messages" VerticalAlignment="Center" />
+                <NumericUpDown Value="{Binding CanLogMaxDepth}"
+                               Minimum="10" Maximum="10000" Increment="10"
+                               FormatString="0"
+                               Background="#1A1E26" BorderBrush="#2E3440"
+                               Foreground="#E0E5EC"
+                               Width="90"
+                               VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Classes="muted xs" Text="FIFO — oldest messages are dropped when full"
+                       FontStyle="Italic" Margin="0,0,0,16" />
+
             <!-- Units of measure -->
             <TextBlock Classes="heading" Text="UNITS OF MEASURE" Margin="0,0,0,6" />
             <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,16">

@@ -6,6 +6,10 @@
     <Project Path="Apps/SignCamera/SignCamera.InferenceTest/SignCamera.InferenceTest.csproj" />
     <Project Path="Apps/SignCamera/SignCamera.Pi/SignCamera.Pi.csproj" />
   </Folder>
+  <Folder Name="/docs/">
+    <File Path="../../README.MD" />
+  </Folder>
+  <Folder Name="/docs/can/" />
   <Folder Name="/Libraries/">
     <Project Path="Libraries/Neomotive.Core/Neomotive.Core.csproj" />
     <Project Path="Libraries/Neomotive.SpeedLimit/Neomotive.SpeedLimit.csproj" />

@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 
 namespace Neomotive.ModuleSimulator.UI;
 
@@ -12,6 +14,16 @@ public partial class MainWindow : Window
     {
         DataContext = new MainWindowViewModel();
         InitializeComponent();
+        Vm.CanLogUpdated += ScrollCanLogToBottom;
+    }
+
+    private void ScrollCanLogToBottom()
+    {
+        var scroller = this.FindControl<ScrollViewer>("CanLogScroller");
+        if (scroller is null) return;
+        Dispatcher.UIThread.Post(
+            () => scroller.Offset = new Vector(scroller.Offset.X, double.MaxValue),
+            DispatcherPriority.Background);
     }
 
     private void OnPcmPressed(object? sender, PointerPressedEventArgs e) => Vm.SelectPcm();
@@ -22,6 +34,8 @@ public partial class MainWindow : Window
     private void OnShowDtcs(object? sender, RoutedEventArgs e)     => Vm.ShowDtcs();
     private void OnShowInputs(object? sender, RoutedEventArgs e)   => Vm.ShowInputs();
     private void OnShowConfig(object? sender, RoutedEventArgs e)   => Vm.ShowConfig();
+
+    private void OnClearCanLog(object? sender, RoutedEventArgs e)  => Vm.ClearCanLog();
 
     private void OnCommandKeyDown(object? sender, KeyEventArgs e)
     {

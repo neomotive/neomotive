@@ -48,6 +48,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private SettingsView _view = SettingsView.Data;
     private SelectedModule _selectedModule = SelectedModule.Pcm;
     private DateTime _lastCanTimestamp = DateTime.MinValue;
+    private int _lastCanCount = -1;
     private readonly SimulatorConfig _config;
     private readonly HashSet<string> _commandDtcCodes = new();
 
@@ -69,7 +70,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             FeedbackText = $"Offline mode — {ex.Message}";
         }
 
-        _log = new CanPacketLog();
+        _log = new CanPacketLog(_config.CanLogMaxDepth);
         var bus = new LoggingCanBus(rawBus, _log);
         _pcmState = new SimulatorState { Vin = _config.Vin };
         _tcuState = new SimulatorTcuState();
@@ -153,6 +154,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     // ── CAN log ───────────────────────────────────────────────────────────────
 
+    public event Action? CanLogUpdated;
+
     public bool HasNoCanPackets { get; private set; } = true;
     public bool HasCanPackets { get; private set; } = false;
 
@@ -205,6 +208,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     public void ClearCommand() => CommandInput = "";
 
+    public void ClearCanLog()
+    {
+        _log.Clear();
+        _lastCanTimestamp = DateTime.MinValue;
+        _lastCanCount = 0;
+        CanLogItems = [];
+        HasCanPackets = false;
+        HasNoCanPackets = true;
+        OnPropertyChanged(nameof(HasCanPackets));
+        OnPropertyChanged(nameof(HasNoCanPackets));
+    }
+
     // ── Config tab ────────────────────────────────────────────────────────────
 
     public bool IsImperial => _config.Units == UnitsOfMeasure.Imperial;
@@ -233,6 +248,19 @@ public class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasConfigVinNote));
             OnPropertyChanged(nameof(ConfigVinFeedback));
             DataFields = BuildDataFields();
+        }
+    }
+
+    public int CanLogMaxDepth
+    {
+        get => _config.CanLogMaxDepth;
+        set
+        {
+            var clamped = value < 10 ? 10 : value > 10000 ? 10000 : value;
+            _config.CanLogMaxDepth = clamped;
+            _log.MaxDepth = clamped;
+            ConfigManager.Save(_config);
+            OnPropertyChanged();
         }
     }
 
@@ -530,12 +558,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private void RefreshCanLog()
     {
-        var packets = _log.GetRecent(6);
-        var latest = packets.Count > 0 ? packets[^1].Timestamp : DateTime.MinValue;
-        if (latest == _lastCanTimestamp) return;
+        var all = _log.GetAll();
+        var latest = all.Count > 0 ? all[^1].Timestamp : DateTime.MinValue;
+        if (latest == _lastCanTimestamp && all.Count == _lastCanCount) return;
         _lastCanTimestamp = latest;
+        _lastCanCount = all.Count;
 
-        CanLogItems = BuildCanLog();
+        CanLogItems = BuildCanLog(all);
         var hasPackets = CanLogItems.Count > 0;
         if (HasCanPackets != hasPackets)
         {
@@ -544,6 +573,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(HasCanPackets));
             OnPropertyChanged(nameof(HasNoCanPackets));
         }
+        CanLogUpdated?.Invoke();
     }
 
     // ── Data builders ─────────────────────────────────────────────────────────
@@ -663,9 +693,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
             .ToList();
     }
 
-    private IReadOnlyList<CanLogItem> BuildCanLog()
+    private IReadOnlyList<CanLogItem> BuildCanLog(IReadOnlyList<CanPacketEntry>? packets = null)
     {
-        return _log.GetRecent(6).Select(pkt => new CanLogItem(
+        return (packets ?? _log.GetAll()).Select(pkt => new CanLogItem(
             pkt.Timestamp.ToString("HH:mm:ss.fff"),
             pkt.Id.ToString("X3"),
             pkt.IsOutgoing,
