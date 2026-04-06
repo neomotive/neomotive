@@ -22,6 +22,7 @@
     <Project Path="Neomotive.ControlModule/Neomotive.ControlModule.csproj" Id="c12bc292-7ba1-4600-8371-440a47e42429" />
     <Project Path="Neomotive.ModuleSimulator.Core/Neomotive.ModuleSimulator.Core.csproj" Id="a5fc049b-a64b-46ce-b055-87866c611072" />
     <Project Path="Neomotive.ModuleSimulator.Desktop/Neomotive.ModuleSimulator.Desktop.csproj" Id="e1361edc-2ace-4264-9971-b0db9049bf70" />
+    <Project Path="Neomotive.ModuleSimulator.RaspberryPi/Neomotive.ModuleSimulator.RaspberryPi.csproj" Id="2924b058-5d05-4129-a9c6-59e0fb1ad822" />
     <Project Path="Neomotive.ModuleSimulator.UI/Neomotive.ModuleSimulator.UI.csproj" Id="fd7b8979-c0a4-4464-a02a-d9b762a05492" />
   </Folder>
   <Folder Name="/Libraries/TransferCase/">

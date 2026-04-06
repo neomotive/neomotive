@@ -3,6 +3,50 @@
              x:Class="Neomotive.ModuleSimulator.UI.App"
              RequestedThemeVariant="Dark">
 
+    <!-- ── Color palette ───────────────────────────────────────────────────── -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Foreground roles -->
+            <SolidColorBrush x:Key="BrushFgDefault">#C8CDD6</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgSubtle">#8A9BB0</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgMuted">#6A7888</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgDim">#556878</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgValue">#88C0D0</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgActive">#E0E5EC</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgHover">#C0C8D4</SolidColorBrush>
+
+            <!-- Semantic colors -->
+            <SolidColorBrush x:Key="BrushOk">#6DBF67</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushWarn">#D4A050</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushError">#E06060</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushTx">#5E9FE0</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushRx">#C8A040</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushPcm">#6DBF67</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushTcu">#6BB8D4</SolidColorBrush>
+
+            <!-- Backgrounds -->
+            <SolidColorBrush x:Key="BrushBgModule">#1C2028</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgModuleSelected">#1A2A1A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtc">#1A1E26</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtcHover">#222830</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtcActive">#3A1A1A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtcActiveHover">#4A2020</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgMonitorHover">#1A2030</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgActionHover">#2A1A1A</SolidColorBrush>
+
+            <!-- Borders -->
+            <SolidColorBrush x:Key="BrushBorder">#2E3440</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderSelected">#4A7C4A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderTabActive">#4A7C59</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderDtcActive">#8A3030</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderAction">#3A4050</SolidColorBrush>
+
+            <!-- Scrollbar -->
+            <SolidColorBrush x:Key="BrushScrollThumb">#445060</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushScrollThumbHover">#607080</SolidColorBrush>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
 
@@ -11,79 +55,81 @@
         <!-- All TextBlocks default to monospace -->
         <Style Selector="TextBlock">
             <Setter Property="FontFamily" Value="Consolas,Cascadia Code,monospace" />
-            <Setter Property="FontSize"   Value="11" />
-            <Setter Property="Foreground" Value="#C8CDD6" />
+            <Setter Property="FontSize"   Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgDefault}" />
         </Style>
 
         <!-- Colour roles -->
         <Style Selector="TextBlock.label">
-            <Setter Property="Foreground" Value="#4A5568" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgSubtle}" />
         </Style>
         <Style Selector="TextBlock.muted">
-            <Setter Property="Foreground" Value="#344050" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgMuted}" />
         </Style>
         <Style Selector="TextBlock.dim">
-            <Setter Property="Foreground" Value="#2A3540" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgDim}" />
             <Setter Property="FontStyle"  Value="Italic" />
         </Style>
         <Style Selector="TextBlock.value">
-            <Setter Property="Foreground" Value="#88C0D0" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgValue}" />
         </Style>
         <Style Selector="TextBlock.ok">
-            <Setter Property="Foreground" Value="#6DBF67" />
+            <Setter Property="Foreground" Value="{StaticResource BrushOk}" />
         </Style>
         <Style Selector="TextBlock.warn">
-            <Setter Property="Foreground" Value="#D4A050" />
+            <Setter Property="Foreground" Value="{StaticResource BrushWarn}" />
         </Style>
         <Style Selector="TextBlock.error">
-            <Setter Property="Foreground" Value="#E06060" />
+            <Setter Property="Foreground" Value="{StaticResource BrushError}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
         <Style Selector="TextBlock.tx">
-            <Setter Property="Foreground" Value="#5E9FE0" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTx}" />
         </Style>
         <Style Selector="TextBlock.rx">
-            <Setter Property="Foreground" Value="#C8A040" />
+            <Setter Property="Foreground" Value="{StaticResource BrushRx}" />
         </Style>
         <Style Selector="TextBlock.mil-on">
-            <Setter Property="Foreground" Value="#E06060" />
+            <Setter Property="Foreground" Value="{StaticResource BrushError}" />
             <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize"    Value="18" />
         </Style>
         <Style Selector="TextBlock.mil-off">
-            <Setter Property="Foreground" Value="#6DBF67" />
+            <Setter Property="Foreground" Value="{StaticResource BrushOk}" />
+            <Setter Property="FontSize"    Value="18" />
         </Style>
         <Style Selector="TextBlock.pcm-name">
-            <Setter Property="Foreground"  Value="#6DBF67" />
+            <Setter Property="Foreground"  Value="{StaticResource BrushPcm}" />
             <Setter Property="FontWeight"  Value="SemiBold" />
-            <Setter Property="FontSize"    Value="12" />
+            <Setter Property="FontSize"    Value="15" />
         </Style>
         <Style Selector="TextBlock.tcu-name">
-            <Setter Property="Foreground"  Value="#6BB8D4" />
+            <Setter Property="Foreground"  Value="{StaticResource BrushTcu}" />
             <Setter Property="FontWeight"  Value="SemiBold" />
-            <Setter Property="FontSize"    Value="12" />
+            <Setter Property="FontSize"    Value="15" />
         </Style>
 
         <!-- Size modifiers -->
         <Style Selector="TextBlock.sm">
-            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontSize" Value="12" />
         </Style>
         <Style Selector="TextBlock.xs">
-            <Setter Property="FontSize" Value="9" />
+            <Setter Property="FontSize" Value="11" />
         </Style>
 
         <!-- Section headings: uppercase, letter-spaced, tiny -->
         <Style Selector="TextBlock.heading">
             <Setter Property="FontSize"      Value="9" />
             <Setter Property="FontWeight"    Value="Bold" />
-            <Setter Property="Foreground"    Value="#384050" />
+            <Setter Property="Foreground"    Value="{StaticResource BrushFgMuted}" />
             <Setter Property="LetterSpacing" Value="2" />
         </Style>
 
         <!-- ── Module panel ────────────────────────────────────────────────── -->
 
         <Style Selector="Border.module">
-            <Setter Property="Background"      Value="#1C2028" />
-            <Setter Property="BorderBrush"     Value="#2E3440" />
+            <Setter Property="Background"      Value="{StaticResource BrushBgModule}" />
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius"    Value="3" />
             <Setter Property="Padding"         Value="8,6" />
@@ -91,59 +137,59 @@
             <Setter Property="Cursor"          Value="Hand" />
         </Style>
         <Style Selector="Border.module.selected">
-            <Setter Property="Background"  Value="#1A2A1A" />
-            <Setter Property="BorderBrush" Value="#4A7C4A" />
+            <Setter Property="Background"  Value="{StaticResource BrushBgModuleSelected}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSelected}" />
         </Style>
 
         <!-- ── Tab buttons ─────────────────────────────────────────────────── -->
 
         <Style Selector="Button.tab">
             <Setter Property="Background"      Value="Transparent" />
-            <Setter Property="Foreground"      Value="#556070" />
+            <Setter Property="Foreground"      Value="{StaticResource BrushFgSubtle}" />
             <Setter Property="BorderThickness" Value="0,0,0,2" />
             <Setter Property="BorderBrush"     Value="Transparent" />
-            <Setter Property="Padding"         Value="12,4" />
+            <Setter Property="Padding"         Value="16,8" />
             <Setter Property="CornerRadius"    Value="0" />
             <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
-            <Setter Property="FontSize"        Value="11" />
+            <Setter Property="FontSize"        Value="14" />
         </Style>
         <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#C0C8D4" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgHover}" />
         </Style>
         <Style Selector="Button.tab.active">
-            <Setter Property="Foreground"  Value="#E0E5EC" />
-            <Setter Property="BorderBrush" Value="#4A7C59" />
+            <Setter Property="Foreground"  Value="{StaticResource BrushFgActive}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderTabActive}" />
             <Setter Property="FontWeight"  Value="SemiBold" />
         </Style>
         <Style Selector="Button.tab.active:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#E0E5EC" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgActive}" />
         </Style>
 
         <!-- ── DTC toggle buttons ──────────────────────────────────────────── -->
 
         <Style Selector="Button.dtc">
-            <Setter Property="Background"      Value="#1A1E26" />
-            <Setter Property="BorderBrush"     Value="#2E3440" />
+            <Setter Property="Background"      Value="{StaticResource BrushBgDtc}" />
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius"    Value="3" />
-            <Setter Property="Padding"         Value="7,3" />
-            <Setter Property="Margin"          Value="0,0,4,0" />
+            <Setter Property="Padding"         Value="10,6" />
+            <Setter Property="Margin"          Value="0,0,6,0" />
             <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
-            <Setter Property="FontSize"        Value="11" />
-            <Setter Property="Foreground"      Value="#556070" />
+            <Setter Property="FontSize"        Value="14" />
+            <Setter Property="Foreground"      Value="{StaticResource BrushFgSubtle}" />
         </Style>
         <Style Selector="Button.dtc:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#222830" />
+            <Setter Property="Background" Value="{StaticResource BrushBgDtcHover}" />
         </Style>
         <Style Selector="Button.dtc.active">
-            <Setter Property="Background"  Value="#3A1A1A" />
-            <Setter Property="BorderBrush" Value="#8A3030" />
-            <Setter Property="Foreground"  Value="#E06060" />
+            <Setter Property="Background"  Value="{StaticResource BrushBgDtcActive}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDtcActive}" />
+            <Setter Property="Foreground"  Value="{StaticResource BrushError}" />
         </Style>
         <Style Selector="Button.dtc.active:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#4A2020" />
+            <Setter Property="Background" Value="{StaticResource BrushBgDtcActiveHover}" />
         </Style>
 
         <!-- ── Monitor row toggle ──────────────────────────────────────────── -->
@@ -157,8 +203,11 @@
             <Setter Property="Margin"                   Value="0,0,0,2" />
             <Setter Property="Cursor"                   Value="Hand" />
         </Style>
+        <Style Selector="Button.monitor-row TextBlock">
+            <Setter Property="FontSize" Value="18" />
+        </Style>
         <Style Selector="Button.monitor-row:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1A2030" />
+            <Setter Property="Background" Value="{StaticResource BrushBgMonitorHover}" />
         </Style>
         <Style Selector="Button.monitor-row:disabled /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
@@ -169,17 +218,17 @@
 
         <Style Selector="Button.action-sm">
             <Setter Property="Background"      Value="Transparent" />
-            <Setter Property="BorderBrush"     Value="#3A4050" />
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorderAction}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius"    Value="3" />
             <Setter Property="Padding"         Value="5,1" />
             <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
             <Setter Property="FontSize"        Value="10" />
-            <Setter Property="Foreground"      Value="#556070" />
+            <Setter Property="Foreground"      Value="{StaticResource BrushFgSubtle}" />
         </Style>
         <Style Selector="Button.action-sm:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2A1A1A" />
-            <Setter Property="Foreground" Value="#E06060" />
+            <Setter Property="Background" Value="{StaticResource BrushBgActionHover}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushError}" />
         </Style>
 
         <!-- ── Touch-friendly scrollbars ──────────────────────────────────── -->
@@ -196,12 +245,12 @@
             <Setter Property="Width" Value="10" />
         </Style>
         <Style Selector="ScrollBar:vertical /template/ Thumb">
-            <Setter Property="MinHeight"   Value="40" />
-            <Setter Property="Background"  Value="#445060" />
+            <Setter Property="MinHeight"    Value="40" />
+            <Setter Property="Background"   Value="{StaticResource BrushScrollThumb}" />
             <Setter Property="CornerRadius" Value="5" />
         </Style>
         <Style Selector="ScrollBar:vertical /template/ Thumb:pointerover">
-            <Setter Property="Background" Value="#607080" />
+            <Setter Property="Background" Value="{StaticResource BrushScrollThumbHover}" />
         </Style>
 
         <!-- ── Category cycle button ────────────────────────────────────────── -->
@@ -210,7 +259,7 @@
             <Setter Property="Background"      Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding"         Value="0" />
-            <Setter Property="Foreground"      Value="#4A5568" />
+            <Setter Property="Foreground"      Value="{StaticResource BrushFgSubtle}" />
             <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
             <Setter Property="FontSize"        Value="11" />
             <Setter Property="Cursor"          Value="Hand" />
@@ -218,7 +267,7 @@
         </Style>
         <Style Selector="Button.category:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#88C0D0" />
+            <Setter Property="Foreground" Value="{StaticResource BrushFgValue}" />
         </Style>
 
     </Application.Styles>

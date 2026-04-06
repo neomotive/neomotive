@@ -56,7 +56,7 @@
             </Border>
 
             <!-- ── Right: tab bar + content ───────────────────────────────── -->
-            <Grid Grid.Column="1" RowDefinitions="28, *">
+            <Grid Grid.Column="1" RowDefinitions="42, *">
 
                 <!-- Tab bar -->
                 <Border Grid.Row="0"
