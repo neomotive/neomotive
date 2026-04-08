@@ -10,11 +10,11 @@ public partial class MainWindow : Window
 {
     private MainWindowViewModel Vm => (MainWindowViewModel)DataContext!;
 
-    public MainWindow()
+    public MainWindow(MainWindowViewModel vm)
     {
-        DataContext = new MainWindowViewModel();
+        DataContext = vm;
         InitializeComponent();
-        Vm.CanLogUpdated += ScrollCanLogToBottom;
+        vm.CanLogUpdated += ScrollCanLogToBottom;
     }
 
     private void ScrollCanLogToBottom()

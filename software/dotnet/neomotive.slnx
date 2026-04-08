@@ -23,6 +23,7 @@
     <Project Path="Neomotive.ModuleSimulator.Core/Neomotive.ModuleSimulator.Core.csproj" Id="a5fc049b-a64b-46ce-b055-87866c611072" />
     <Project Path="Neomotive.ModuleSimulator.RaspberryPi/Neomotive.ModuleSimulator.RaspberryPi.csproj" Id="2924b058-5d05-4129-a9c6-59e0fb1ad822" />
     <Project Path="Neomotive.ModuleSimulator.UI/Neomotive.ModuleSimulator.UI.csproj" Id="fd7b8979-c0a4-4464-a02a-d9b762a05492" />
+    <Project Path="Neomotive.ModuleSimulator.UIShared/Neomotive.ModuleSimulator.UIShared.csproj" />
   </Folder>
   <Folder Name="/Libraries/TransferCase/">
     <Project Path="Libraries/Neomotive.TransferCase.Core/Neomotive.TransferCase.Core.csproj" />
@@ -34,6 +35,7 @@
     <Project Path="../../../wilderness/Meadow.Core/Source/implementations/linux/Meadow.Linux/Meadow.Linux.csproj">
       <Deploy />
     </Project>
+    <Project Path="../../../wilderness/Meadow.Core/Source/implementations/windows/Meadow.Windows/Meadow.Windows.csproj" />
     <Project Path="../../../wilderness/Meadow.Core/Source/Meadow.Core/Meadow.Core.csproj">
       <Deploy />
     </Project>
@@ -51,6 +53,10 @@
       <Deploy />
     </Project>
     <Project Path="../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.PCanBasic/Driver/ICs.CAN.PCanBasic.csproj" />
+    <Project Path="../../../wilderness/Meadow.Logging/Source/Meadow.Logging.LogProviders/Driver/Meadow.Logging.LogProviders.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../wilderness/Meadow.Logging/Source/Meadow.Logging.LogProviders/Samples/UdpLogClient_Sample/UdpLogClient_Sample.csproj" />
     <Project Path="../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />
     <Project Path="../../../wilderness/Meadow.Units/Source/Meadow.Units/Meadow.Units.csproj">
       <Deploy />

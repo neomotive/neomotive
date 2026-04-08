@@ -20,8 +20,9 @@
   </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Core\Source\implementations\windows\Meadow.Windows\Meadow.Windows.csproj" />
+        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
         <ProjectReference Include="..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.PCanBasic\Driver\ICs.CAN.PCanBasic.csproj" />
-        <ProjectReference Include="..\Neomotive.ControlModule\Neomotive.ControlModule.csproj" />
-        <ProjectReference Include="..\Neomotive.ModuleSimulator.Core\Neomotive.ModuleSimulator.Core.csproj" />
+        <ProjectReference Include="..\Neomotive.ModuleSimulator.UIShared\Neomotive.ModuleSimulator.UIShared.csproj" />
     </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 using Avalonia.Threading;
-using Meadow.Foundation.ICs.CAN;
+using Meadow;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using System;
@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Neomotive.ModuleSimulator.UI;
 
@@ -20,9 +21,9 @@ public record MonitorItem(string Key, string Name, bool Supported, bool Complete
 }
 public record DtcItem(string Code, string Category, string Description, bool IsActive, bool IsQuick)
 {
-    public bool IsInactive     => !IsActive;
-    public bool IsCommand      => !IsQuick;
-    public bool IsCommandActive   => !IsQuick && IsActive;
+    public bool IsInactive => !IsActive;
+    public bool IsCommand => !IsQuick;
+    public bool IsCommandActive => !IsQuick && IsActive;
     public bool IsCommandInactive => !IsQuick && !IsActive;
 }
 public record DtcButtonItem(string Code, string Description, bool IsActive);
@@ -39,11 +40,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Dictionary<string, byte[]> PermanentDtcs,
         Action Sync);
 
-    private readonly SimulatorState _pcmState;
-    private readonly SimulatorTcuState _tcuState;
-    private readonly SimulatorPcm _pcm;
-    private readonly SimulatorTcu _tcu;
-    private readonly CanPacketLog _log;
+    private SimulatorState _pcmState;
+    private SimulatorTcuState _tcuState;
+    private SimulatorPcm _pcm;
+    private SimulatorTcu _tcu;
+    private CanPacketLog _log;
 
     private SettingsView _view = SettingsView.Data;
     private SelectedModule _selectedModule = SelectedModule.Pcm;
@@ -52,30 +53,45 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly SimulatorConfig _config;
     private readonly HashSet<string> _commandDtcCodes = new();
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(string feedbackText = "")
     {
+        FeedbackText = feedbackText;
         _config = ConfigManager.Load();
         if (_config.QuickDtcs.Count == 0)
+        {
             SeedDefaultQuickDtcs();
-        ICanBus rawBus;
-        try
-        {
-            var expander = new PCanUsb();
-            rawBus = expander.CreateCanBus(CanBitrate.Can_500kbps);
-            FeedbackText = "CAN bus connected (PCanUsb, 500 kbps)";
         }
-        catch (Exception ex)
+
+        // since Avalonia and Meadow are both starting at the same time, we must wait
+        // for MeadowInitialize to complete before the output port is ready
+        _ = Task.Run(WaitForHardware);
+    }
+
+    private LoggingCanBus _bus;
+
+    private async Task WaitForHardware()
+    {
+        while (_bus == null) // TODO: wait for any other required hardware
         {
-            rawBus = new NullCanBus();
-            FeedbackText = $"Offline mode — {ex.Message}";
+            var rawBus = Resolver.Services.Get<ICanBus>();
+            if (rawBus != null)
+            {
+                if (rawBus is NullCanBus)
+                    FeedbackText = "No CAN bus detected — offline mode";
+                else
+                    FeedbackText = "Using CAN bus: " + rawBus.GetType().Name;
+
+                _bus = new LoggingCanBus(rawBus, _log);
+                continue;
+            }
+            await Task.Delay(100);
         }
 
         _log = new CanPacketLog(_config.CanLogMaxDepth);
-        var bus = new LoggingCanBus(rawBus, _log);
         _pcmState = new SimulatorState { Vin = _config.Vin };
         _tcuState = new SimulatorTcuState();
-        _pcm = new SimulatorPcm(bus, _pcmState);
-        _tcu = new SimulatorTcu(bus, _tcuState);
+        _pcm = new SimulatorPcm(_bus, _pcmState);
+        _tcu = new SimulatorTcu(_bus, _tcuState);
 
         Refresh();
 
@@ -223,7 +239,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     // ── Config tab ────────────────────────────────────────────────────────────
 
     public bool IsImperial => _config.Units == UnitsOfMeasure.Imperial;
-    public bool IsMetric   => _config.Units == UnitsOfMeasure.Metric;
+    public bool IsMetric => _config.Units == UnitsOfMeasure.Metric;
 
     public void SetUnits(UnitsOfMeasure units)
     {
@@ -268,9 +284,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public string ConfigVinFeedback => $"Note: standard VINs are 17 characters ({_config.Vin.Length}/17)";
 
     public ObservableCollection<QuickDtcConfig> ConfigDtcs => _config.QuickDtcs;
-    public bool CanAddDtc                              => _config.QuickDtcs.Count < 10;
-    public bool ConfigAtMax                            => _config.QuickDtcs.Count >= 10;
-    public bool HasNoQuickDtcs                         => _config.QuickDtcs.Count == 0;
+    public bool CanAddDtc => _config.QuickDtcs.Count < 10;
+    public bool ConfigAtMax => _config.QuickDtcs.Count >= 10;
+    public bool HasNoQuickDtcs => _config.QuickDtcs.Count == 0;
 
     private string _newDtcCode = "";
     public string NewDtcCode
@@ -315,9 +331,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _config.QuickDtcs.Add(new QuickDtcConfig { Code = code, Description = desc });
         ConfigManager.Save(_config);
 
-        NewDtcCode        = "";
+        NewDtcCode = "";
         NewDtcDescription = "";
-        ConfigFeedback    = $"Added {code}";
+        ConfigFeedback = $"Added {code}";
 
         NotifyConfigChanged();
         KnownDtcButtons = BuildDtcButtons();
@@ -512,16 +528,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var r = _pcmState.Readiness;
         switch (key)
         {
-            case "misfire":      if (r.MisfireSupported)                r.MisfireComplete                = !r.MisfireComplete;                break;
-            case "fuel":         if (r.FuelSystemSupported)             r.FuelSystemComplete             = !r.FuelSystemComplete;             break;
-            case "comprehensive":if (r.ComprehensiveComponentSupported) r.ComprehensiveComponentComplete = !r.ComprehensiveComponentComplete; break;
-            case "catalyst":     if (r.CatalystSupported)               r.CatalystComplete               = !r.CatalystComplete;               break;
-            case "hcat":         if (r.HeatedCatalystSupported)         r.HeatedCatalystComplete         = !r.HeatedCatalystComplete;         break;
-            case "evap":         if (r.EvapSystemSupported)             r.EvapSystemComplete             = !r.EvapSystemComplete;             break;
-            case "air":          if (r.SecondaryAirSupported)           r.SecondaryAirComplete           = !r.SecondaryAirComplete;           break;
-            case "o2":           if (r.OxygenSensorSupported)           r.OxygenSensorComplete           = !r.OxygenSensorComplete;           break;
-            case "o2heater":     if (r.OxygenSensorHeaterSupported)     r.OxygenSensorHeaterComplete     = !r.OxygenSensorHeaterComplete;     break;
-            case "egr":          if (r.EgrSystemSupported)              r.EgrSystemComplete              = !r.EgrSystemComplete;              break;
+            case "misfire": if (r.MisfireSupported) r.MisfireComplete = !r.MisfireComplete; break;
+            case "fuel": if (r.FuelSystemSupported) r.FuelSystemComplete = !r.FuelSystemComplete; break;
+            case "comprehensive": if (r.ComprehensiveComponentSupported) r.ComprehensiveComponentComplete = !r.ComprehensiveComponentComplete; break;
+            case "catalyst": if (r.CatalystSupported) r.CatalystComplete = !r.CatalystComplete; break;
+            case "hcat": if (r.HeatedCatalystSupported) r.HeatedCatalystComplete = !r.HeatedCatalystComplete; break;
+            case "evap": if (r.EvapSystemSupported) r.EvapSystemComplete = !r.EvapSystemComplete; break;
+            case "air": if (r.SecondaryAirSupported) r.SecondaryAirComplete = !r.SecondaryAirComplete; break;
+            case "o2": if (r.OxygenSensorSupported) r.OxygenSensorComplete = !r.OxygenSensorComplete; break;
+            case "o2heater": if (r.OxygenSensorHeaterSupported) r.OxygenSensorHeaterComplete = !r.OxygenSensorHeaterComplete; break;
+            case "egr": if (r.EgrSystemSupported) r.EgrSystemComplete = !r.EgrSystemComplete; break;
         }
         Refresh();
     }
@@ -657,12 +673,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Command DTCs: always shown (active or inactive) until explicitly removed
         foreach (var code in _commandDtcCodes.OrderBy(c => c))
         {
-            var isStored    = stored.ContainsKey(code);
-            var isPending   = pending.ContainsKey(code);
+            var isStored = stored.ContainsKey(code);
+            var isPending = pending.ContainsKey(code);
             var isPermanent = permanent.ContainsKey(code);
-            var isActive    = isStored || isPending || isPermanent;
-            var category    = isStored ? "Stored" : isPending ? "Pending" : isPermanent ? "Permanent" : "";
-            var desc        = staticKnown.FirstOrDefault(d => d.Code == code)?.Description ?? code;
+            var isActive = isStored || isPending || isPermanent;
+            var category = isStored ? "Stored" : isPending ? "Pending" : isPermanent ? "Permanent" : "";
+            var desc = staticKnown.FirstOrDefault(d => d.Code == code)?.Description ?? code;
             items.Add(new DtcItem(code, category, desc, isActive, IsQuick: false));
             addedCodes.Add(code);
         }
