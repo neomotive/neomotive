@@ -5,6 +5,7 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://KnobControl.Avalonia/Themes/KnobControl.Avalonia.axaml" />
         <StyleInclude Source="avares://Neomotive.ModuleSimulator.UIShared/SharedStyles.axaml" />
     </Application.Styles>
 

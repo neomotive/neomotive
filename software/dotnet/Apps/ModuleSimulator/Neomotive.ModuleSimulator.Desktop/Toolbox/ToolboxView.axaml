@@ -1,0 +1,169 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI.Toolbox"
+             xmlns:knob="clr-namespace:KnobControl.Avalonia;assembly=KnobControl.Avalonia"
+             xmlns:led="https://github.com/ChrisPulman/XamlLEDControl.Avalonia"
+             x:Class="Neomotive.ModuleSimulator.UI.Toolbox.ToolboxView"
+             x:DataType="local:ToolboxViewModel"
+             Background="#141820">
+
+    <Border BorderBrush="#2E3440" BorderThickness="1,0,0,0">
+        <StackPanel Margin="10,8" Spacing="0">
+
+            <!-- Heading -->
+            <TextBlock Text="HARDWARE"
+                       FontFamily="Consolas,Cascadia Code,monospace"
+                       FontSize="10" FontWeight="Bold" LetterSpacing="2"
+                       Foreground="#8A9BB0"
+                       Margin="0,0,0,12" />
+
+            <!-- ── Potentiometers ─────────────────────────────────────────── -->
+            <Border Background="#0E1115" CornerRadius="4" Padding="10,10" Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*, *">
+
+                    <!-- POT 1 -->
+                    <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="POT 1"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <knob:Knob Minimum="0" Maximum="1023"
+                                   Value="{Binding Pot1Value}"
+                                   Width="90" Height="90"
+                                   ArcThickness="4"
+                                   Stroke="#4A90D9"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Pot1Value, StringFormat='{}{0:F0}'}"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="11" Foreground="#C8CDD6"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- POT 2 -->
+                    <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="POT 2"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <knob:Knob Minimum="0" Maximum="1023"
+                                   Value="{Binding Pot2Value}"
+                                   Width="90" Height="90"
+                                   ArcThickness="4"
+                                   Stroke="#4A90D9"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Pot2Value, StringFormat='{}{0:F0}'}"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="11" Foreground="#C8CDD6"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                </Grid>
+            </Border>
+
+            <!-- ── LEDs ──────────────────────────────────────────────────── -->
+            <Border Background="#0E1115" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*, *">
+
+                    <StackPanel Grid.Column="0" Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="LED 1"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <led:XamlLED IsTrue="{Binding Led1On}"
+                                     DefaultOnColor="LimeGreen"
+                                     DefaultOffColor="#2E3440"
+                                     LEDSize="28"
+                                     HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="LED 2"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <led:XamlLED IsTrue="{Binding Led2On}"
+                                     DefaultOnColor="LimeGreen"
+                                     DefaultOffColor="#2E3440"
+                                     LEDSize="28"
+                                     HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                </Grid>
+            </Border>
+
+            <!-- ── Push buttons ──────────────────────────────────────────── -->
+            <Border Background="#0E1115" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*, *">
+
+                    <StackPanel Grid.Column="0" Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="BTN 1"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <Border x:Name="Btn1"
+                                Width="52" Height="36" CornerRadius="4"
+                                Background="#2E3440" BorderBrush="#4A5568" BorderThickness="1"
+                                Cursor="Hand"
+                                PointerPressed="OnButton1Pressed"
+                                PointerReleased="OnButton1Released">
+                            <TextBlock Text="PUSH"
+                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                       FontSize="9" Foreground="#8A9BB0"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="BTN 2"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <Border x:Name="Btn2"
+                                Width="52" Height="36" CornerRadius="4"
+                                Background="#2E3440" BorderBrush="#4A5568" BorderThickness="1"
+                                Cursor="Hand"
+                                PointerPressed="OnButton2Pressed"
+                                PointerReleased="OnButton2Released">
+                            <TextBlock Text="PUSH"
+                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                       FontSize="9" Foreground="#8A9BB0"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                    </StackPanel>
+
+                </Grid>
+            </Border>
+
+            <!-- ── SPST Switches ─────────────────────────────────────────── -->
+            <Border Background="#0E1115" CornerRadius="4" Padding="10,8">
+                <Grid ColumnDefinitions="*, *">
+
+                    <StackPanel Grid.Column="0" Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="SW 1"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <ToggleSwitch IsChecked="{Binding Switch1On}"
+                                      OnContent="" OffContent=""
+                                      HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="SW 2"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="10" Foreground="#6A7888"
+                                   HorizontalAlignment="Center" />
+                        <ToggleSwitch IsChecked="{Binding Switch2On}"
+                                      OnContent="" OffContent=""
+                                      HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </Border>
+
+</UserControl>
