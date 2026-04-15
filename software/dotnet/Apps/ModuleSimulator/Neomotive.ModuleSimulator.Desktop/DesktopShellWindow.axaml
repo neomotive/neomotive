@@ -5,16 +5,17 @@
         x:Class="Neomotive.ModuleSimulator.UI.DesktopShellWindow"
         Title="Neomotive Module Simulator"
         Width="1080" Height="480"
-        MinWidth="1080" MinHeight="480"
-        CanResize="False"
+        CanResize="True"
         Background="#111418">
 
-    <Grid ColumnDefinitions="800, *">
-        <!-- 800×480 simulator panel -->
-        <views:SimulatorView Grid.Column="0" x:Name="SimulatorPanel" />
+    <Viewbox Stretch="Uniform">
+        <Grid Width="1080" Height="480" ColumnDefinitions="800, *">
+            <!-- 800×480 simulator panel -->
+            <views:SimulatorView Grid.Column="0" x:Name="SimulatorPanel" />
 
-        <!-- Hardware toolbox — DataContext set to ToolboxViewModel in code-behind -->
-        <toolbox:ToolboxView Grid.Column="1" x:Name="ToolboxPanel" />
-    </Grid>
+            <!-- Hardware toolbox — DataContext set to ToolboxViewModel in code-behind -->
+            <toolbox:ToolboxView Grid.Column="1" x:Name="ToolboxPanel" />
+        </Grid>
+    </Viewbox>
 
 </Window>
