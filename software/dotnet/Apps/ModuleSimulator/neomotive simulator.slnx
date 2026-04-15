@@ -1,0 +1,50 @@
+<Solution>
+  <Folder Name="/docs/">
+    <File Path="../../README.MD" />
+  </Folder>
+  <Folder Name="/docs/can/" />
+  <Folder Name="/Libraries/">
+    <Project Path="../../Libraries/Neomotive.Core/Neomotive.Core.csproj" />
+  </Folder>
+  <Folder Name="/Libraries/ControlModules/">
+    <Project Path="Neomotive.ControlModule/Neomotive.ControlModule.csproj" Id="c12bc292-7ba1-4600-8371-440a47e42429" />
+    <Project Path="Neomotive.ModuleSimulator.Core/Neomotive.ModuleSimulator.Core.csproj" Id="a5fc049b-a64b-46ce-b055-87866c611072" />
+    <Project Path="Neomotive.ModuleSimulator.RaspberryPi/Neomotive.ModuleSimulator.RaspberryPi.csproj" Id="2924b058-5d05-4129-a9c6-59e0fb1ad822" />
+    <Project Path="Neomotive.ModuleSimulator.UIShared/Neomotive.ModuleSimulator.UIShared.csproj" />
+  </Folder>
+  <Folder Name="/_refs/">
+    <Project Path="../../../../../wilderness/Meadow.Contracts/Source/Meadow.Contracts/Meadow.Contracts.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Core/Source/implementations/linux/Meadow.Linux/Meadow.Linux.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Core/Source/implementations/windows/Meadow.Windows/Meadow.Windows.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Core/Source/Meadow.Core/Meadow.Core.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Core/Source/ui/Meadow.Avalonia/Meadow.Avalonia.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Core/Meadow.Foundation.Core.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Graphics.MicroLayout/Driver/Graphics.MicroLayout.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.J1979/Driver/Telematics.J1979.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Silk/Driver/Displays.Silk.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Ssd130x/Driver/Displays.Ssd130x.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.Mcp2515/Driver/ICs.CAN.Mcp2515.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.PCanBasic/Driver/ICs.CAN.PCanBasic.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Logging/Source/Meadow.Logging.LogProviders/Driver/Meadow.Logging.LogProviders.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/Meadow.Logging/Source/Meadow.Logging.LogProviders/Samples/UdpLogClient_Sample/UdpLogClient_Sample.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Units/Source/Meadow.Units/Meadow.Units.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../wilderness/MQTTnet/Source/MQTTnet/MQTTnet.csproj" />
+  </Folder>
+</Solution>

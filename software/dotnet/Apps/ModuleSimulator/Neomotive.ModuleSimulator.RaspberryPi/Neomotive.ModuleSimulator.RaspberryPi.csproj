@@ -15,10 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
-    <ProjectReference Include="..\..\..\..\wilderness\Meadow.Core\Source\implementations\linux\Meadow.Linux\Meadow.Linux.csproj" />
-    <ProjectReference Include="..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.Mcp2515\Driver\ICs.CAN.Mcp2515.csproj" />
-    <ProjectReference Include="..\..\..\..\wilderness\Meadow.Logging\Source\Meadow.Logging.LogProviders\Driver\Meadow.Logging.LogProviders.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\implementations\linux\Meadow.Linux\Meadow.Linux.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.Mcp2515\Driver\ICs.CAN.Mcp2515.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Logging\Source\Meadow.Logging.LogProviders\Driver\Meadow.Logging.LogProviders.csproj" />
     <ProjectReference Include="..\Neomotive.ModuleSimulator.UIShared\Neomotive.ModuleSimulator.UIShared.csproj" />
   </ItemGroup>
 </Project>

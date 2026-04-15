@@ -71,23 +71,28 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private async Task WaitForHardware()
     {
+        _log = new CanPacketLog(_config.CanLogMaxDepth);
+
         while (_bus == null) // TODO: wait for any other required hardware
         {
             var rawBus = Resolver.Services.Get<ICanBus>();
             if (rawBus != null)
             {
                 if (rawBus is NullCanBus)
+                {
                     FeedbackText = "No CAN bus detected — offline mode";
+                }
                 else
+                {
                     FeedbackText = "Using CAN bus: " + rawBus.GetType().Name;
+                }
 
                 _bus = new LoggingCanBus(rawBus, _log);
-                continue;
+                _bus.BusError += OnCanBusError;
+                break;
             }
             await Task.Delay(100);
         }
-
-        _log = new CanPacketLog(_config.CanLogMaxDepth);
         _pcmState = new SimulatorState { Vin = _config.Vin };
         _tcuState = new SimulatorTcuState();
         _pcm = new SimulatorPcm(_bus, _pcmState);
@@ -99,6 +104,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         timer.Tick += (_, _) => RefreshCanLog();
         timer.Start();
+    }
+
+    private void OnCanBusError(object? sender, CanErrorInfo e)
+    {
+        Console.WriteLine($"CAN bus error: TxError={e.TransmitErrorCount} RxError={e.ReceiveErrorCount}");
     }
 
     // ── Module display ────────────────────────────────────────────────────────

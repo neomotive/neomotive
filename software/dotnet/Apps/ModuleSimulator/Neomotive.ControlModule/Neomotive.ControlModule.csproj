@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.J1979\Driver\Telematics.J1979.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.J1979\Driver\Telematics.J1979.csproj" />
   </ItemGroup>
 
 </Project>

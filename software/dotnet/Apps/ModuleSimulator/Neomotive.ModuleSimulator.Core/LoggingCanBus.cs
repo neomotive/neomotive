@@ -22,8 +22,11 @@ public class LoggingCanBus : ICanBus
 
         _inner.FrameReceived += (s, f) =>
         {
+            Console.WriteLine("Frame received");
             if (f is StandardDataFrame sdf)
+            {
                 _log.Add(new CanPacketEntry(DateTime.Now, sdf.ID, sdf.Payload.ToArray(), false));
+            }
             FrameReceived?.Invoke(s, f);
         };
 
@@ -33,7 +36,9 @@ public class LoggingCanBus : ICanBus
     public void WriteFrame(ICanFrame frame)
     {
         if (frame is StandardDataFrame sdf)
+        {
             _log.Add(new CanPacketEntry(DateTime.Now, sdf.ID, sdf.Payload.ToArray(), true));
+        }
         _inner.WriteFrame(frame);
     }
 
