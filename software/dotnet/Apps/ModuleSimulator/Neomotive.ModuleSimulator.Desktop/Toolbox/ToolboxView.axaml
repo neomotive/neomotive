@@ -27,13 +27,26 @@
                                    FontFamily="Consolas,Cascadia Code,monospace"
                                    FontSize="10" Foreground="#6A7888"
                                    HorizontalAlignment="Center" />
+                        <ComboBox ItemsSource="{x:Static local:ToolboxViewModel.AvailablePids}"
+                                  SelectedItem="{Binding Pot1Pid}"
+                                  HorizontalAlignment="Stretch"
+                                  FontFamily="Consolas,Cascadia Code,monospace"
+                                  FontSize="10">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="10" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <knob:Knob Minimum="0" Maximum="1023"
                                    Value="{Binding Pot1Value}"
                                    Width="90" Height="90"
                                    ArcThickness="4"
                                    Stroke="#4A90D9"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding Pot1Value, StringFormat='{}{0:F0}'}"
+                        <TextBlock Text="{Binding Pot1DisplayValue}"
                                    FontFamily="Consolas,Cascadia Code,monospace"
                                    FontSize="11" Foreground="#C8CDD6"
                                    HorizontalAlignment="Center" />
@@ -45,13 +58,26 @@
                                    FontFamily="Consolas,Cascadia Code,monospace"
                                    FontSize="10" Foreground="#6A7888"
                                    HorizontalAlignment="Center" />
+                        <ComboBox ItemsSource="{x:Static local:ToolboxViewModel.AvailablePids}"
+                                  SelectedItem="{Binding Pot2Pid}"
+                                  HorizontalAlignment="Stretch"
+                                  FontFamily="Consolas,Cascadia Code,monospace"
+                                  FontSize="10">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="10" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <knob:Knob Minimum="0" Maximum="1023"
                                    Value="{Binding Pot2Value}"
                                    Width="90" Height="90"
                                    ArcThickness="4"
                                    Stroke="#4A90D9"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding Pot2Value, StringFormat='{}{0:F0}'}"
+                        <TextBlock Text="{Binding Pot2DisplayValue}"
                                    FontFamily="Consolas,Cascadia Code,monospace"
                                    FontSize="11" Foreground="#C8CDD6"
                                    HorizontalAlignment="Center" />

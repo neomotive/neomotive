@@ -1,7 +1,6 @@
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using Meadow.Units;
-using System.Linq;
 
 namespace Neomotive.ModuleSimulator;
 
@@ -29,6 +28,11 @@ public class SimulatorPcm : PcmBase
 
     protected override float? GetThrottlePosition()
         => _state.ThrottlePercent;
+
+    public void SetCoolantTemperature(Temperature temp)
+    {
+        _state.CoolantTempCelsius = temp.Celsius;
+    }
 
     protected override EmissionsReadinessStatus GetEmissionsReadiness()
         => _state.Readiness;
@@ -60,12 +64,12 @@ public class SimulatorPcm : PcmBase
     {
         // Use individual clears instead of ClearAllDtcs() to preserve the freeze frame
         // and avoid a transient empty-store state that races with incoming CAN queries.
-        foreach (var dtc in GetStoredDtcs().ToList())   ClearDtc(dtc);
-        foreach (var dtc in GetPendingDtcs().ToList())  ClearPendingDtc(dtc);
+        foreach (var dtc in GetStoredDtcs().ToList()) ClearDtc(dtc);
+        foreach (var dtc in GetPendingDtcs().ToList()) ClearPendingDtc(dtc);
         foreach (var dtc in GetPermanentDtcs().ToList()) ClearPermanentDtc(dtc);
 
-        foreach (var raw in _state.StoredDtcs.Values)   SetDtc(new Dtc(raw));
-        foreach (var raw in _state.PendingDtcs.Values)  SetPendingDtc(new Dtc(raw));
+        foreach (var raw in _state.StoredDtcs.Values) SetDtc(new Dtc(raw));
+        foreach (var raw in _state.PendingDtcs.Values) SetPendingDtc(new Dtc(raw));
         foreach (var raw in _state.PermanentDtcs.Values) SetPermanentDtc(new Dtc(raw));
     }
 }

@@ -47,10 +47,13 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var toolboxVm = new ToolboxViewModel();
+            var inputs = new DesktopInputs();
+
+            var mainVm = new MainWindowViewModel(inputs);
+            var toolboxVm = new ToolboxViewModel(inputs, mainVm.SetSimulatedValue);
             Resolver.Services.Add<ToolboxViewModel>(toolboxVm);
 
-            desktop.MainWindow = new DesktopShellWindow(new MainWindowViewModel(), toolboxVm);
+            desktop.MainWindow = new DesktopShellWindow(mainVm, toolboxVm);
         }
 
         base.OnFrameworkInitializationCompleted();
