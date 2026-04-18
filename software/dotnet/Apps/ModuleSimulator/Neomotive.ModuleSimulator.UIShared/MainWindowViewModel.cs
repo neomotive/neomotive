@@ -54,6 +54,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly SimulatorConfig _config;
     private readonly HashSet<string> _commandDtcCodes = new();
 
+    public InputsViewModel InputsVm { get; }
+
     public MainWindowViewModel(SimulatorInputs inputs, string feedbackText = "")
     {
         _inputs = inputs;
@@ -63,6 +65,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             SeedDefaultQuickDtcs();
         }
+
+        InputsVm = new InputsViewModel(inputs, SetSimulatedValue, SetSimulatedBoolValue);
 
         // since Avalonia and Meadow are both starting at the same time, we must wait
         // for MeadowInitialize to complete before the output port is ready
@@ -105,10 +109,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         timer.Tick += (_, _) =>
             {
-                // read the can log
                 RefreshCanLog();
-
-                // refresh any input pids
+                InputsVm.RefreshValues();
             };
 
         timer.Start();
@@ -230,6 +232,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
             default: return;
         }
         Dispatcher.UIThread.Post(() => DataFields = BuildDataFields());
+    }
+
+    public void SetSimulatedBoolValue(string key, bool value)
+    {
+        // Boolean input channels — extend as new state properties are added to SimulatorState
+        // Currently no boolean fields on SimulatorState; placeholder for future expansion.
     }
 
     public void SelectPcm() { _selectedModule = SelectedModule.Pcm; Refresh(); }

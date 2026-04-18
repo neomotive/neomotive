@@ -1,9 +1,314 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI"
+             xmlns:core="clr-namespace:Neomotive.ModuleSimulator;assembly=Neomotive.ModuleSimulator.Core"
              x:Class="Neomotive.ModuleSimulator.UI.Views.InputsView"
              x:DataType="local:MainWindowViewModel">
-    <ScrollViewer Padding="12,8">
-        <TextBlock Classes="label" Text="Inputs will go here" />
-    </ScrollViewer>
+
+    <UserControl.Styles>
+        <!-- Quick-pick tile -->
+        <Style Selector="Button.qpick">
+            <Setter Property="Background"       Value="#1A2030" />
+            <Setter Property="Foreground"       Value="#A0AABB" />
+            <Setter Property="BorderBrush"      Value="#2E3A4E" />
+            <Setter Property="BorderThickness"  Value="1" />
+            <Setter Property="CornerRadius"     Value="6" />
+            <Setter Property="Padding"          Value="0" />
+            <Setter Property="MinHeight"        Value="52" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment"   Value="Center" />
+            <Setter Property="FontFamily"       Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"         Value="12" />
+            <Setter Property="Cursor"           Value="Hand" />
+        </Style>
+        <Style Selector="Button.qpick:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#253045" />
+            <Setter Property="TextElement.Foreground" Value="#E0E5EC" />
+        </Style>
+
+        <!-- Large stepper button -->
+        <Style Selector="Button.step">
+            <Setter Property="Background"      Value="#1A2030" />
+            <Setter Property="Foreground"      Value="#C8CDD6" />
+            <Setter Property="BorderBrush"     Value="#2E3A4E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius"    Value="6" />
+            <Setter Property="MinWidth"        Value="52" />
+            <Setter Property="MinHeight"       Value="52" />
+            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"        Value="20" />
+            <Setter Property="Padding"         Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment"   Value="Center" />
+            <Setter Property="Cursor"          Value="Hand" />
+        </Style>
+        <Style Selector="Button.step.fine">
+            <Setter Property="MinWidth"  Value="40" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="FontSize"  Value="16" />
+            <Setter Property="Foreground" Value="#6A7888" />
+        </Style>
+
+        <!-- Edit section label -->
+        <Style Selector="TextBlock.edit-label">
+            <Setter Property="FontFamily" Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"   Value="9" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="LetterSpacing" Value="2" />
+            <Setter Property="Foreground" Value="#6A7888" />
+        </Style>
+
+        <!-- Value display in stepper -->
+        <Style Selector="TextBlock.step-value">
+            <Setter Property="FontFamily" Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"   Value="20" />
+            <Setter Property="Foreground" Value="#4A90D9" />
+            <Setter Property="MinWidth"   Value="90" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Bool cycle button (wide) -->
+        <Style Selector="Button.cycle">
+            <Setter Property="Background"      Value="#1A2030" />
+            <Setter Property="Foreground"      Value="#C8CDD6" />
+            <Setter Property="BorderBrush"     Value="#2E3A4E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius"    Value="6" />
+            <Setter Property="MinHeight"       Value="52" />
+            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"        Value="16" />
+            <Setter Property="Padding"         Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Cursor"          Value="Hand" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*, Auto">
+
+        <!-- ── Input rows list ──────────────────────────────────────────────── -->
+        <ScrollViewer Grid.Row="0" Padding="12,8">
+            <StackPanel Spacing="0">
+
+                <!-- Column headers -->
+                <Grid ColumnDefinitions="80, *, *, 52" Margin="4,0,4,4">
+                    <TextBlock Grid.Column="0" Classes="edit-label" Text="INPUT" />
+                    <TextBlock Grid.Column="1" Classes="edit-label" Text="CURRENT VALUE" />
+                    <TextBlock Grid.Column="2" Classes="edit-label" Text="CONTROLS" />
+                </Grid>
+                <Rectangle Height="1" Fill="#1E2530" Margin="0,0,0,4" />
+
+                <ItemsControl ItemsSource="{Binding InputsVm.Rows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:SimulatedInputRow">
+                            <Border Background="#0A0D12" CornerRadius="3" Margin="0,2" Padding="4,6">
+                                <Grid ColumnDefinitions="80, *, *, 52">
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Label}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="12" FontWeight="Bold"
+                                               Foreground="#C8CDD6"
+                                               VerticalAlignment="Center" />
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding CurrentValue}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="12"
+                                               Foreground="#4A90D9"
+                                               VerticalAlignment="Center" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding AssignedName}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="12"
+                                               Foreground="#8A9BB0"
+                                               VerticalAlignment="Center" />
+
+                                    <!-- Edit button — large touch target -->
+                                    <Button Grid.Column="3"
+                                            Content="✎"
+                                            FontSize="18"
+                                            MinHeight="40"
+                                            Padding="4"
+                                            Background="Transparent"
+                                            Foreground="#4A5568"
+                                            BorderThickness="0"
+                                            Cursor="Hand"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Command="{Binding $parent[ItemsControl].((local:MainWindowViewModel)DataContext).InputsVm.EditCommand}"
+                                            CommandParameter="{Binding}" />
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ── Edit panel ───────────────────────────────────────────────────── -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding InputsVm.IsEditing}"
+                Background="#0D1017"
+                BorderBrush="#2E3440"
+                BorderThickness="0,1,0,0"
+                Padding="12,10">
+            <StackPanel Spacing="10">
+
+                <!-- Editing label + save/cancel row -->
+                <Grid ColumnDefinitions="*, Auto, 8, Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding InputsVm.EditingRow.Label, StringFormat='Configure {0}'}"
+                               FontFamily="Consolas,Cascadia Code,monospace"
+                               FontSize="11" FontWeight="Bold" LetterSpacing="1"
+                               Foreground="#8A9BB0"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Content="✓  Save"
+                            Command="{Binding InputsVm.SaveEditCommand}"
+                            FontFamily="Consolas,Cascadia Code,monospace"
+                            FontSize="13" FontWeight="Bold"
+                            MinHeight="44" Padding="16,0"
+                            Background="#2A5C3A"
+                            Foreground="#6DBF67"
+                            BorderThickness="0"
+                            CornerRadius="6" />
+                    <Button Grid.Column="3"
+                            Content="✕"
+                            Command="{Binding InputsVm.CancelEditCommand}"
+                            FontFamily="Consolas,Cascadia Code,monospace"
+                            FontSize="16"
+                            MinHeight="44" MinWidth="44"
+                            Background="#2A1A1A"
+                            Foreground="#AA4444"
+                            BorderThickness="0"
+                            CornerRadius="6" />
+                </Grid>
+
+                <!-- ── POT editor ────────────────────────────────────────────── -->
+                <StackPanel IsVisible="{Binding InputsVm.EditIsPot}" Spacing="10">
+
+                    <!-- Quick picks grid -->
+                    <TextBlock Classes="edit-label" Text="QUICK PICK" />
+                    <ItemsControl ItemsSource="{Binding InputsVm.QuickPicks}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:PotQuickPick">
+                                <Button Classes="qpick"
+                                        MinWidth="80"
+                                        Margin="0,0,6,6"
+                                        Command="{Binding $parent[ItemsControl].((local:MainWindowViewModel)DataContext).InputsVm.ApplyQuickPickCommand}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Spacing="2" Margin="10,6">
+                                        <TextBlock Text="{Binding Label}"
+                                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                                   FontSize="12" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Unit}"
+                                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                                   FontSize="9"
+                                                   Foreground="#6A7888"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Scale stepper -->
+                    <Grid ColumnDefinitions="90, *, Auto" RowDefinitions="Auto, Auto">
+                        <TextBlock Grid.Column="0" Grid.Row="0" Classes="edit-label" Text="SCALE" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="0" Grid.Row="1"
+                                   Text="(V × Scale + Offset)"
+                                   FontFamily="Consolas,Cascadia Code,monospace"
+                                   FontSize="9" Foreground="#404858" />
+
+                        <StackPanel Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+                                    Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Button Classes="step" Content="−−"
+                                    Command="{Binding InputsVm.ScaleDownCoarseCommand}" />
+                            <Button Classes="step fine" Content="−"
+                                    Command="{Binding InputsVm.ScaleDownFineCommand}" />
+                            <TextBlock Classes="step-value" Text="{Binding InputsVm.EditScale, StringFormat='{}{0:F2}'}" />
+                            <Button Classes="step fine" Content="+"
+                                    Command="{Binding InputsVm.ScaleUpFineCommand}" />
+                            <Button Classes="step" Content="++"
+                                    Command="{Binding InputsVm.ScaleUpCoarseCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Offset stepper -->
+                    <Grid ColumnDefinitions="90, *">
+                        <TextBlock Grid.Column="0" Classes="edit-label" Text="OFFSET" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Button Classes="step" Content="−−"
+                                    Command="{Binding InputsVm.OffsetDownCoarseCommand}" />
+                            <Button Classes="step fine" Content="−"
+                                    Command="{Binding InputsVm.OffsetDownFineCommand}" />
+                            <TextBlock Classes="step-value" Text="{Binding InputsVm.EditOffset, StringFormat='{}{0:F2}'}" />
+                            <Button Classes="step fine" Content="+"
+                                    Command="{Binding InputsVm.OffsetUpFineCommand}" />
+                            <Button Classes="step" Content="++"
+                                    Command="{Binding InputsVm.OffsetUpCoarseCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Range preview -->
+                    <Border Background="#0A1015" CornerRadius="4" Padding="10,6">
+                        <Grid ColumnDefinitions="90, *">
+                            <TextBlock Grid.Column="0" Classes="edit-label" Text="RANGE" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding InputsVm.EditRangePreview}"
+                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                       FontSize="14"
+                                       Foreground="#4A90D9"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                </StackPanel>
+
+                <!-- ── BOOL editor (switch / button) ─────────────────────────── -->
+                <StackPanel IsVisible="{Binding InputsVm.EditIsBool}" Spacing="10">
+
+                    <TextBlock Classes="edit-label" Text="SELECT STATE TO CONTROL" />
+
+                    <Grid ColumnDefinitions="52, *, 52">
+                        <Button Grid.Column="0" Classes="step"
+                                Content="◀"
+                                Command="{Binding InputsVm.PrevBoolChannelCommand}" />
+
+                        <Border Grid.Column="1"
+                                Background="#0A1015"
+                                CornerRadius="6"
+                                Margin="6,0"
+                                Padding="12,0">
+                            <TextBlock Text="{Binding InputsVm.EditBoolChannel.DisplayName}"
+                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                       FontSize="18" FontWeight="Bold"
+                                       Foreground="#C8CDD6"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       MinHeight="52" />
+                        </Border>
+
+                        <Button Grid.Column="2" Classes="step"
+                                Content="▶"
+                                Command="{Binding InputsVm.NextBoolChannelCommand}" />
+                    </Grid>
+
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+    </Grid>
+
 </UserControl>

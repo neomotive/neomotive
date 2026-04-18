@@ -1,166 +1,128 @@
 using Meadow.Units;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace Neomotive.ModuleSimulator.UI.Toolbox;
 
-public record PotPidItem(string Key, string DisplayName, string Unit, double MinValue, double MaxValue)
-{
-    public double Map(double knobValue) => MinValue + (knobValue / 1023.0) * (MaxValue - MinValue);
-    public string Format(double physicalValue) => $"{physicalValue:F1} {Unit}";
-}
-
 public class ToolboxViewModel : INotifyPropertyChanged
 {
     private readonly DesktopInputs _inputs;
-    private readonly Action<string, double>? _applyPotValue;
-
-    public static readonly IReadOnlyList<PotPidItem> AvailablePids =
-    [
-        new("coolant_temp", "Coolant Temp",   "°C",   -40,   215),
-        new("rpm",          "Engine RPM",     "rpm",    0,  8000),
-        new("speed",        "Vehicle Speed",  "km/h",   0,   200),
-        new("throttle",     "Throttle",       "%",      0,   100),
-    ];
+    private readonly InputsViewModel _inputsVm;
 
     private double _pot1Value = 512;
     private double _pot2Value = 512;
-    private PotPidItem _pot1Pid = AvailablePids[0]; // Coolant Temp
-    private PotPidItem _pot2Pid = AvailablePids[1]; // Engine RPM
+    private double _pot3Value = 512;
+    private double _pot4Value = 512;
     private bool _button1Down;
     private bool _button2Down;
-    private bool _led2On;
+    private bool _button3Down;
+    private bool _button4Down;
     private bool _switch1On;
     private bool _switch2On;
+    private bool _switch3On;
+    private bool _switch4On;
 
-    public ToolboxViewModel(DesktopInputs inputs, Action<string, double>? applyPotValue = null)
+    public ToolboxViewModel(DesktopInputs inputs, InputsViewModel inputsVm)
     {
         _inputs = inputs;
-        _applyPotValue = applyPotValue;
+        _inputsVm = inputsVm;
     }
 
-    private void ApplyPot1()
-    {
-        _inputs.SetPot1Voltage((_pot1Value / 1023.0 * 5.0).Volts());
-        _applyPotValue?.Invoke(_pot1Pid.Key, _pot1Pid.Map(_pot1Value));
-        OnPropertyChanged(nameof(Pot1DisplayValue));
-    }
+    // ── Pot values (0–1023 knob range → 0–5V) ───────────────────────────────
 
-    private void ApplyPot2()
-    {
-        _inputs.SetPot2Voltage((_pot2Value / 1023.0 * 5.0).Volts());
-        _applyPotValue?.Invoke(_pot2Pid.Key, _pot2Pid.Map(_pot2Value));
-        OnPropertyChanged(nameof(Pot2DisplayValue));
-    }
-
-    // ── Pot PID selection ────────────────────────────────────────────────────
-
-    public PotPidItem Pot1Pid
-    {
-        get => _pot1Pid;
-        set
-        {
-            if (_pot1Pid == value) return;
-            _pot1Pid = value;
-            ApplyPot1();
-            OnPropertyChanged();
-        }
-    }
-
-    public PotPidItem Pot2Pid
-    {
-        get => _pot2Pid;
-        set
-        {
-            if (_pot2Pid == value) return;
-            _pot2Pid = value;
-            ApplyPot2();
-            OnPropertyChanged();
-        }
-    }
-
-    public string Pot1DisplayValue => _pot1Pid.Format(_pot1Pid.Map(_pot1Value));
-    public string Pot2DisplayValue => _pot2Pid.Format(_pot2Pid.Map(_pot2Value));
-
-    // ── Pot values ───────────────────────────────────────────────────────────
+    public string Pot1DisplayValue => $"{_pot1Value / 1023.0 * 5.0:F2}V";
+    public string Pot2DisplayValue => $"{_pot2Value / 1023.0 * 5.0:F2}V";
+    public string Pot3DisplayValue => $"{_pot3Value / 1023.0 * 5.0:F2}V";
+    public string Pot4DisplayValue => $"{_pot4Value / 1023.0 * 5.0:F2}V";
 
     public double Pot1Value
     {
         get => _pot1Value;
-        set
-        {
-            _pot1Value = value;
-            ApplyPot1();
-            OnPropertyChanged();
-        }
+        set { _pot1Value = value; _inputs.SetPot1Voltage((_pot1Value / 1023.0 * 5.0).Volts()); OnPropertyChanged(); OnPropertyChanged(nameof(Pot1DisplayValue)); }
     }
 
     public double Pot2Value
     {
         get => _pot2Value;
-        set
-        {
-            _pot2Value = value;
-            ApplyPot2();
-            OnPropertyChanged();
-        }
+        set { _pot2Value = value; _inputs.SetPot2Voltage((_pot2Value / 1023.0 * 5.0).Volts()); OnPropertyChanged(); OnPropertyChanged(nameof(Pot2DisplayValue)); }
     }
 
-    // ── LEDs ─────────────────────────────────────────────────────────────────
+    public double Pot3Value
+    {
+        get => _pot3Value;
+        set { _pot3Value = value; _inputs.SetPot3Voltage((_pot3Value / 1023.0 * 5.0).Volts()); OnPropertyChanged(); OnPropertyChanged(nameof(Pot3DisplayValue)); }
+    }
 
-    /// <summary>Output: LED 1 state — driven by the simulator.</summary>
+    public double Pot4Value
+    {
+        get => _pot4Value;
+        set { _pot4Value = value; _inputs.SetPot4Voltage((_pot4Value / 1023.0 * 5.0).Volts()); OnPropertyChanged(); OnPropertyChanged(nameof(Pot4DisplayValue)); }
+    }
+
+    // ── LEDs (outputs — driven by simulator) ─────────────────────────────────
+
     public bool Led1On
     {
         get => _inputs.Led1?.IsOn ?? false;
-        set
-        {
-            if (_inputs.Led1 is not null)
-            {
-                _inputs.Led1.IsOn = value;
-                OnPropertyChanged();
-            }
-        }
+        set { if (_inputs.Led1 is not null) { _inputs.Led1.IsOn = value; OnPropertyChanged(); } }
     }
 
-    /// <summary>Output: LED 2 state — driven by the simulator.</summary>
     public bool Led2On
     {
-        get => _led2On;
-        set { _led2On = value; OnPropertyChanged(); }
+        get => _inputs.Led2?.IsOn ?? false;
+        set { if (_inputs.Led2 is not null) { _inputs.Led2.IsOn = value; OnPropertyChanged(); } }
     }
 
-    // ── Buttons ──────────────────────────────────────────────────────────────
+    // ── Buttons (momentary, true while held) ─────────────────────────────────
 
-    /// <summary>Input: momentary push button 1 — true while held.</summary>
     public bool Button1Down
     {
         get => _button1Down;
-        set { _button1Down = value; OnPropertyChanged(); }
+        set { _button1Down = value; _inputsVm.SetButtonState(1, value); OnPropertyChanged(); }
     }
 
-    /// <summary>Input: momentary push button 2 — true while held.</summary>
     public bool Button2Down
     {
         get => _button2Down;
-        set { _button2Down = value; OnPropertyChanged(); }
+        set { _button2Down = value; _inputsVm.SetButtonState(2, value); OnPropertyChanged(); }
     }
 
-    // ── Switches ─────────────────────────────────────────────────────────────
+    public bool Button3Down
+    {
+        get => _button3Down;
+        set { _button3Down = value; _inputsVm.SetButtonState(3, value); OnPropertyChanged(); }
+    }
 
-    /// <summary>Input: SPST switch 1 state.</summary>
+    public bool Button4Down
+    {
+        get => _button4Down;
+        set { _button4Down = value; _inputsVm.SetButtonState(4, value); OnPropertyChanged(); }
+    }
+
+    // ── Switches (SPST, latching) ─────────────────────────────────────────────
+
     public bool Switch1On
     {
         get => _switch1On;
-        set { _switch1On = value; OnPropertyChanged(); }
+        set { _switch1On = value; _inputsVm.SetSwitchState(1, value); OnPropertyChanged(); }
     }
 
-    /// <summary>Input: SPST switch 2 state.</summary>
     public bool Switch2On
     {
         get => _switch2On;
-        set { _switch2On = value; OnPropertyChanged(); }
+        set { _switch2On = value; _inputsVm.SetSwitchState(2, value); OnPropertyChanged(); }
+    }
+
+    public bool Switch3On
+    {
+        get => _switch3On;
+        set { _switch3On = value; _inputsVm.SetSwitchState(3, value); OnPropertyChanged(); }
+    }
+
+    public bool Switch4On
+    {
+        get => _switch4On;
+        set { _switch4On = value; _inputsVm.SetSwitchState(4, value); OnPropertyChanged(); }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

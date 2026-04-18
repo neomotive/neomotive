@@ -18,11 +18,6 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         _ = LoadMeadowOS();
     }
 
-    public override Task MeadowRun()
-    {
-        return base.MeadowRun();
-    }
-
     public override Task MeadowInitialize()
     {
         ICanBus rawBus;
@@ -50,7 +45,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
             var inputs = new DesktopInputs();
 
             var mainVm = new MainWindowViewModel(inputs);
-            var toolboxVm = new ToolboxViewModel(inputs, mainVm.SetSimulatedValue);
+            var toolboxVm = new ToolboxViewModel(inputs, mainVm.InputsVm);
             Resolver.Services.Add<ToolboxViewModel>(toolboxVm);
 
             desktop.MainWindow = new DesktopShellWindow(mainVm, toolboxVm);

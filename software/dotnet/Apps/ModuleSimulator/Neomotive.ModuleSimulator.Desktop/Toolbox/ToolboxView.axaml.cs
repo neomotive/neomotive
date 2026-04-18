@@ -36,4 +36,28 @@ public partial class ToolboxView : UserControl
         if (Vm is not null) Vm.Button2Down = false;
         if (sender is Border b) b.Background = new SolidColorBrush(Color.Parse("#2E3440"));
     }
+
+    private void OnButton3Pressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (Vm is not null) Vm.Button3Down = true;
+        if (sender is Border b) b.Background = new SolidColorBrush(Color.Parse("#4A5568"));
+    }
+
+    private void OnButton3Released(object? sender, PointerReleasedEventArgs e)
+    {
+        if (Vm is not null) Vm.Button3Down = false;
+        if (sender is Border b) b.Background = new SolidColorBrush(Color.Parse("#2E3440"));
+    }
+
+    private void OnButton4Pressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (Vm is not null) Vm.Button4Down = true;
+        if (sender is Border b) b.Background = new SolidColorBrush(Color.Parse("#4A5568"));
+    }
+
+    private void OnButton4Released(object? sender, PointerReleasedEventArgs e)
+    {
+        if (Vm is not null) Vm.Button4Down = false;
+        if (sender is Border b) b.Background = new SolidColorBrush(Color.Parse("#2E3440"));
+    }
 }
