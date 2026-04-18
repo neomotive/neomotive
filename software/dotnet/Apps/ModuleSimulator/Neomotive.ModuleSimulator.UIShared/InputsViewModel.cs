@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
@@ -48,7 +49,7 @@ public class InputsViewModel : INotifyPropertyChanged
 {
     private readonly SimulatorInputs _inputs;
     private readonly Action<string, double>? _applyPotValue;
-    private readonly Action<string, bool>? _applyBoolValue;
+    private readonly Action<string, bool>?   _applyBoolValue;
 
     public ObservableCollection<SimulatedInputRow> Rows { get; } = [];
 
@@ -72,13 +73,29 @@ public class InputsViewModel : INotifyPropertyChanged
     public bool EditIsPot  => _editingRow?.Type == InputType.Pot;
     public bool EditIsBool => _editingRow?.Type is InputType.Switch or InputType.Button;
 
-    // Pot edit staging
-    private string _editKey = "";
-    public string EditKey
+    // ── Pot edit — step 1: PID selection ─────────────────────────────────────
+
+    private SimulatorPidDef? _editPid;
+
+    /// <summary>Bound two-way to the PID ComboBox.  Setter drives SelectPid logic.</summary>
+    public SimulatorPidDef? SelectedPid
     {
-        get => _editKey;
-        set { _editKey = value; OnPropertyChanged(); }
+        get => _editPid;
+        set
+        {
+            if (_editPid == value) return;
+            _editPid = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasPidSelected));
+            OnPropertyChanged(nameof(FilteredQuickPicks));
+            // Auto-select the first matching quick pick
+            SelectedQuickPick = FilteredQuickPicks.FirstOrDefault();
+        }
     }
+
+    public bool HasPidSelected => _editPid != null;
+
+    // ── Pot edit — step 2: scale/offset/unit ─────────────────────────────────
 
     private string _editUnit = "";
     public string EditUnit
@@ -108,7 +125,34 @@ public class InputsViewModel : INotifyPropertyChanged
         private set { _editRangePreview = value; OnPropertyChanged(); }
     }
 
-    // Bool edit staging
+    // Quick picks for the selected PID — derived entirely from the two catalog maps
+    public IReadOnlyList<PotQuickPick> FilteredQuickPicks =>
+        _editPid == null
+            ? []
+            : InputChannelCatalog.QuickPicksFor(_editPid);
+
+    private PotQuickPick? _selectedQuickPick;
+
+    /// <summary>Bound two-way to the unit ComboBox.  Setter applies scale/offset/unit.</summary>
+    public PotQuickPick? SelectedQuickPick
+    {
+        get => _selectedQuickPick;
+        set
+        {
+            if (_selectedQuickPick == value) return;
+            _selectedQuickPick = value;
+            OnPropertyChanged();
+            if (value != null)
+            {
+                EditUnit   = value.Unit;
+                EditScale  = value.Scale;
+                EditOffset = value.Offset;
+            }
+        }
+    }
+
+    // ── Bool edit ─────────────────────────────────────────────────────────────
+
     private BoolChannel? _editBoolChannel;
     public BoolChannel? EditBoolChannel
     {
@@ -116,38 +160,39 @@ public class InputsViewModel : INotifyPropertyChanged
         set { _editBoolChannel = value; OnPropertyChanged(); }
     }
 
-    public IReadOnlyList<PotQuickPick> QuickPicks       => InputChannelCatalog.PotQuickPicks;
-    public IReadOnlyList<BoolChannel>  AvailableBoolChannels => InputChannelCatalog.BoolChannels;
+    // ── Catalog references ────────────────────────────────────────────────────
+
+    public IReadOnlyList<SimulatorPidDef> SupportedPotPids   => InputChannelCatalog.SupportedPotPids;
+    public IReadOnlyList<BoolChannel>     AvailableBoolChannels => InputChannelCatalog.BoolChannels;
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
-    public ICommand EditCommand          { get; }
-    public ICommand SaveEditCommand      { get; }
-    public ICommand CancelEditCommand    { get; }
-    public ICommand ApplyQuickPickCommand { get; }
+    public ICommand EditCommand       { get; }
+    public ICommand SaveEditCommand   { get; }
+    public ICommand CancelEditCommand { get; }
 
-    // Coarse steppers (±10)
-    public ICommand ScaleUpCoarseCommand   { get; }
-    public ICommand ScaleDownCoarseCommand { get; }
-    public ICommand OffsetUpCoarseCommand  { get; }
+    // Scale coarse (±10) and fine (±1)
+    public ICommand ScaleUpCoarseCommand    { get; }
+    public ICommand ScaleDownCoarseCommand  { get; }
+    public ICommand ScaleUpFineCommand      { get; }
+    public ICommand ScaleDownFineCommand    { get; }
+
+    // Offset coarse (±10) and fine (±1)
+    public ICommand OffsetUpCoarseCommand   { get; }
     public ICommand OffsetDownCoarseCommand { get; }
+    public ICommand OffsetUpFineCommand     { get; }
+    public ICommand OffsetDownFineCommand   { get; }
 
-    // Fine steppers (±1)
-    public ICommand ScaleUpFineCommand   { get; }
-    public ICommand ScaleDownFineCommand { get; }
-    public ICommand OffsetUpFineCommand  { get; }
-    public ICommand OffsetDownFineCommand { get; }
-
-    // Bool channel steppers (cycle through list)
+    // Bool channel cycle
     public ICommand NextBoolChannelCommand { get; }
     public ICommand PrevBoolChannelCommand { get; }
 
     public InputsViewModel(SimulatorInputs inputs,
-        Action<string, double>? applyPotValue = null,
+        Action<string, double>? applyPotValue  = null,
         Action<string, bool>?   applyBoolValue = null)
     {
-        _inputs        = inputs;
-        _applyPotValue = applyPotValue;
+        _inputs         = inputs;
+        _applyPotValue  = applyPotValue;
         _applyBoolValue = applyBoolValue;
 
         Rows.Add(new SimulatedInputRow("POT1",    InputType.Pot));
@@ -163,20 +208,20 @@ public class InputsViewModel : INotifyPropertyChanged
         Rows.Add(new SimulatedInputRow("BUTTON3", InputType.Button));
         Rows.Add(new SimulatedInputRow("BUTTON4", InputType.Button));
 
-        EditCommand           = new RelayCommand<SimulatedInputRow>(BeginEdit);
-        SaveEditCommand       = new RelayCommand(CommitEdit,  () => IsEditing);
-        CancelEditCommand     = new RelayCommand(CancelEdit,  () => IsEditing);
-        ApplyQuickPickCommand = new RelayCommand<PotQuickPick>(ApplyQuickPick);
+        // Always-enabled — visibility is controlled by IsEditing / HasPidSelected
+        EditCommand       = new RelayCommand<SimulatedInputRow>(BeginEdit);
+        SaveEditCommand   = new RelayCommand(CommitEdit);
+        CancelEditCommand = new RelayCommand(CancelEdit);
 
         ScaleUpCoarseCommand    = new RelayCommand(() => EditScale  += 10);
-        ScaleDownCoarseCommand  = new RelayCommand(() => EditScale  = Math.Max(0.01, EditScale  - 10));
+        ScaleDownCoarseCommand  = new RelayCommand(() => EditScale   = Math.Max(0.01, EditScale  - 10));
+        ScaleUpFineCommand      = new RelayCommand(() => EditScale  += 1);
+        ScaleDownFineCommand    = new RelayCommand(() => EditScale   = Math.Max(0.01, EditScale  - 1));
+
         OffsetUpCoarseCommand   = new RelayCommand(() => EditOffset += 10);
         OffsetDownCoarseCommand = new RelayCommand(() => EditOffset -= 10);
-
-        ScaleUpFineCommand    = new RelayCommand(() => EditScale  += 1);
-        ScaleDownFineCommand  = new RelayCommand(() => EditScale  = Math.Max(0.01, EditScale  - 1));
-        OffsetUpFineCommand   = new RelayCommand(() => EditOffset += 1);
-        OffsetDownFineCommand = new RelayCommand(() => EditOffset -= 1);
+        OffsetUpFineCommand     = new RelayCommand(() => EditOffset += 1);
+        OffsetDownFineCommand   = new RelayCommand(() => EditOffset -= 1);
 
         NextBoolChannelCommand = new RelayCommand(CycleBoolChannelNext);
         PrevBoolChannelCommand = new RelayCommand(CycleBoolChannelPrev);
@@ -239,26 +284,26 @@ public class InputsViewModel : INotifyPropertyChanged
         if (row.Type == InputType.Pot)
         {
             var ch = row.AssignedPotChannel;
-            EditKey    = ch?.Key    ?? "";
-            EditUnit   = ch?.Unit   ?? QuickPicks[0].Unit;
-            EditScale  = ch?.Scale  ?? QuickPicks[0].Scale;
-            EditOffset = ch?.Offset ?? QuickPicks[0].Offset;
-            UpdateRangePreview();
+
+            // Restore previously selected PID (match by key), which also resets FilteredQuickPicks
+            SelectedPid = ch != null
+                ? SupportedPotPids.FirstOrDefault(p => p.Key == ch.Key)
+                : null;
+
+            // Restore previously chosen unit preset (match by unit string), or keep auto-selected first
+            if (ch != null)
+            {
+                var match = FilteredQuickPicks.FirstOrDefault(q => q.Unit == ch.Unit);
+                SelectedQuickPick = match ?? FilteredQuickPicks.FirstOrDefault();
+                // Override with saved scale/offset in case the user had fine-tuned them
+                EditScale  = ch.Scale;
+                EditOffset = ch.Offset;
+            }
         }
         else
         {
             EditBoolChannel = row.AssignedBoolChannel ?? AvailableBoolChannels[0];
         }
-    }
-
-    private void ApplyQuickPick(PotQuickPick? pick)
-    {
-        if (pick == null) return;
-        EditKey    = pick.Key;
-        EditUnit   = pick.Unit;
-        EditScale  = pick.Scale;
-        EditOffset = pick.Offset;
-        UpdateRangePreview();
     }
 
     private void UpdateRangePreview()
@@ -272,15 +317,13 @@ public class InputsViewModel : INotifyPropertyChanged
     {
         if (_editingRow == null) return;
 
-        if (_editingRow.Type == InputType.Pot)
+        if (_editingRow.Type == InputType.Pot && _editPid != null)
         {
-            var displayName = string.IsNullOrWhiteSpace(_editUnit)
-                ? _editingRow.Label
-                : $"{_editKey} [{_editUnit}]";
-
             _editingRow.AssignedPotChannel = new PotChannel(
-                _editKey, displayName, _editUnit, _editScale, _editOffset);
-            _editingRow.AssignedName = $"{_editKey} ({_editUnit})";
+                _editPid.Key,
+                $"{_editPid.Name} ({_editUnit})",
+                _editUnit, _editScale, _editOffset);
+            _editingRow.AssignedName = $"{_editPid.PidCode} {_editPid.Name}";
         }
         else if (_editingRow.Type is InputType.Switch or InputType.Button
                  && _editBoolChannel != null)
@@ -317,7 +360,7 @@ public class InputsViewModel : INotifyPropertyChanged
         return 0;
     }
 
-    // ── Allow Toolbox to set bool states ─────────────────────────────────────
+    // ── Allow Toolbox to push bool states ────────────────────────────────────
 
     public void SetSwitchState(int oneBasedIndex, bool state)
     {
@@ -348,10 +391,10 @@ public class InputsViewModel : INotifyPropertyChanged
 
 // ── ICommand helpers ──────────────────────────────────────────────────────────
 
-file sealed class RelayCommand(Action execute, Func<bool>? canExecute = null) : ICommand
+file sealed class RelayCommand(Action execute) : ICommand
 {
     public event EventHandler? CanExecuteChanged;
-    public bool CanExecute(object? _) => canExecute?.Invoke() ?? true;
+    public bool CanExecute(object? _) => true;
     public void Execute(object? _)    => execute();
 }
 

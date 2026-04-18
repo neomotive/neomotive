@@ -226,9 +226,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         switch (key)
         {
             case "coolant_temp": _pcmState.CoolantTempCelsius = value; break;
-            case "rpm":          _pcmState.Rpm = (float)value; break;
-            case "speed":        _pcmState.SpeedKph = value; break;
-            case "throttle":     _pcmState.ThrottlePercent = (float)value; break;
+            case "rpm": _pcmState.Rpm = (float)value; break;
+            case "speed": _pcmState.SpeedKph = value; break;
+            case "throttle": _pcmState.ThrottlePercent = (float)value; break;
             default: return;
         }
         Dispatcher.UIThread.Post(() => DataFields = BuildDataFields());

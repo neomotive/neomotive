@@ -1,10 +1,39 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Neomotive.ModuleSimulator;
 
 public enum InputType { Pot, Switch, Button }
 
 /// <summary>
-/// Defines what a potentiometer controls and how to convert its voltage.
-/// physical = voltage * Scale + Offset
+/// The physical/engineering unit family shared between PIDs and quick-pick presets.
+/// This is the bridge: PIDs map to a PotUnitType; quick picks are grouped by PotUnitType.
+/// Adding a new PID only requires updating PidUnitTypes. Adding a new unit only requires
+/// updating QuickPicksByUnitType. Neither change touches the other.
+/// </summary>
+public enum PotUnitType
+{
+    Temperature,
+    Speed,
+    Rpm,
+    Percentage,
+    Pressure,
+    Voltage,
+    Lambda,
+}
+
+/// <summary>
+/// Describes a PID that a controller exposes and that can be driven by a pot.
+/// Unit type is intentionally absent here — it comes from PidUnitTypes lookup.
+/// </summary>
+public record SimulatorPidDef(
+    string Key,      // matches SetSimulatedValue key, e.g. "coolant_temp"
+    string Name,     // human name, e.g. "Coolant Temp"
+    string PidCode,  // hex string, e.g. "0x05"
+    string Module);  // "PCM" or "TCU"
+
+/// <summary>
+/// How to convert pot voltage to a physical value: physical = voltage × Scale + Offset
 /// </summary>
 public record PotChannel(string Key, string DisplayName, string Unit, double Scale, double Offset)
 {
@@ -16,34 +45,105 @@ public record PotChannel(string Key, string DisplayName, string Unit, double Sca
 public record BoolChannel(string Key, string DisplayName);
 
 /// <summary>
-/// A named preset that sets Scale/Offset/Unit in one tap.
+/// A named scale/offset/unit preset for one-tap configuration.
+/// No unit type here — presets are grouped by unit type in QuickPicksByUnitType.
 /// </summary>
-public record PotQuickPick(string Label, string Key, string Unit, double Scale, double Offset)
-{
-    public PotChannel ToChannel(string displayName) =>
-        new(Key, displayName, Unit, Scale, Offset);
-}
+public record PotQuickPick(string Label, string Unit, double Scale, double Offset);
 
 public static class InputChannelCatalog
 {
+    // ── PID definitions ───────────────────────────────────────────────────────
+
     /// <summary>
-    /// Quick-pick presets for common automotive/sensor ranges.
+    /// All PIDs the simulator controllers expose that can be driven by a pot.
+    /// Add new PIDs here and in PidUnitTypes — nothing else needs changing.
+    /// </summary>
+    public static readonly IReadOnlyList<SimulatorPidDef> SupportedPotPids =
+    [
+        new("coolant_temp", "Coolant Temp",     "0x05", "PCM"),
+        new("rpm",          "Engine RPM",       "0x0C", "PCM"),
+        new("speed",        "Vehicle Speed",    "0x0D", "PCM"),
+        new("throttle",     "Throttle Pos",     "0x11", "PCM"),
+        new("trans_temp",   "Trans Fluid Temp", "0x5C", "TCU"),
+    ];
+
+    // ── PID → unit type map ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Maps PID hex code to the engineering unit family it represents.
+    /// This is the only place that needs updating when a PID is added or changed.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, PotUnitType> PidUnitTypes =
+        new Dictionary<string, PotUnitType>
+        {
+            ["0x05"] = PotUnitType.Temperature,  // Engine Coolant Temp
+            ["0x0C"] = PotUnitType.Rpm,          // Engine RPM
+            ["0x0D"] = PotUnitType.Speed,        // Vehicle Speed
+            ["0x11"] = PotUnitType.Percentage,   // Throttle Position
+            ["0x5C"] = PotUnitType.Temperature,  // Engine Oil / Trans Fluid Temp
+        };
+
+    // ── Unit type → quick picks map ───────────────────────────────────────────
+
+    /// <summary>
+    /// Groups quick-pick presets by engineering unit type.
+    /// Add a new unit family here independently of the PID list.
     /// physical = voltage × Scale + Offset  (voltage 0–5 V)
     /// </summary>
-    public static readonly IReadOnlyList<PotQuickPick> PotQuickPicks =
-    [
-        //                  label              key             unit    scale    offset
-        new("Temp °C",     "coolant_temp",    "°C",           51.0,   -40.0),  // -40 … 215 °C
-        new("Temp °F",     "coolant_temp",    "°F",           91.8,   -40.0),  // -40 … 419 °F
-        new("Percent %",   "throttle",        "%",            20.0,     0.0),  //   0 … 100 %
-        new("RPM",         "rpm",             "rpm",        1600.0,     0.0),  //   0 … 8000 rpm
-        new("Speed km/h",  "speed",           "km/h",         40.0,     0.0),  //   0 … 200 km/h
-        new("Speed mph",   "speed",           "mph",          25.0,     0.0),  //   0 … 125 mph
-        new("Pres kPa",    "pressure",        "kPa",          50.0,     0.0),  //   0 … 250 kPa
-        new("Pres PSI",    "pressure",        "PSI",          14.5,     0.0),  //   0 … 72.5 PSI
-        new("Voltage V",   "voltage",         "V",             1.0,     0.0),  //   0 … 5 V (raw)
-        new("Lambda λ",    "lambda",          "λ",             0.4,     0.5),  // 0.5 … 2.5 λ
-    ];
+    public static readonly IReadOnlyDictionary<PotUnitType, IReadOnlyList<PotQuickPick>> QuickPicksByUnitType =
+        new Dictionary<PotUnitType, IReadOnlyList<PotQuickPick>>
+        {
+            [PotUnitType.Temperature] =
+            [
+                new("°C",  "°C",  51.0, -40.0),   // -40 … 215 °C
+                new("°F",  "°F",  91.8, -40.0),   // -40 … 419 °F
+            ],
+            [PotUnitType.Speed] =
+            [
+                new("km/h", "km/h", 40.0, 0.0),   //   0 … 200 km/h
+                new("mph",  "mph",  25.0, 0.0),   //   0 … 125 mph
+            ],
+            [PotUnitType.Rpm] =
+            [
+                new("RPM", "rpm", 1600.0, 0.0),   //   0 … 8 000 rpm
+            ],
+            [PotUnitType.Percentage] =
+            [
+                new("%", "%", 20.0, 0.0),          //   0 … 100 %
+            ],
+            [PotUnitType.Pressure] =
+            [
+                new("kPa", "kPa", 50.0,  0.0),    //   0 … 250 kPa
+                new("PSI", "PSI", 14.5,  0.0),    //   0 … 72.5 PSI
+                new("bar", "bar",  0.5,  0.0),    //   0 … 2.5 bar
+            ],
+            [PotUnitType.Voltage] =
+            [
+                new("V (raw)", "V", 1.0, 0.0),    //   0 … 5 V
+            ],
+            [PotUnitType.Lambda] =
+            [
+                new("λ", "λ", 0.4, 0.5),           // 0.5 … 2.5 λ
+            ],
+        };
+
+    // ── Lookup helpers ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns the quick picks appropriate for a given PID, or empty if the PID
+    /// code is not in the unit-type map.
+    /// </summary>
+    public static IReadOnlyList<PotQuickPick> QuickPicksFor(SimulatorPidDef pid) =>
+        PidUnitTypes.TryGetValue(pid.PidCode, out var unitType)
+        && QuickPicksByUnitType.TryGetValue(unitType, out var picks)
+            ? picks
+            : [];
+
+    /// <summary>Returns the unit type for a PID, or null if unknown.</summary>
+    public static PotUnitType? UnitTypeFor(SimulatorPidDef pid) =>
+        PidUnitTypes.TryGetValue(pid.PidCode, out var t) ? t : null;
+
+    // ── Bool channels ─────────────────────────────────────────────────────────
 
     public static readonly IReadOnlyList<BoolChannel> BoolChannels =
     [
