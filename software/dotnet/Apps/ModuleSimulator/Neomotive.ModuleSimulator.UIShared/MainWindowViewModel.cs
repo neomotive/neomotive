@@ -66,7 +66,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             SeedDefaultQuickDtcs();
         }
 
-        InputsVm = new InputsViewModel(inputs, SetSimulatedValue, SetSimulatedBoolValue);
+        InputsVm = new InputsViewModel(inputs, _config, () => ConfigManager.Save(_config), SetSimulatedValue, SetSimulatedBoolValue);
 
         // since Avalonia and Meadow are both starting at the same time, we must wait
         // for MeadowInitialize to complete before the output port is ready

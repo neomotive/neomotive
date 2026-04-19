@@ -33,13 +33,25 @@ public record SimulatorPidDef(
     string Module);  // "PCM" or "TCU"
 
 /// <summary>
-/// How to convert pot voltage to a physical value: physical = voltage × Scale + Offset
+/// How to convert pot voltage to a physical value: physical = voltage × Scale + Offset.
+/// ToNativeValue converts the displayed unit back to the simulator's native unit (e.g. °F → °C).
 /// </summary>
-public record PotChannel(string Key, string DisplayName, string Unit, double Scale, double Offset)
+public record PotChannel(string Key, string DisplayName, string Unit, double Scale, double Offset, PotUnitType UnitType)
 {
     public double MapFromVoltage(double volts) => volts * Scale + Offset;
     public string Format(double value) => $"{value:F1} {Unit}";
     public string RangeDescription => $"{Format(Offset)} – {Format(5.0 * Scale + Offset)}";
+
+    /// <summary>
+    /// Converts the physical value (in the user's chosen unit) to the native unit the
+    /// simulator expects: °C for temperature, km/h for speed, native for everything else.
+    /// </summary>
+    public double ToNativeValue(double physical) => UnitType switch
+    {
+        PotUnitType.Temperature => Unit == "°F" ? (physical - 32.0) * 5.0 / 9.0 : physical,
+        PotUnitType.Speed       => Unit == "mph" ? physical * 1.60934 : physical,
+        _                       => physical,
+    };
 }
 
 public record BoolChannel(string Key, string DisplayName);

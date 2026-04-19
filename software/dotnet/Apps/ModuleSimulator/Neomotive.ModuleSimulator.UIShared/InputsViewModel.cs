@@ -50,6 +50,8 @@ public class InputsViewModel : INotifyPropertyChanged
     private readonly SimulatorInputs _inputs;
     private readonly Action<string, double>? _applyPotValue;
     private readonly Action<string, bool>?   _applyBoolValue;
+    private readonly SimulatorConfig?        _config;
+    private readonly Action?                 _saveConfig;
 
     public ObservableCollection<SimulatedInputRow> Rows { get; } = [];
 
@@ -188,10 +190,14 @@ public class InputsViewModel : INotifyPropertyChanged
     public ICommand PrevBoolChannelCommand { get; }
 
     public InputsViewModel(SimulatorInputs inputs,
+        SimulatorConfig?        config         = null,
+        Action?                 saveConfig     = null,
         Action<string, double>? applyPotValue  = null,
         Action<string, bool>?   applyBoolValue = null)
     {
         _inputs         = inputs;
+        _config         = config;
+        _saveConfig     = saveConfig;
         _applyPotValue  = applyPotValue;
         _applyBoolValue = applyBoolValue;
 
@@ -225,6 +231,8 @@ public class InputsViewModel : INotifyPropertyChanged
 
         NextBoolChannelCommand = new RelayCommand(CycleBoolChannelNext);
         PrevBoolChannelCommand = new RelayCommand(CycleBoolChannelPrev);
+
+        if (_config != null) RestoreFromConfig(_config);
     }
 
     // ── Refresh (250 ms timer) ────────────────────────────────────────────────
@@ -259,7 +267,7 @@ public class InputsViewModel : INotifyPropertyChanged
         {
             var physical = channel.MapFromVoltage(voltage);
             row.CurrentValue = $"{voltage:F2}V / {channel.Format(physical)}";
-            _applyPotValue?.Invoke(channel.Key, physical);
+            _applyPotValue?.Invoke(channel.Key, channel.ToNativeValue(physical));
         }
     }
 
@@ -319,20 +327,70 @@ public class InputsViewModel : INotifyPropertyChanged
 
         if (_editingRow.Type == InputType.Pot && _editPid != null)
         {
+            var unitType = InputChannelCatalog.UnitTypeFor(_editPid) ?? PotUnitType.Voltage;
             _editingRow.AssignedPotChannel = new PotChannel(
                 _editPid.Key,
                 $"{_editPid.Name} ({_editUnit})",
-                _editUnit, _editScale, _editOffset);
+                _editUnit, _editScale, _editOffset, unitType);
             _editingRow.AssignedName = $"{_editPid.PidCode} {_editPid.Name}";
+
+            if (_config != null)
+            {
+                _config.Inputs[_editingRow.Label] = new InputRowConfig
+                {
+                    Pot = new PotInputConfig
+                    {
+                        PidKey   = _editPid.Key,
+                        Unit     = _editUnit,
+                        Scale    = _editScale,
+                        Offset   = _editOffset,
+                        UnitType = unitType,
+                    }
+                };
+                _saveConfig?.Invoke();
+            }
         }
         else if (_editingRow.Type is InputType.Switch or InputType.Button
                  && _editBoolChannel != null)
         {
             _editingRow.AssignedBoolChannel = _editBoolChannel;
             _editingRow.AssignedName = _editBoolChannel.DisplayName;
+
+            if (_config != null)
+            {
+                _config.Inputs[_editingRow.Label] = new InputRowConfig
+                {
+                    Bool = new BoolInputConfig { ChannelKey = _editBoolChannel.Key }
+                };
+                _saveConfig?.Invoke();
+            }
         }
 
         EditingRow = null;
+    }
+
+    private void RestoreFromConfig(SimulatorConfig config)
+    {
+        foreach (var row in Rows)
+        {
+            if (!config.Inputs.TryGetValue(row.Label, out var saved)) continue;
+
+            if (row.Type == InputType.Pot && saved.Pot is { } p)
+            {
+                var pid = SupportedPotPids.FirstOrDefault(x => x.Key == p.PidKey);
+                if (pid == null) continue;
+                row.AssignedPotChannel = new PotChannel(
+                    p.PidKey, $"{pid.Name} ({p.Unit})", p.Unit, p.Scale, p.Offset, p.UnitType);
+                row.AssignedName = $"{pid.PidCode} {pid.Name}";
+            }
+            else if (row.Type is InputType.Switch or InputType.Button && saved.Bool is { } b)
+            {
+                var channel = AvailableBoolChannels.FirstOrDefault(c => c.Key == b.ChannelKey);
+                if (channel == null) continue;
+                row.AssignedBoolChannel = channel;
+                row.AssignedName = channel.DisplayName;
+            }
+        }
     }
 
     private void CancelEdit() => EditingRow = null;
