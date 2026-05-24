@@ -109,7 +109,7 @@
                 <ItemsControl ItemsSource="{Binding InputsVm.Rows}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="local:SimulatedInputRow">
-                            <Border Background="#0A0D12" CornerRadius="3" Margin="0,2" Padding="4,6">
+                            <Border Background="#0A0D12" CornerRadius="3" Margin="0,2" Padding="4,0">
                                 <Grid ColumnDefinitions="80, *, *, 52">
                                     <TextBlock Grid.Column="0"
                                                Text="{Binding Label}"
@@ -128,7 +128,7 @@
                                                VerticalAlignment="Center" />
                                     <Button Grid.Column="3"
                                             Content="✎" FontSize="18"
-                                            MinHeight="40" Padding="4"
+                                            MinHeight="20" Padding="4"
                                             Background="Transparent" Foreground="#4A5568"
                                             BorderThickness="0" Cursor="Hand"
                                             HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -152,7 +152,7 @@
             <StackPanel Spacing="5">
 
                 <!-- Header row: label + Save + Cancel -->
-                <Grid ColumnDefinitions="*, Auto, 8, Auto" Height="36">
+                <Grid ColumnDefinitions="*, Auto, 8, Auto" Height="32">
                     <TextBlock Grid.Column="0"
                                Text="{Binding InputsVm.EditingRow.Label, StringFormat='Configure {0}'}"
                                FontFamily="Consolas,Cascadia Code,monospace"
@@ -166,7 +166,7 @@
                             Command="{Binding InputsVm.SaveEditCommand}"
                             FontFamily="Consolas,Cascadia Code,monospace"
                             FontSize="16" FontWeight="Bold"
-                            Height="36" Width="52"
+                            Height="30" Width="36"
                             Padding="0"
                             Background="#1E4A2A" Foreground="#5DBF57"
                             BorderThickness="0" CornerRadius="6" />
@@ -178,7 +178,7 @@
                             Command="{Binding InputsVm.CancelEditCommand}"
                             FontFamily="Consolas,Cascadia Code,monospace"
                             FontSize="16"
-                            Height="36" Width="36"
+                            Height="30" Width="36"
                             Padding="0"
                             Background="#2A1A1A" Foreground="#AA4444"
                             BorderThickness="0" CornerRadius="6" />
