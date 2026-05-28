@@ -26,6 +26,13 @@ public class SimulatorState
     public readonly Dictionary<string, byte[]> PendingDtcs = new();
     public readonly Dictionary<string, byte[]> PermanentDtcs = new();
 
+    public SimulatorState(SimulatorInputs inputs)
+    {
+        Inputs = inputs;
+    }
+
+    public SimulatorInputs Inputs { get; }
+
     public static readonly KnownDtc[] KnownDtcs =
     {
         new("P0300", "Random/Multiple Misfire",              new byte[] { 0x03, 0x00 }),

@@ -1,0 +1,14 @@
+#!/bin/bash
+# ~/.xinitrc — started by startx, no window manager so no title bar / border offset
+
+# Disable screensaver, display power management, and screen blanking
+xset s off
+xset s noblank
+xset -dpms
+
+# Hide the cursor immediately — touchscreen only, no mouse
+# Install with: sudo apt install unclutter
+unclutter -idle 0 -root &
+
+cd /opt/neomotive
+exec ./Neomotive.ModuleSimulator.RaspberryPi

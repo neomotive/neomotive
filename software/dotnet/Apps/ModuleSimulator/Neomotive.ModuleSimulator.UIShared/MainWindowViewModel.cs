@@ -41,6 +41,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Action Sync);
 
     private SimulatorState _pcmState;
+    private SimulatorInputs _inputs;
     private SimulatorTcuState _tcuState;
     private SimulatorPcm _pcm;
     private SimulatorTcu _tcu;
@@ -53,14 +54,19 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly SimulatorConfig _config;
     private readonly HashSet<string> _commandDtcCodes = new();
 
-    public MainWindowViewModel(string feedbackText = "")
+    public InputsViewModel InputsVm { get; }
+
+    public MainWindowViewModel(SimulatorInputs inputs, string feedbackText = "")
     {
+        _inputs = inputs;
         FeedbackText = feedbackText;
         _config = ConfigManager.Load();
         if (_config.QuickDtcs.Count == 0)
         {
             SeedDefaultQuickDtcs();
         }
+
+        InputsVm = new InputsViewModel(inputs, _config, () => ConfigManager.Save(_config), SetSimulatedValue, SetSimulatedBoolValue);
 
         // since Avalonia and Meadow are both starting at the same time, we must wait
         // for MeadowInitialize to complete before the output port is ready
@@ -93,16 +99,20 @@ public class MainWindowViewModel : INotifyPropertyChanged
             }
             await Task.Delay(100);
         }
-        _pcmState = new SimulatorState { Vin = _config.Vin };
+        _pcmState = new SimulatorState(_inputs) { Vin = _config.Vin };
         _tcuState = new SimulatorTcuState();
         _pcm = new SimulatorPcm(_bus, _pcmState);
         _tcu = new SimulatorTcu(_bus, _tcuState);
 
         Refresh();
 
-        // CAN log is the only thing that changes without user interaction
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        timer.Tick += (_, _) => RefreshCanLog();
+        timer.Tick += (_, _) =>
+            {
+                RefreshCanLog();
+                InputsVm.RefreshValues();
+            };
+
         timer.Start();
     }
 
@@ -209,6 +219,26 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
+
+    public void SetSimulatedValue(string key, double value)
+    {
+        if (_pcmState is null) return;
+        switch (key)
+        {
+            case "coolant_temp": _pcmState.CoolantTempCelsius = value; break;
+            case "rpm": _pcmState.Rpm = (float)value; break;
+            case "speed": _pcmState.SpeedKph = value; break;
+            case "throttle": _pcmState.ThrottlePercent = (float)value; break;
+            default: return;
+        }
+        Dispatcher.UIThread.Post(() => DataFields = BuildDataFields());
+    }
+
+    public void SetSimulatedBoolValue(string key, bool value)
+    {
+        // Boolean input channels — extend as new state properties are added to SimulatorState
+        // Currently no boolean fields on SimulatorState; placeholder for future expansion.
+    }
 
     public void SelectPcm() { _selectedModule = SelectedModule.Pcm; Refresh(); }
     public void SelectTcu() { _selectedModule = SelectedModule.Tcu; Refresh(); }

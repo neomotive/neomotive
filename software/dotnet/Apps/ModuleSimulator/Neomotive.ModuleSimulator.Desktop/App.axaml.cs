@@ -4,6 +4,7 @@ using Meadow;
 using Meadow.Avalonia;
 using Meadow.Foundation.ICs.CAN;
 using Meadow.Hardware;
+using Neomotive.ModuleSimulator.UI.Toolbox;
 using System;
 using System.Threading.Tasks;
 
@@ -15,11 +16,6 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
     {
         AvaloniaXamlLoader.Load(this);
         _ = LoadMeadowOS();
-    }
-
-    public override Task MeadowRun()
-    {
-        return base.MeadowRun();
     }
 
     public override Task MeadowInitialize()
@@ -46,7 +42,13 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow(new MainWindowViewModel());
+            var inputs = new DesktopInputs();
+
+            var mainVm = new MainWindowViewModel(inputs);
+            var toolboxVm = new ToolboxViewModel(inputs, mainVm.InputsVm);
+            Resolver.Services.Add<ToolboxViewModel>(toolboxVm);
+
+            desktop.MainWindow = new DesktopShellWindow(mainVm, toolboxVm);
         }
 
         base.OnFrameworkInitializationCompleted();

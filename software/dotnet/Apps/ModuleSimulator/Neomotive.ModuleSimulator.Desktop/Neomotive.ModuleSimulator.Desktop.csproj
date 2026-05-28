@@ -17,12 +17,14 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Tulesha.KnobControl.Avalonia" Version="11.3.6.1" />
+    <PackageReference Include="XamlLEDControl.Avalonia" Version="2.0.5" />
   </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Core\Source\implementations\windows\Meadow.Windows\Meadow.Windows.csproj" />
-        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
-        <ProjectReference Include="..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.PCanBasic\Driver\ICs.CAN.PCanBasic.csproj" />
+        <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\implementations\windows\Meadow.Windows\Meadow.Windows.csproj" />
+        <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
+        <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.PCanBasic\Driver\ICs.CAN.PCanBasic.csproj" />
         <ProjectReference Include="..\Neomotive.ModuleSimulator.UIShared\Neomotive.ModuleSimulator.UIShared.csproj" />
     </ItemGroup>
 </Project>

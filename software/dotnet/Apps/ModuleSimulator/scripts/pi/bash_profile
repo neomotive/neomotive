@@ -1,0 +1,5 @@
+# ~/.bash_profile
+# Auto-start X on tty1 (the console the Pi autologs into)
+if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    exec startx
+fi

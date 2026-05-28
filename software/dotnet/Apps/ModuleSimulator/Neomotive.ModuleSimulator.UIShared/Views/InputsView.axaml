@@ -1,9 +1,342 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI"
+             xmlns:core="clr-namespace:Neomotive.ModuleSimulator;assembly=Neomotive.ModuleSimulator.Core"
              x:Class="Neomotive.ModuleSimulator.UI.Views.InputsView"
              x:DataType="local:MainWindowViewModel">
-    <ScrollViewer Padding="12,8">
-        <TextBlock Classes="label" Text="Inputs will go here" />
-    </ScrollViewer>
+
+    <UserControl.Styles>
+        <!-- PID selection tile -->
+        <Style Selector="Button.pid">
+            <Setter Property="Background"      Value="#141A26" />
+            <Setter Property="Foreground"      Value="#8A9BB0" />
+            <Setter Property="BorderBrush"     Value="#2E3A4E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius"    Value="6" />
+            <Setter Property="Padding"         Value="0" />
+            <Setter Property="MinHeight"       Value="60" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment"   Value="Center" />
+            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="Cursor"          Value="Hand" />
+        </Style>
+        <Style Selector="Button.pid:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1E2D45" />
+            <Setter Property="TextElement.Foreground" Value="#E0E5EC" />
+        </Style>
+        <Style Selector="Button.pid.selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1A3A5C" />
+            <Setter Property="BorderBrush" Value="#4A90D9" />
+        </Style>
+
+        <!-- Quick-pick tile -->
+        <Style Selector="Button.qpick">
+            <Setter Property="Background"      Value="#0E1420" />
+            <Setter Property="Foreground"      Value="#8A9BB0" />
+            <Setter Property="BorderBrush"     Value="#2E3A4E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius"    Value="6" />
+            <Setter Property="Padding"         Value="0" />
+            <Setter Property="MinHeight"       Value="52" />
+            <Setter Property="MinWidth"        Value="72" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment"   Value="Center" />
+            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"        Value="13" />
+            <Setter Property="Cursor"          Value="Hand" />
+        </Style>
+        <Style Selector="Button.qpick:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1A2A40" />
+            <Setter Property="TextElement.Foreground" Value="#E0E5EC" />
+        </Style>
+
+        <!-- Large stepper button -->
+        <Style Selector="Button.step">
+            <Setter Property="Background"      Value="#141A26" />
+            <Setter Property="Foreground"      Value="#C8CDD6" />
+            <Setter Property="BorderBrush"     Value="#2E3A4E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius"    Value="6" />
+            <Setter Property="MinWidth"        Value="52" />
+            <Setter Property="MinHeight"       Value="52" />
+            <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"        Value="20" />
+            <Setter Property="Padding"         Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment"   Value="Center" />
+            <Setter Property="Cursor"          Value="Hand" />
+        </Style>
+        <Style Selector="Button.step.fine">
+            <Setter Property="MinWidth"   Value="40" />
+            <Setter Property="MinHeight"  Value="40" />
+            <Setter Property="FontSize"   Value="16" />
+            <Setter Property="Foreground" Value="#5A6878" />
+        </Style>
+
+        <!-- Section heading inside edit panel -->
+        <Style Selector="TextBlock.step-label">
+            <Setter Property="FontFamily"    Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"      Value="9" />
+            <Setter Property="FontWeight"    Value="Bold" />
+            <Setter Property="LetterSpacing" Value="2" />
+            <Setter Property="Foreground"    Value="#6A7888" />
+        </Style>
+
+        <!-- Large value display between steppers -->
+        <Style Selector="TextBlock.step-value">
+            <Setter Property="FontFamily"    Value="Consolas,Cascadia Code,monospace" />
+            <Setter Property="FontSize"      Value="20" />
+            <Setter Property="Foreground"    Value="#4A90D9" />
+            <Setter Property="MinWidth"      Value="90" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*, Auto">
+
+        <!-- ── Input rows ───────────────────────────────────────────────────── -->
+        <ScrollViewer Grid.Row="0" Padding="12,8">
+            <StackPanel Spacing="0">
+
+                <Grid ColumnDefinitions="80, *, *, 52" Margin="4,0,4,4">
+                    <TextBlock Grid.Column="0" Classes="step-label" Text="INPUT" />
+                    <TextBlock Grid.Column="1" Classes="step-label" Text="CURRENT VALUE" />
+                    <TextBlock Grid.Column="2" Classes="step-label" Text="CONTROLS" />
+                </Grid>
+                <Rectangle Height="1" Fill="#1E2530" Margin="0,0,0,4" />
+
+                <ItemsControl ItemsSource="{Binding InputsVm.Rows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:SimulatedInputRow">
+                            <Border Background="#0A0D12" CornerRadius="3" Margin="0,2" Padding="4,0">
+                                <Grid ColumnDefinitions="80, *, *, 52">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Label}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="12" FontWeight="Bold"
+                                               Foreground="#C8CDD6" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding CurrentValue}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="12" Foreground="#4A90D9"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding AssignedName}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="12" Foreground="#8A9BB0"
+                                               VerticalAlignment="Center" />
+                                    <Button Grid.Column="3"
+                                            Content="✎" FontSize="18"
+                                            MinHeight="20" Padding="4"
+                                            Background="Transparent" Foreground="#4A5568"
+                                            BorderThickness="0" Cursor="Hand"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            Command="{Binding $parent[ItemsControl].((local:MainWindowViewModel)DataContext).InputsVm.EditCommand}"
+                                            CommandParameter="{Binding}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ── Edit panel ───────────────────────────────────────────────────── -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding InputsVm.IsEditing}"
+                Background="#0D1017"
+                BorderBrush="#2E3440" BorderThickness="0,1,0,0"
+                Padding="12,6">
+            <StackPanel Spacing="5">
+
+                <!-- Header row: label + Save + Cancel -->
+                <Grid ColumnDefinitions="*, Auto, 8, Auto" Height="32">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding InputsVm.EditingRow.Label, StringFormat='Configure {0}'}"
+                               FontFamily="Consolas,Cascadia Code,monospace"
+                               FontSize="11" FontWeight="Bold" LetterSpacing="1"
+                               Foreground="#8A9BB0" VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Content="✓"
+                            VerticalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Command="{Binding InputsVm.SaveEditCommand}"
+                            FontFamily="Consolas,Cascadia Code,monospace"
+                            FontSize="16" FontWeight="Bold"
+                            Height="30" Width="36"
+                            Padding="0"
+                            Background="#1E4A2A" Foreground="#5DBF57"
+                            BorderThickness="0" CornerRadius="6" />
+                    <Button Grid.Column="3"
+                            Content="✕"
+                            VerticalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Command="{Binding InputsVm.CancelEditCommand}"
+                            FontFamily="Consolas,Cascadia Code,monospace"
+                            FontSize="16"
+                            Height="30" Width="36"
+                            Padding="0"
+                            Background="#2A1A1A" Foreground="#AA4444"
+                            BorderThickness="0" CornerRadius="6" />
+                </Grid>
+
+                <!-- ═══ POT EDITOR ════════════════════════════════════════════ -->
+                <ScrollViewer IsVisible="{Binding InputsVm.EditIsPot}"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              MaxHeight="420">
+                    <StackPanel Spacing="10">
+
+                        <!-- Step 1: PID ComboBox -->
+                        <Grid ColumnDefinitions="90, *">
+                            <TextBlock Grid.Column="0" Classes="step-label"
+                                       Text="PID" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding InputsVm.SupportedPotPids}"
+                                      SelectedItem="{Binding InputsVm.SelectedPid}"
+                                      MinHeight="44"
+                                      HorizontalAlignment="Stretch"
+                                      FontFamily="Consolas,Cascadia Code,monospace"
+                                      FontSize="12">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="core:SimulatorPidDef">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="2,4">
+                                            <TextBlock Text="{Binding PidCode}"
+                                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                                       FontSize="11" Foreground="#4A90D9"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Module}"
+                                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                                       FontSize="10" Foreground="#6A7888"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Step 2: Unit ComboBox (only shown after PID is picked) -->
+                        <StackPanel IsVisible="{Binding InputsVm.HasPidSelected}" Spacing="10">
+
+                            <!-- Unit / range preset -->
+                            <Grid ColumnDefinitions="90, *">
+                                <TextBlock Grid.Column="0" Classes="step-label"
+                                           Text="UNIT" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding InputsVm.FilteredQuickPicks}"
+                                          SelectedItem="{Binding InputsVm.SelectedQuickPick}"
+                                          MinHeight="44"
+                                          HorizontalAlignment="Stretch"
+                                          FontFamily="Consolas,Cascadia Code,monospace"
+                                          FontSize="12">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="core:PotQuickPick">
+                                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="2,4">
+                                                <TextBlock Text="{Binding Label}"
+                                                           FontFamily="Consolas,Cascadia Code,monospace"
+                                                           FontSize="13" FontWeight="Bold"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Unit}"
+                                                           FontFamily="Consolas,Cascadia Code,monospace"
+                                                           FontSize="10" Foreground="#6A7888"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Fine-tune: Scale stepper -->
+                            <Grid ColumnDefinitions="90, *">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Classes="step-label" Text="SCALE" />
+                                    <TextBlock Text="V × Scale + Offset"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="8" Foreground="#344050" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button Classes="step" Content="−−"
+                                            Command="{Binding InputsVm.ScaleDownCoarseCommand}" />
+                                    <Button Classes="step fine" Content="−"
+                                            Command="{Binding InputsVm.ScaleDownFineCommand}" />
+                                    <TextBlock Classes="step-value"
+                                               Text="{Binding InputsVm.EditScale, StringFormat='{}{0:F2}'}" />
+                                    <Button Classes="step fine" Content="+"
+                                            Command="{Binding InputsVm.ScaleUpFineCommand}" />
+                                    <Button Classes="step" Content="++"
+                                            Command="{Binding InputsVm.ScaleUpCoarseCommand}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Fine-tune: Offset stepper -->
+                            <Grid ColumnDefinitions="90, *">
+                                <TextBlock Grid.Column="0" Classes="step-label" Text="OFFSET" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button Classes="step" Content="−−"
+                                            Command="{Binding InputsVm.OffsetDownCoarseCommand}" />
+                                    <Button Classes="step fine" Content="−"
+                                            Command="{Binding InputsVm.OffsetDownFineCommand}" />
+                                    <TextBlock Classes="step-value"
+                                               Text="{Binding InputsVm.EditOffset, StringFormat='{}{0:F2}'}" />
+                                    <Button Classes="step fine" Content="+"
+                                            Command="{Binding InputsVm.OffsetUpFineCommand}" />
+                                    <Button Classes="step" Content="++"
+                                            Command="{Binding InputsVm.OffsetUpCoarseCommand}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Range preview -->
+                            <Border Background="#080C10" CornerRadius="4" Padding="10,8">
+                                <Grid ColumnDefinitions="90, *">
+                                    <TextBlock Grid.Column="0" Classes="step-label" Text="RANGE"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding InputsVm.EditRangePreview}"
+                                               FontFamily="Consolas,Cascadia Code,monospace"
+                                               FontSize="15" Foreground="#4A90D9"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ═══ BOOL EDITOR (switch / button) ════════════════════════ -->
+                <StackPanel IsVisible="{Binding InputsVm.EditIsBool}" Spacing="10">
+
+                    <TextBlock Classes="step-label" Text="SELECT STATE TO CONTROL" />
+
+                    <Grid ColumnDefinitions="52, *, 52">
+                        <Button Grid.Column="0" Classes="step" Content="◀"
+                                Command="{Binding InputsVm.PrevBoolChannelCommand}" />
+                        <Border Grid.Column="1"
+                                Background="#080C10" CornerRadius="6"
+                                Margin="6,0" Padding="12,0">
+                            <TextBlock Text="{Binding InputsVm.EditBoolChannel.DisplayName}"
+                                       FontFamily="Consolas,Cascadia Code,monospace"
+                                       FontSize="18" FontWeight="Bold"
+                                       Foreground="#C8CDD6"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       MinHeight="52" />
+                        </Border>
+                        <Button Grid.Column="2" Classes="step" Content="▶"
+                                Command="{Binding InputsVm.NextBoolChannelCommand}" />
+                    </Grid>
+
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+    </Grid>
+
 </UserControl>
