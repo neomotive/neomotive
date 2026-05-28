@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/_ref/">
+    <Project Path="../../../../../../wilderness/Meadow.Contracts/Source/Meadow.Contracts/Meadow.Contracts.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../../wilderness/Meadow.Core/Source/implementations/linux/Meadow.Linux/Meadow.Linux.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../../wilderness/Meadow.Core/Source/Meadow.Core/Meadow.Core.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Core/Meadow.Foundation.Core.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Serialization.MicroJson/Driver/Serialization.MicroJson.csproj" />
+    <Project Path="../../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.ADC.Mcp3xxx/Driver/ICs.ADC.Mcp3xxx.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="../../../../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />
+    <Project Path="../../../../../../wilderness/Meadow.Units/Source/Meadow.Units.Generators/Meadow.Units.Generators.csproj" />
+    <Project Path="../../../../../../wilderness/Meadow.Units/Source/Meadow.Units/Meadow.Units.csproj">
+      <Deploy />
+    </Project>
+  </Folder>
+  <Project Path="InputBoardTest.csproj" />
+</Solution>
