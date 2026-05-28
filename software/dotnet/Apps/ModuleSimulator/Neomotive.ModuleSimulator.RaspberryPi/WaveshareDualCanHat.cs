@@ -5,7 +5,7 @@ using Meadow.Units;
 using System;
 using static Meadow.Foundation.ICs.CAN.Mcp2515;
 
-namespace Neomotive.ModuleSimulator.RaspberryPi;
+namespace Neomotive.ModuleSimulator;
 
 public class WaveshareDualCanHat
 {

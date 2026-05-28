@@ -8,6 +8,8 @@
         Width="800" Height="480"
         MinWidth="800" MinHeight="480"
         CanResize="False"
+        SystemDecorations="None"
+        Position="0,0"
         Background="#111418">
 
     <!-- Root: main content | CAN log | command bar -->

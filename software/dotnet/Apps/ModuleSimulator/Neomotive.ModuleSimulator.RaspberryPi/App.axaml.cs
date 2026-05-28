@@ -7,7 +7,7 @@ using Neomotive.ModuleSimulator.UI;
 using System;
 using System.Threading.Tasks;
 
-namespace Neomotive.ModuleSimulator.RaspberryPi;
+namespace Neomotive.ModuleSimulator;
 
 public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 {
