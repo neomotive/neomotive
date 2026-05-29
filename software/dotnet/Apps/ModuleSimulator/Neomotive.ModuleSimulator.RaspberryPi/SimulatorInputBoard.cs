@@ -71,19 +71,19 @@ public class SimulatorInputBoard : ISimulatorInputs
 
         var ain1 = _adc.Pins.CH0.CreateAnalogInputPort(1, TimeSpan.FromMilliseconds(250), _adc.DefaultReferenceVoltage);
         _pot1 = new Potentiometer(ain1, 10_000.Ohms()) { UpdateInterval = TimeSpan.FromMilliseconds(250) };
-        _pot1.Changed += (s, e) => Pot1Volts = _pot1.GetCurrentPosition() * refVolts;
+        _pot1.Changed += (s, e) => Pot1Volts = _pot1.GetCurrentPosition() / 100.0 * refVolts;
 
         var ain2 = _adc.Pins.CH1.CreateAnalogInputPort();
         _pot2 = new Potentiometer(ain2, 10_000.Ohms());
-        _pot2.Changed += (s, e) => Pot2Volts = _pot2.GetCurrentPosition() * refVolts;
+        _pot2.Changed += (s, e) => Pot2Volts = _pot2.GetCurrentPosition() / 100.0 * refVolts;
 
         var ain3 = _adc.Pins.CH2.CreateAnalogInputPort();
         _pot3 = new Potentiometer(ain3, 10_000.Ohms());
-        _pot3.Changed += (s, e) => Pot3Volts = _pot3.GetCurrentPosition() * refVolts;
+        _pot3.Changed += (s, e) => Pot3Volts = _pot3.GetCurrentPosition() / 100.0 * refVolts;
 
         var ain4 = _adc.Pins.CH3.CreateAnalogInputPort();
         _pot4 = new Potentiometer(ain4, 10_000.Ohms());
-        _pot4.Changed += (s, e) => Pot4Volts = _pot4.GetCurrentPosition() * refVolts;
+        _pot4.Changed += (s, e) => Pot4Volts = _pot4.GetCurrentPosition() / 100.0 * refVolts;
 
         Resolver.Log.Info("Initializing discrete inputs...");
 
@@ -102,6 +102,13 @@ public class SimulatorInputBoard : ISimulatorInputs
         var btn1 = new PushButton(device.Pins.Pin13, ResistorMode.ExternalPullDown, TimeSpan.FromMilliseconds(10));
         btn1.PressStarted += (s, e) => Button1Down = true;
         btn1.PressEnded += (s, e) => Button1Down = false;
+        btn1.LongClickedThreshold = TimeSpan.FromSeconds(5);
+        btn1.LongClicked += (s, e) =>
+        {
+            Resolver.Log.Info("Long press — shutdown requested");
+            try { device.Shutdown(); }
+            catch (Exception ex) { Resolver.Log.Error($"Shutdown failed: {ex.Message}"); }
+        };
         Button1 = btn1;
 
         var btn2 = new PushButton(device.Pins.Pin15, ResistorMode.ExternalPullDown, TimeSpan.FromMilliseconds(10));
