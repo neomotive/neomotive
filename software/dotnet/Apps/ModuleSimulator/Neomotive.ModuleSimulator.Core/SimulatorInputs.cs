@@ -5,44 +5,38 @@ using Meadow.Peripherals.Switches;
 
 namespace Neomotive.ModuleSimulator;
 
-public class SimulatorInputs
+public interface ISimulatorInputs
 {
-    public IPotentiometer? Pot1 { get; set; }
-    public IPotentiometer? Pot2 { get; set; }
-    public IPotentiometer? Pot3 { get; set; }
-    public IPotentiometer? Pot4 { get; set; }
+    IPotentiometer? Pot1 { get; }
+    IPotentiometer? Pot2 { get; }
+    IPotentiometer? Pot3 { get; }
+    IPotentiometer? Pot4 { get; }
 
-    public ILed? Led1 { get; set; }
-    public ILed? Led2 { get; set; }
+    ILed? Led1 { get; }
+    ILed? Led2 { get; }
 
-    // Hardware button interfaces (optional; set when actual hardware is available)
-    public IButton? Button1 { get; set; }
-    public IButton? Button2 { get; set; }
-    public IButton? Button3 { get; set; }
-    public IButton? Button4 { get; set; }
+    IButton? Button1 { get; }
+    IButton? Button2 { get; }
+    IButton? Button3 { get; }
+    IButton? Button4 { get; }
 
-    // Hardware switch interfaces (optional; set when actual hardware is available)
-    public ISwitch? Switch1 { get; set; }
-    public ISwitch? Switch2 { get; set; }
-    public ISwitch? Switch3 { get; set; }
-    public ISwitch? Switch4 { get; set; }
+    ISwitch? Switch1 { get; }
+    ISwitch? Switch2 { get; }
+    ISwitch? Switch3 { get; }
+    ISwitch? Switch4 { get; }
 
-    // Direct boolean state — used by desktop simulation when hardware ports are unavailable.
-    // On real hardware, these should be updated from IButton/ISwitch event handlers.
-    public bool Button1Down { get; set; }
-    public bool Button2Down { get; set; }
-    public bool Button3Down { get; set; }
-    public bool Button4Down { get; set; }
+    bool Button1Down { get; set; }
+    bool Button2Down { get; set; }
+    bool Button3Down { get; set; }
+    bool Button4Down { get; set; }
 
-    public bool Switch1On { get; set; }
-    public bool Switch2On { get; set; }
-    public bool Switch3On { get; set; }
-    public bool Switch4On { get; set; }
+    bool Switch1On { get; set; }
+    bool Switch2On { get; set; }
+    bool Switch3On { get; set; }
+    bool Switch4On { get; set; }
 
-    // Pot voltage cache (0–5 V) — updated whenever SetPot{n}Voltage is called so
-    // UI code in UIShared can read current values without referencing Meadow types.
-    public double Pot1Volts { get; set; } = 2.5;
-    public double Pot2Volts { get; set; } = 2.5;
-    public double Pot3Volts { get; set; } = 2.5;
-    public double Pot4Volts { get; set; } = 2.5;
+    double Pot1Volts { get; set; }
+    double Pot2Volts { get; set; }
+    double Pot3Volts { get; set; }
+    double Pot4Volts { get; set; }
 }

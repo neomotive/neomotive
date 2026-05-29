@@ -47,7 +47,23 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow(new MainWindowViewModel("Connecting to hardware..."));
+            Resolver.Log.LogLevel = Meadow.Logging.LogLevel.Trace;
+
+            SimulatorInputBoard inputs;
+
+            try
+            {
+                Console.WriteLine($"[DBG] OnFrameworkInitializationCompleted: Device={Device?.GetType().Name ?? "NULL"}");
+                Resolver.Log.Error($"Creating input board...");
+                inputs = new SimulatorInputBoard(Device!);
+            }
+            catch (Exception ex)
+            {
+                Resolver.Log.Error($"Failed to initialize input board: {ex}");
+                inputs = null;
+            }
+            desktop.MainWindow = new MainWindow(
+                new MainWindowViewModel(inputs, "Connecting to hardware..."));
         }
         base.OnFrameworkInitializationCompleted();
     }

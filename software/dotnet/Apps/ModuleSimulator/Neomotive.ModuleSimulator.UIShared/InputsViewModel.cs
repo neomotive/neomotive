@@ -47,7 +47,7 @@ public class SimulatedInputRow : INotifyPropertyChanged
 
 public class InputsViewModel : INotifyPropertyChanged
 {
-    private readonly SimulatorInputs _inputs;
+    private readonly ISimulatorInputs _inputs;
     private readonly Action<string, double>? _applyPotValue;
     private readonly Action<string, bool>?   _applyBoolValue;
     private readonly SimulatorConfig?        _config;
@@ -189,7 +189,7 @@ public class InputsViewModel : INotifyPropertyChanged
     public ICommand NextBoolChannelCommand { get; }
     public ICommand PrevBoolChannelCommand { get; }
 
-    public InputsViewModel(SimulatorInputs inputs,
+    public InputsViewModel(ISimulatorInputs inputs,
         SimulatorConfig?        config         = null,
         Action?                 saveConfig     = null,
         Action<string, double>? applyPotValue  = null,
@@ -207,12 +207,8 @@ public class InputsViewModel : INotifyPropertyChanged
         Rows.Add(new SimulatedInputRow("POT4",    InputType.Pot));
         Rows.Add(new SimulatedInputRow("SWITCH1", InputType.Switch));
         Rows.Add(new SimulatedInputRow("SWITCH2", InputType.Switch));
-        Rows.Add(new SimulatedInputRow("SWITCH3", InputType.Switch));
-        Rows.Add(new SimulatedInputRow("SWITCH4", InputType.Switch));
         Rows.Add(new SimulatedInputRow("BUTTON1", InputType.Button));
         Rows.Add(new SimulatedInputRow("BUTTON2", InputType.Button));
-        Rows.Add(new SimulatedInputRow("BUTTON3", InputType.Button));
-        Rows.Add(new SimulatedInputRow("BUTTON4", InputType.Button));
 
         // Always-enabled — visibility is controlled by IsEditing / HasPidSelected
         EditCommand       = new RelayCommand<SimulatedInputRow>(BeginEdit);
@@ -244,14 +240,10 @@ public class InputsViewModel : INotifyPropertyChanged
         ReadAndApplyPot(2, _inputs.Pot3Volts);
         ReadAndApplyPot(3, _inputs.Pot4Volts);
 
-        ReadBoolRow(4,  _inputs.Switch1On);
-        ReadBoolRow(5,  _inputs.Switch2On);
-        ReadBoolRow(6,  _inputs.Switch3On);
-        ReadBoolRow(7,  _inputs.Switch4On);
-        ReadBoolRow(8,  _inputs.Button1Down);
-        ReadBoolRow(9,  _inputs.Button2Down);
-        ReadBoolRow(10, _inputs.Button3Down);
-        ReadBoolRow(11, _inputs.Button4Down);
+        ReadBoolRow(4, _inputs.Switch1?.IsOn ?? _inputs.Switch1On);
+        ReadBoolRow(5, _inputs.Switch2?.IsOn ?? _inputs.Switch2On);
+        ReadBoolRow(6, _inputs.Button1Down);
+        ReadBoolRow(7, _inputs.Button2Down);
     }
 
     private void ReadAndApplyPot(int index, double voltage)
@@ -426,8 +418,6 @@ public class InputsViewModel : INotifyPropertyChanged
         {
             case 1: _inputs.Switch1On = state; break;
             case 2: _inputs.Switch2On = state; break;
-            case 3: _inputs.Switch3On = state; break;
-            case 4: _inputs.Switch4On = state; break;
         }
     }
 
@@ -437,8 +427,6 @@ public class InputsViewModel : INotifyPropertyChanged
         {
             case 1: _inputs.Button1Down = state; break;
             case 2: _inputs.Button2Down = state; break;
-            case 3: _inputs.Button3Down = state; break;
-            case 4: _inputs.Button4Down = state; break;
         }
     }
 

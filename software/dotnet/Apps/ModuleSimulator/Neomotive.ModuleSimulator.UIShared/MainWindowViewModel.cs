@@ -41,7 +41,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Action Sync);
 
     private SimulatorState _pcmState;
-    private SimulatorInputs _inputs;
+    private ISimulatorInputs? _inputs;
     private SimulatorTcuState _tcuState;
     private SimulatorPcm _pcm;
     private SimulatorTcu _tcu;
@@ -56,7 +56,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     public InputsViewModel InputsVm { get; }
 
-    public MainWindowViewModel(SimulatorInputs inputs, string feedbackText = "")
+    public MainWindowViewModel(ISimulatorInputs? inputs, string feedbackText = "")
     {
         _inputs = inputs;
         FeedbackText = feedbackText;
@@ -99,7 +99,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             }
             await Task.Delay(100);
         }
-        _pcmState = new SimulatorState(_inputs) { Vin = _config.Vin };
+        _pcmState = new SimulatorState(_inputs!) { Vin = _config.Vin };
         _tcuState = new SimulatorTcuState();
         _pcm = new SimulatorPcm(_bus, _pcmState);
         _tcu = new SimulatorTcu(_bus, _tcuState);
@@ -838,8 +838,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
             case "clear":
                 return "Usage: clear dtc <code>  |  clear dtc all";
 
+            case "exit":
+                Environment.Exit(0);
+                return null;
+
             case "help":
-                return "select pcm|tcu  |  show data|monitors|dtcs  |  set vin|rpm|temp|speed|throttle <val>  |  set gear P|R|N|D|1-8  |  set transtemp <val>  |  set dtc [[cat]] <code>  |  clear dtc <code>|all";
+                return "select pcm|tcu  |  show data|monitors|dtcs  |  set vin|rpm|temp|speed|throttle <val>  |  set gear P|R|N|D|1-8  |  set transtemp <val>  |  set dtc [[cat]] <code>  |  clear dtc <code>|all  |  exit";
 
             default:
                 return $"Unknown command '{parts[0]}' — type 'help'";

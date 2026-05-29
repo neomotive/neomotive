@@ -26,12 +26,12 @@ public class SimulatorState
     public readonly Dictionary<string, byte[]> PendingDtcs = new();
     public readonly Dictionary<string, byte[]> PermanentDtcs = new();
 
-    public SimulatorState(SimulatorInputs inputs)
+    public SimulatorState(ISimulatorInputs inputs)
     {
         Inputs = inputs;
     }
 
-    public SimulatorInputs Inputs { get; }
+    public ISimulatorInputs Inputs { get; }
 
     public static readonly KnownDtc[] KnownDtcs =
     {
