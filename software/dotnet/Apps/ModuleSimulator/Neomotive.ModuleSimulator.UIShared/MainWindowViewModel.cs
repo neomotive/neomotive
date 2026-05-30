@@ -54,7 +54,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly SimulatorConfig _config;
     private readonly HashSet<string> _commandDtcCodes = new();
 
-    public InputsViewModel InputsVm { get; }
+    public InputsViewModel InputsVm { get; private set; }
 
     public MainWindowViewModel(ISimulatorInputs? inputs, string feedbackText = "")
     {
@@ -71,6 +71,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // since Avalonia and Meadow are both starting at the same time, we must wait
         // for MeadowInitialize to complete before the output port is ready
         _ = Task.Run(WaitForHardware);
+    }
+
+    public void SetInputs(ISimulatorInputs inputs)
+    {
+        _inputs = inputs;
+        InputsVm = new InputsViewModel(inputs, _config, () => ConfigManager.Save(_config), SetSimulatedValue, SetSimulatedBoolValue);
+        OnPropertyChanged(nameof(InputsVm));
     }
 
     private LoggingCanBus _bus;

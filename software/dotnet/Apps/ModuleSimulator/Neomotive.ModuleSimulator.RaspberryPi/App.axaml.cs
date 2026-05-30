@@ -12,7 +12,9 @@ namespace Neomotive.ModuleSimulator;
 public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 {
     private readonly TaskCompletionSource<(ICanBus bus, string feedback)> _busReady = new();
+    private readonly TaskCompletionSource<SimulatorInputBoard?> _inputsReady = new();
     private WaveshareDualCanHat _hat;
+    private MainWindowViewModel? _mainVm;
 
     public override void Initialize()
     {
@@ -40,6 +42,17 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
             _busReady.TrySetResult((new NullCanBus(), $"Offline mode — {ex.Message}"));
         }
 
+        try
+        {
+            Resolver.Log.Info("Initializing input board...");
+            _inputsReady.TrySetResult(new SimulatorInputBoard(Device!));
+        }
+        catch (Exception ex)
+        {
+            Resolver.Log.Error($"Failed to initialize input board: {ex}");
+            _inputsReady.TrySetResult(null);
+        }
+
         return base.MeadowInitialize();
     }
 
@@ -49,22 +62,17 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         {
             Resolver.Log.LogLevel = Meadow.Logging.LogLevel.Trace;
 
-            SimulatorInputBoard inputs;
-
-            try
-            {
-                Console.WriteLine($"[DBG] OnFrameworkInitializationCompleted: Device={Device?.GetType().Name ?? "NULL"}");
-                Resolver.Log.Error($"Creating input board...");
-                inputs = new SimulatorInputBoard(Device!);
-            }
-            catch (Exception ex)
-            {
-                Resolver.Log.Error($"Failed to initialize input board: {ex}");
-                inputs = null;
-            }
-            desktop.MainWindow = new MainWindow(
-                new MainWindowViewModel(inputs, "Connecting to hardware..."));
+            _mainVm = new MainWindowViewModel(null, "Connecting to hardware...");
+            desktop.MainWindow = new MainWindow(_mainVm);
+            _ = WireInputsAsync();
         }
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private async Task WireInputsAsync()
+    {
+        var inputs = await _inputsReady.Task;
+        if (inputs != null)
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => _mainVm?.SetInputs(inputs));
     }
 }
