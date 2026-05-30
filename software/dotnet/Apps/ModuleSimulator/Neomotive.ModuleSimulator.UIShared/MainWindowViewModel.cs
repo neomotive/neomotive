@@ -118,6 +118,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             {
                 RefreshCanLog();
                 InputsVm.RefreshValues();
+                CheckCanBusWatchdog();
             };
 
         timer.Start();
@@ -209,21 +210,43 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     // ── CAN health ────────────────────────────────────────────────────────────
 
+    private DateTime _lastCanActivity = DateTime.MinValue;
+    private bool _canBusStuck = false;
+
     public int CanBusErrorCount { get; private set; }
     public int CanLastTxErrors { get; private set; }
     public int CanLastRxErrors { get; private set; }
-    public bool HasCanHealthData => CanBusErrorCount > 0;
-    public bool HasNoCanErrors => CanBusErrorCount == 0;
+    public bool CanBusStuck => _canBusStuck;
+    public bool HasCanHealthData => CanBusErrorCount > 0 || _canBusStuck;
+    public bool HasNoCanErrors => !HasCanHealthData;
     public bool CanTxErrorSevere => CanLastTxErrors >= 128;
+
+    private void CheckCanBusWatchdog()
+    {
+        // If we've seen CAN activity before but nothing for 10+ seconds, the interrupt
+        // handler is likely stuck (INT pin permanently asserted, no new falling edges).
+        if (_lastCanActivity == DateTime.MinValue) return;
+        var stuck = (DateTime.UtcNow - _lastCanActivity).TotalSeconds > 10 && !_canBusStuck;
+        if (stuck)
+        {
+            _canBusStuck = true;
+            OnPropertyChanged(nameof(CanBusStuck));
+            OnPropertyChanged(nameof(HasCanHealthData));
+            OnPropertyChanged(nameof(HasNoCanErrors));
+        }
+    }
 
     public void ResetCanErrors()
     {
         CanBusErrorCount = 0;
         CanLastTxErrors = 0;
         CanLastRxErrors = 0;
+        _canBusStuck = false;
+        _lastCanActivity = DateTime.MinValue;
         OnPropertyChanged(nameof(CanBusErrorCount));
         OnPropertyChanged(nameof(CanLastTxErrors));
         OnPropertyChanged(nameof(CanLastRxErrors));
+        OnPropertyChanged(nameof(CanBusStuck));
         OnPropertyChanged(nameof(HasCanHealthData));
         OnPropertyChanged(nameof(HasNoCanErrors));
         OnPropertyChanged(nameof(CanTxErrorSevere));
@@ -660,6 +683,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (latest == _lastCanTimestamp && all.Count == _lastCanCount) return;
         _lastCanTimestamp = latest;
         _lastCanCount = all.Count;
+        _lastCanActivity = DateTime.UtcNow;
+        if (_canBusStuck)
+        {
+            _canBusStuck = false;
+            OnPropertyChanged(nameof(CanBusStuck));
+            OnPropertyChanged(nameof(HasCanHealthData));
+            OnPropertyChanged(nameof(HasNoCanErrors));
+        }
 
         CanLogItems = BuildCanLog(all);
         var hasPackets = CanLogItems.Count > 0;

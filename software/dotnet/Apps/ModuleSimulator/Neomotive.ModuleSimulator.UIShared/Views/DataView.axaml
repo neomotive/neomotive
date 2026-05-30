@@ -30,6 +30,13 @@
                     <TextBlock Classes="ok xs" Text="● No errors" IsVisible="{Binding HasNoCanErrors}" />
                     <StackPanel IsVisible="{Binding HasCanHealthData}" Spacing="3">
                         <Grid ColumnDefinitions="140, *">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Bus Stuck" />
+                            <TextBlock Grid.Column="1" Classes="error" Text="● INT pin locked — restart app"
+                                       IsVisible="{Binding CanBusStuck}" />
+                            <TextBlock Grid.Column="1" Classes="ok xs" Text="● ok"
+                                       IsVisible="{Binding !CanBusStuck}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="140, *">
                             <TextBlock Grid.Column="0" Classes="label" Text="Error Events" />
                             <TextBlock Grid.Column="1" Classes="error" Text="{Binding CanBusErrorCount}" />
                         </Grid>
