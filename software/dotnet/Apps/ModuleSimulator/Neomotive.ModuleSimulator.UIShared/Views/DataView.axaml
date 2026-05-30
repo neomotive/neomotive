@@ -21,9 +21,15 @@
                     BorderThickness="0,1,0,0"
                     Padding="0,8,0,0">
                 <StackPanel>
-                    <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,5">
-                        <TextBlock Grid.Column="0" Classes="heading" Text="CAN BUS" />
-                        <Button Grid.Column="1" Classes="action-sm" Content="Reset"
+                    <Grid ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,5">
+                        <TextBlock Grid.Column="0" Classes="heading" Text="CAN BUS" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0" IsVisible="{Binding HasAutoReconnects}">
+                            <TextBlock Classes="warn xs" Text="● Auto-reconnects: " />
+                            <TextBlock Classes="warn xs" Text="{Binding AutoReconnectCount}" FontWeight="Bold" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="2" Content="Auto-reconnect" IsChecked="{Binding AutoReconnect}" 
+                                  FontSize="10" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <Button Grid.Column="3" Classes="action-sm" Content="Reset"
                                 IsVisible="{Binding HasCanHealthData}"
                                 Click="OnResetCanErrors" />
                     </Grid>

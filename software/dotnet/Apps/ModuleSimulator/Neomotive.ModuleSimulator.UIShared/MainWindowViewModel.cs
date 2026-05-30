@@ -212,6 +212,32 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private DateTime _lastCanActivity = DateTime.MinValue;
     private bool _canBusStuck = false;
+    private bool _autoReconnect = true;
+    private int _autoReconnectCount = 0;
+
+    public bool AutoReconnect
+    {
+        get => _autoReconnect;
+        set
+        {
+            _autoReconnect = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public int AutoReconnectCount
+    {
+        get => _autoReconnectCount;
+        private set
+        {
+            _autoReconnectCount = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasAutoReconnects));
+        }
+    }
+
+    public bool HasAutoReconnects => AutoReconnectCount > 0;
+
 
     public int CanBusErrorCount { get; private set; }
     public int CanLastTxErrors { get; private set; }
@@ -229,10 +255,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
         var stuck = (DateTime.UtcNow - _lastCanActivity).TotalSeconds > 10 && !_canBusStuck;
         if (stuck)
         {
-            _canBusStuck = true;
-            OnPropertyChanged(nameof(CanBusStuck));
-            OnPropertyChanged(nameof(HasCanHealthData));
-            OnPropertyChanged(nameof(HasNoCanErrors));
+            if (AutoReconnect)
+            {
+                AutoReconnectCount++;
+                ResetCanErrors();
+            }
+            else
+            {
+                _canBusStuck = true;
+                OnPropertyChanged(nameof(CanBusStuck));
+                OnPropertyChanged(nameof(HasCanHealthData));
+                OnPropertyChanged(nameof(HasNoCanErrors));
+            }
         }
     }
 
@@ -243,6 +277,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
         CanLastRxErrors = 0;
         _canBusStuck = false;
         _lastCanActivity = DateTime.MinValue;
+
+        // Force a hardware re-initialization if using the MCP2515 driver
+        if (_bus is LoggingCanBus lcb)
+        {
+            // The BitRate setter in Mcp2515CanBus triggers a full hardware Initialize()
+            lcb.BitRate = lcb.BitRate;
+        }
+
         OnPropertyChanged(nameof(CanBusErrorCount));
         OnPropertyChanged(nameof(CanLastTxErrors));
         OnPropertyChanged(nameof(CanLastRxErrors));
