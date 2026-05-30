@@ -10,5 +10,14 @@ xset -dpms
 # Install with: sudo apt install unclutter
 unclutter -idle 0 -root &
 
+# Show splash on root window immediately — covers the black screen while .NET starts.
+# Avalonia's fullscreen window will cover it once the app is ready.
+# Install with: sudo apt install feh
+[ -f /opt/neomotive/splash.png ] && feh --bg-fill /opt/neomotive/splash.png
+
+# Wait for SPI to be ready — MCP3004 ADC and GPIO inputs depend on it.
+# The device isn't always present at the moment X starts during early boot.
+until [ -e /dev/spidev0.0 ]; do sleep 0.2; done
+
 cd /opt/neomotive
-exec ./Neomotive.ModuleSimulator.RaspberryPi
+exec ./simulator > /tmp/simulator.log 2>&1
