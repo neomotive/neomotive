@@ -89,13 +89,12 @@
                 BorderBrush="#2E3440"
                 BorderThickness="0,1,0,1"
                 Padding="12,6">
-            <Grid RowDefinitions="16, *">
-                <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
-                    <TextBlock Grid.Column="0" Classes="heading" Text="CAN PACKETS" />
+            <Grid RowDefinitions="Auto, *">
+                <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,4">
+                    <TextBlock Grid.Column="0" Classes="heading" Text="CAN PACKETS" VerticalAlignment="Center" />
                     <Button Grid.Column="1" Classes="action-sm" Content="Clear"
                             IsVisible="{Binding HasCanPackets}"
-                            Click="OnClearCanLog"
-                            VerticalAlignment="Center" />
+                            Click="OnClearCanLog" />
                 </Grid>
 
                 <TextBlock Grid.Row="1" Classes="dim"

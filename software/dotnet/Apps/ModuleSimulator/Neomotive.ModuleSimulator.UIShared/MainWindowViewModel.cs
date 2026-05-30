@@ -360,9 +360,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         set
         {
             var v = value?.ToUpperInvariant().Trim() ?? "";
-            if (v.Length < 1 || v.Length > 17) return;
+            if (v.Length == 0 || v.Length > 17) return;
             _config.Vin = v;
-            _pcmState.Vin = v;
+            // Only push to PCM when the VIN is fully valid — prevents broadcasting a malformed VIN
+            if (_pcmState != null && IsValidVin(v))
+                _pcmState.Vin = v;
             ConfigManager.Save(_config);
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasConfigVinNote));
@@ -384,8 +386,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool HasConfigVinNote => _config.Vin.Length != 17;
-    public string ConfigVinFeedback => $"Note: standard VINs are 17 characters ({_config.Vin.Length}/17)";
+    public bool HasConfigVinNote => !IsValidVin(_config.Vin);
+    public string ConfigVinFeedback => _config.Vin.Length != 17
+        ? $"VIN must be exactly 17 characters ({_config.Vin.Length}/17)"
+        : "Invalid character — I, O, Q are not allowed in VINs";
 
     public ObservableCollection<QuickDtcConfig> ConfigDtcs => _config.QuickDtcs;
     public bool CanAddDtc => _config.QuickDtcs.Count < 10;
@@ -927,8 +931,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         switch (field.ToLowerInvariant())
         {
             case "vin":
-                if (value.Length < 1 || value.Length > 17) return "VIN must be 1-17 characters";
-                state.Vin = value.ToUpperInvariant();
+                var vinUpper = value.ToUpperInvariant();
+                if (!IsValidVin(vinUpper)) return vinUpper.Length != 17
+                    ? $"VIN must be exactly 17 characters ({vinUpper.Length}/17)"
+                    : "Invalid character — I, O, Q are not allowed in VINs";
+                state.Vin = vinUpper;
                 return $"VIN set to {state.Vin}";
             case "rpm":
                 if (!float.TryParse(value, out var rpm) || rpm < 0 || rpm > 20000) return "RPM must be 0-20000";
@@ -1031,6 +1038,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
         holder.PermanentDtcs.Clear();
         holder.Sync();
         return count > 0 ? $"Cleared {count} DTC(s)" : "No DTCs were set";
+    }
+
+    // ISO 3779: 17 alphanumeric chars; I, O, Q are prohibited (too similar to 1, 0, 0)
+    private static bool IsValidVin(string vin)
+    {
+        if (vin.Length != 17) return false;
+        foreach (var c in vin)
+            if (!char.IsDigit(c) && !(char.IsAsciiLetter(c) && c != 'I' && c != 'O' && c != 'Q'))
+                return false;
+        return true;
     }
 
     private static bool TryParseDtcCode(string input, out string normalized, out byte[] raw)

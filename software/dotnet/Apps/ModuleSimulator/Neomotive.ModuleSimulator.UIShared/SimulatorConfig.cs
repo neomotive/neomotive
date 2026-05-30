@@ -39,7 +39,7 @@ public class InputRowConfig
 public class SimulatorConfig
 {
     public UnitsOfMeasure Units { get; set; } = UnitsOfMeasure.Imperial;
-    public string Vin { get; set; } = "AWWWWWWWWWWW0YEAH";
+    public string Vin { get; set; } = "1M8GDM9AXKP042788";
     public int CanLogMaxDepth { get; set; } = 100;
     public ObservableCollection<QuickDtcConfig> QuickDtcs { get; set; } = [];
 

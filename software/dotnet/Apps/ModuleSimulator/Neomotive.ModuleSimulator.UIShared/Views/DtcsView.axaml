@@ -10,7 +10,7 @@
                 <TextBlock Classes="dim" Text="No DTCs — add quick DTCs in the Config tab"
                            IsVisible="{Binding HasNoDtcs}" />
                 <StackPanel IsVisible="{Binding HasDtcs}" Spacing="2">
-                    <Grid ColumnDefinitions="72, 78, *, Auto" Margin="0,0,0,4">
+                    <Grid ColumnDefinitions="90, 120, *, Auto" Margin="0,0,0,4">
                         <TextBlock Grid.Column="0" Classes="muted xs" Text="Code"        FontWeight="Bold" />
                         <TextBlock Grid.Column="1" Classes="muted xs" Text="Category"    FontWeight="Bold" />
                         <TextBlock Grid.Column="2" Classes="muted xs" Text="Description" FontWeight="Bold" />
@@ -18,22 +18,26 @@
                     <ItemsControl ItemsSource="{Binding Dtcs}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="local:DtcItem">
-                                <Grid ColumnDefinitions="72, 78, *, Auto" Margin="0,0,0,2">
-                                    <TextBlock Grid.Column="0"
+                                <Grid ColumnDefinitions="90, 120, *, Auto" Margin="0,0,0,4">
+                                    <TextBlock Grid.Column="0" FontSize="18"
                                                Classes.error="{Binding IsActive}"
                                                Classes.label="{Binding IsInactive}"
-                                               Text="{Binding Code}" />
+                                               Text="{Binding Code}"
+                                               VerticalAlignment="Center" />
                                     <Button Grid.Column="1" Classes="category"
+                                            FontSize="18"
                                             Content="{Binding Category}"
                                             Tag="{Binding Code}"
                                             Click="OnCycleCategory"
                                             IsVisible="{Binding IsActive}"
+                                            VerticalAlignment="Center"
                                             ToolTip.Tip="Click to cycle: Stored → Pending → Permanent" />
-                                    <TextBlock Grid.Column="2"
+                                    <TextBlock Grid.Column="2" FontSize="18"
                                                Classes.muted="{Binding IsInactive}"
-                                               Text="{Binding Description}" />
+                                               Text="{Binding Description}"
+                                               VerticalAlignment="Center" />
                                     <StackPanel Grid.Column="3" Orientation="Horizontal"
-                                                Spacing="2" VerticalAlignment="Center">
+                                                Spacing="4" VerticalAlignment="Center">
                                         <!-- Quick DTC active: [x] removes and deactivates -->
                                         <Button Classes="action-sm" Content="✕"
                                                 Tag="{Binding Code}" Click="OnClearDtc"

@@ -9,4 +9,5 @@ public abstract class TransmissionControlModule : ControllerBase
         : base(canBuses, moduleAddress)
     {
     }
+
 }
