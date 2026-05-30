@@ -4,15 +4,51 @@
              x:Class="Neomotive.ModuleSimulator.UI.Views.DataView"
              x:DataType="local:MainWindowViewModel">
     <ScrollViewer Padding="12,8">
-        <ItemsControl ItemsSource="{Binding DataFields}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="local:DataFieldItem">
-                    <Grid ColumnDefinitions="140, *" Margin="0,0,0,3">
-                        <TextBlock Grid.Column="0" Classes="label" Text="{Binding Field}" />
-                        <TextBlock Grid.Column="1" Classes="value" Text="{Binding Value}" />
+        <StackPanel>
+            <ItemsControl ItemsSource="{Binding DataFields}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:DataFieldItem">
+                        <Grid ColumnDefinitions="140, *" Margin="0,0,0,3">
+                            <TextBlock Grid.Column="0" Classes="label" Text="{Binding Field}" />
+                            <TextBlock Grid.Column="1" Classes="value" Text="{Binding Value}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Margin="0,10,0,0"
+                    BorderBrush="#2E3440"
+                    BorderThickness="0,1,0,0"
+                    Padding="0,8,0,0">
+                <StackPanel>
+                    <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,5">
+                        <TextBlock Grid.Column="0" Classes="heading" Text="CAN BUS" />
+                        <Button Grid.Column="1" Classes="action-sm" Content="Reset"
+                                IsVisible="{Binding HasCanHealthData}"
+                                Click="OnResetCanErrors" />
                     </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                    <TextBlock Classes="ok xs" Text="● No errors" IsVisible="{Binding HasNoCanErrors}" />
+                    <StackPanel IsVisible="{Binding HasCanHealthData}" Spacing="3">
+                        <Grid ColumnDefinitions="140, *">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Error Events" />
+                            <TextBlock Grid.Column="1" Classes="error" Text="{Binding CanBusErrorCount}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="140, *">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Last TEC" />
+                            <TextBlock Grid.Column="1" Classes="warn"
+                                       Text="{Binding CanLastTxErrors}"
+                                       IsVisible="{Binding !CanTxErrorSevere}" />
+                            <TextBlock Grid.Column="1" Classes="error"
+                                       Text="{Binding CanLastTxErrors}"
+                                       IsVisible="{Binding CanTxErrorSevere}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="140, *">
+                            <TextBlock Grid.Column="0" Classes="label" Text="Last REC" />
+                            <TextBlock Grid.Column="1" Classes="warn" Text="{Binding CanLastRxErrors}" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>

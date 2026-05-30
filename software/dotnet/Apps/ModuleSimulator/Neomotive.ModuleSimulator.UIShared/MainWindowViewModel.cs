@@ -126,6 +126,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private void OnCanBusError(object? sender, CanErrorInfo e)
     {
         Console.WriteLine($"CAN bus error: TxError={e.TransmitErrorCount} RxError={e.ReceiveErrorCount}");
+        CanBusErrorCount++;
+        CanLastTxErrors = e.TransmitErrorCount;
+        CanLastRxErrors = e.ReceiveErrorCount;
+        Dispatcher.UIThread.Post(() =>
+        {
+            OnPropertyChanged(nameof(CanBusErrorCount));
+            OnPropertyChanged(nameof(CanLastTxErrors));
+            OnPropertyChanged(nameof(CanLastRxErrors));
+            OnPropertyChanged(nameof(HasCanHealthData));
+            OnPropertyChanged(nameof(HasNoCanErrors));
+            OnPropertyChanged(nameof(CanTxErrorSevere));
+        });
     }
 
     // ── Module display ────────────────────────────────────────────────────────
@@ -193,6 +205,28 @@ public class MainWindowViewModel : INotifyPropertyChanged
     {
         get => _knownDtcButtons;
         private set { _knownDtcButtons = value; OnPropertyChanged(); }
+    }
+
+    // ── CAN health ────────────────────────────────────────────────────────────
+
+    public int CanBusErrorCount { get; private set; }
+    public int CanLastTxErrors { get; private set; }
+    public int CanLastRxErrors { get; private set; }
+    public bool HasCanHealthData => CanBusErrorCount > 0;
+    public bool HasNoCanErrors => CanBusErrorCount == 0;
+    public bool CanTxErrorSevere => CanLastTxErrors >= 128;
+
+    public void ResetCanErrors()
+    {
+        CanBusErrorCount = 0;
+        CanLastTxErrors = 0;
+        CanLastRxErrors = 0;
+        OnPropertyChanged(nameof(CanBusErrorCount));
+        OnPropertyChanged(nameof(CanLastTxErrors));
+        OnPropertyChanged(nameof(CanLastRxErrors));
+        OnPropertyChanged(nameof(HasCanHealthData));
+        OnPropertyChanged(nameof(HasNoCanErrors));
+        OnPropertyChanged(nameof(CanTxErrorSevere));
     }
 
     // ── CAN log ───────────────────────────────────────────────────────────────
