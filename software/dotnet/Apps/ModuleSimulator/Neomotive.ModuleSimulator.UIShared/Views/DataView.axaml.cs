@@ -9,5 +9,5 @@ public partial class DataView : UserControl
 
     public DataView() => InitializeComponent();
 
-    private void OnResetCanErrors(object? sender, RoutedEventArgs e) => Vm.ResetCanErrors();
+
 }

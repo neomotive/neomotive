@@ -16,52 +16,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <Border Margin="0,10,0,0"
-                    BorderBrush="#2E3440"
-                    BorderThickness="0,1,0,0"
-                    Padding="0,8,0,0">
-                <StackPanel>
-                    <Grid ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,5">
-                        <TextBlock Grid.Column="0" Classes="heading" Text="CAN BUS" VerticalAlignment="Center" />
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0" IsVisible="{Binding HasAutoReconnects}">
-                            <TextBlock Classes="warn xs" Text="● Auto-reconnects: " />
-                            <TextBlock Classes="warn xs" Text="{Binding AutoReconnectCount}" FontWeight="Bold" />
-                        </StackPanel>
-                        <CheckBox Grid.Column="2" Content="Auto-reconnect" IsChecked="{Binding AutoReconnect}" 
-                                  FontSize="10" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <Button Grid.Column="3" Classes="action-sm" Content="Reset"
-                                IsVisible="{Binding HasCanHealthData}"
-                                Click="OnResetCanErrors" />
-                    </Grid>
-                    <TextBlock Classes="ok xs" Text="● No errors" IsVisible="{Binding HasNoCanErrors}" />
-                    <StackPanel IsVisible="{Binding HasCanHealthData}" Spacing="3">
-                        <Grid ColumnDefinitions="140, *">
-                            <TextBlock Grid.Column="0" Classes="label" Text="Bus Stuck" />
-                            <TextBlock Grid.Column="1" Classes="error" Text="● INT pin locked — restart app"
-                                       IsVisible="{Binding CanBusStuck}" />
-                            <TextBlock Grid.Column="1" Classes="ok xs" Text="● ok"
-                                       IsVisible="{Binding !CanBusStuck}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="140, *">
-                            <TextBlock Grid.Column="0" Classes="label" Text="Error Events" />
-                            <TextBlock Grid.Column="1" Classes="error" Text="{Binding CanBusErrorCount}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="140, *">
-                            <TextBlock Grid.Column="0" Classes="label" Text="Last TEC" />
-                            <TextBlock Grid.Column="1" Classes="warn"
-                                       Text="{Binding CanLastTxErrors}"
-                                       IsVisible="{Binding !CanTxErrorSevere}" />
-                            <TextBlock Grid.Column="1" Classes="error"
-                                       Text="{Binding CanLastTxErrors}"
-                                       IsVisible="{Binding CanTxErrorSevere}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="140, *">
-                            <TextBlock Grid.Column="0" Classes="label" Text="Last REC" />
-                            <TextBlock Grid.Column="1" Classes="warn" Text="{Binding CanLastRxErrors}" />
-                        </Grid>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -31,7 +31,7 @@ public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, s
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private enum SettingsView { Data, Monitors, Dtcs, Inputs, Config }
+    private enum SettingsView { Data, Monitors, Dtcs, Can, Inputs, Config }
     private enum SelectedModule { Pcm, Tcu }
 
     private record DtcHolder(
@@ -153,6 +153,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsDataView => _view == SettingsView.Data;
     public bool IsMonitorsView => _view == SettingsView.Monitors;
     public bool IsDtcsView => _view == SettingsView.Dtcs;
+    public bool IsCanView => _view == SettingsView.Can;
     public bool IsInputsView => _view == SettingsView.Inputs;
     public bool IsConfigView => _view == SettingsView.Config;
     public bool ShowMonitorsTab => _selectedModule == SelectedModule.Pcm;
@@ -162,9 +163,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         (SelectedModule.Pcm, SettingsView.Data) => "PCM — Data",
         (SelectedModule.Pcm, SettingsView.Monitors) => "PCM — Readiness Monitors",
         (SelectedModule.Pcm, SettingsView.Dtcs) => "PCM — Fault Codes",
+        (SelectedModule.Pcm, SettingsView.Can) => "PCM — CAN Log",
         (SelectedModule.Pcm, SettingsView.Inputs) => "Configure Inputs",
         (SelectedModule.Pcm, SettingsView.Config) => "System Config",
         (SelectedModule.Tcu, SettingsView.Dtcs) => "TCU — Fault Codes",
+        (SelectedModule.Tcu, SettingsView.Can) => "TCU — CAN Log",
         _ => "TCU — Data",
     };
 
@@ -247,12 +250,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool HasNoCanErrors => !HasCanHealthData;
     public bool CanTxErrorSevere => CanLastTxErrors >= 128;
 
+    public int CanBusWatchdogSeconds => 5;
+
     private void CheckCanBusWatchdog()
     {
         // If we've seen CAN activity before but nothing for 10+ seconds, the interrupt
         // handler is likely stuck (INT pin permanently asserted, no new falling edges).
         if (_lastCanActivity == DateTime.MinValue) return;
-        var stuck = (DateTime.UtcNow - _lastCanActivity).TotalSeconds > 10 && !_canBusStuck;
+        var stuck = (DateTime.UtcNow - _lastCanActivity).TotalSeconds > CanBusWatchdogSeconds && !_canBusStuck;
         if (stuck)
         {
             if (AutoReconnect)
@@ -351,6 +356,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void ShowData() { _view = SettingsView.Data; Refresh(); }
     public void ShowMonitors() { _view = SettingsView.Monitors; Refresh(); }
     public void ShowDtcs() { _view = SettingsView.Dtcs; Refresh(); }
+    public void ShowCan()  { _view = SettingsView.Can;  Refresh(); }
     public void ShowInputs() { _view = SettingsView.Inputs; Refresh(); }
     public void ShowConfig() { _view = SettingsView.Config; Refresh(); }
 
@@ -703,6 +709,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsDataView));
         OnPropertyChanged(nameof(IsMonitorsView));
         OnPropertyChanged(nameof(IsDtcsView));
+        OnPropertyChanged(nameof(IsCanView));
         OnPropertyChanged(nameof(IsInputsView));
         OnPropertyChanged(nameof(IsConfigView));
         OnPropertyChanged(nameof(ShowMonitorsTab));

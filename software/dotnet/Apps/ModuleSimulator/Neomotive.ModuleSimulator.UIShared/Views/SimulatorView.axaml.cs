@@ -21,7 +21,7 @@ public partial class SimulatorView : UserControl
     {
         if (DataContext is MainWindowViewModel vm)
         {
-            vm.CanLogUpdated += ScrollCanLogToBottom;
+            
         }
     }
 
@@ -42,6 +42,7 @@ public partial class SimulatorView : UserControl
     private void OnShowDtcs(object? sender, RoutedEventArgs e)     => Vm?.ShowDtcs();
     private void OnShowInputs(object? sender, RoutedEventArgs e)   => Vm?.ShowInputs();
     private void OnShowConfig(object? sender, RoutedEventArgs e)   => Vm?.ShowConfig();
+    private void OnShowCan(object? sender, RoutedEventArgs e)      => Vm?.ShowCan();
 
     private void OnClearCanLog(object? sender, RoutedEventArgs e)  => Vm?.ClearCanLog();
 
