@@ -12,12 +12,32 @@
                 Background="#141820"
                 BorderBrush="#2E3440"
                 BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
-                <Button Content="Connection" Classes="tab" Classes.active="{Binding IsConnectionView}" Click="OnShowConnection" />
-                <Button Content="Vehicle"    Classes="tab" Classes.active="{Binding IsVehicleView}"    Click="OnShowVehicle" />
-                <Button Content="Emissions"  Classes="tab" Classes.active="{Binding IsEmissionsView}"  Click="OnShowEmissions" />
-                <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
-            </StackPanel>
+            <Grid ColumnDefinitions="*, Auto">
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <Button Content="Connection" Classes="tab" Classes.active="{Binding IsConnectionView}" Click="OnShowConnection" />
+                    <Button Content="Vehicle"    Classes="tab" Classes.active="{Binding IsVehicleView}"    Click="OnShowVehicle" />
+                    <Button Content="Emissions"  Classes="tab" Classes.active="{Binding IsEmissionsView}"  Click="OnShowEmissions" />
+                    <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
+                </StackPanel>
+
+                <!-- Connection state indicator -->
+                <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding IsConnected}">
+                        <TextBlock Text="●" FontSize="10" Foreground="{StaticResource BrushOk}"      VerticalAlignment="Center" />
+                        <TextBlock Text="Connected"   FontSize="11" Foreground="{StaticResource BrushFgSubtle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding IsConnecting}">
+                        <TextBlock Text="●" FontSize="10" Foreground="{StaticResource BrushWarn}"    VerticalAlignment="Center" />
+                        <TextBlock Text="Connecting…" FontSize="11" Foreground="{StaticResource BrushFgSubtle}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding IsIdle}">
+                        <TextBlock Text="●" FontSize="10" Foreground="{StaticResource BrushFgDim}"   VerticalAlignment="Center" />
+                        <TextBlock Text="No vehicle"  FontSize="11" Foreground="{StaticResource BrushFgDim}"    VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+
+            </Grid>
         </Border>
 
         <!-- Content area -->

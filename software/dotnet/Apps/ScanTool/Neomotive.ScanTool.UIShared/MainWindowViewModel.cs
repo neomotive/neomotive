@@ -53,7 +53,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsConnected
     {
         get => _isConnected;
-        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(CanRefresh)); }
+        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); }
     }
 
     public bool IsNotConnected => !_isConnected;
@@ -61,10 +61,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsConnecting
     {
         get => _isConnecting;
-        private set { _isConnecting = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanConnect)); }
+        private set { _isConnecting = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanConnect)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); }
     }
 
     public bool CanConnect => !_isConnecting;
+    public bool IsIdle => !_isConnected && !_isConnecting;
 
     public string StatusText
     {
@@ -91,7 +92,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 StatusText = ok ? "Connected" : "No vehicle detected";
                 IsConnecting = false;
 
-                if (ok) _ = RefreshAllAsync(_opCts.Token);
+                if (ok)
+                {
+                    ShowVehicle();
+                    _ = RefreshAllAsync(_opCts.Token);
+                }
             });
         }
         catch (OperationCanceledException)

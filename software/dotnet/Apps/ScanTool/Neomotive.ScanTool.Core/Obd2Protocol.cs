@@ -119,7 +119,7 @@ public static class Obd2Protocol
             if (code == null) continue;
 
             var type = (hi & Obd2Addresses.DtcManufacturerMask) == 0 ? DtcType.Generic : DtcType.Manufacturer;
-            result.Add(new DiagnosticTroubleCode(code, "", status, type));
+            result.Add(new DiagnosticTroubleCode(code, DtcDescriptions.Lookup(code), status, type));
         }
 
         return result;
