@@ -12,17 +12,31 @@ using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
 
+public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, string Description);
+
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog }
 
     private ScanView _view = ScanView.Connection;
     private readonly IObd2Scanner _scanner;
+    private readonly LoggingCanBus? _loggingBus;
+    private readonly CanPacketLog? _log;
+    private readonly DispatcherTimer? _logTimer;
     private CancellationTokenSource? _opCts;
 
     public MainWindowViewModel(IObd2Scanner scanner)
     {
         _scanner = scanner;
+
+        _loggingBus = Resolver.Services.Get<ICanBus>() as LoggingCanBus;
+        if (_loggingBus != null)
+        {
+            _log = _loggingBus.Log;
+            _logTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            _logTimer.Tick += (_, _) => RefreshCanLog();
+            _logTimer.Start();
+        }
     }
 
     // ── View selection ────────────────────────────────────────────────────────
@@ -31,11 +45,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsVehicleView    => _view == ScanView.Vehicle;
     public bool IsEmissionsView  => _view == ScanView.Emissions;
     public bool IsDtcsView       => _view == ScanView.Dtcs;
+    public bool IsCanLogView     => _view == ScanView.CanLog;
 
     public void ShowConnection() { _view = ScanView.Connection; NotifyViewChanged(); }
     public void ShowVehicle()    { _view = ScanView.Vehicle;    NotifyViewChanged(); }
     public void ShowEmissions()  { _view = ScanView.Emissions;  NotifyViewChanged(); }
     public void ShowDtcs()       { _view = ScanView.Dtcs;       NotifyViewChanged(); }
+    public void ShowCanLog()     { _view = ScanView.CanLog;     NotifyViewChanged(); }
 
     private void NotifyViewChanged()
     {
@@ -43,6 +59,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsVehicleView));
         OnPropertyChanged(nameof(IsEmissionsView));
         OnPropertyChanged(nameof(IsDtcsView));
+        OnPropertyChanged(nameof(IsCanLogView));
     }
 
     // ── Connection state ──────────────────────────────────────────────────────
@@ -295,6 +312,204 @@ public class MainWindowViewModel : INotifyPropertyChanged
             });
         }
         catch (OperationCanceledException) { }
+    }
+
+    // ── CAN Logging ───────────────────────────────────────────────────────────
+
+    public bool IsLoggingEnabled
+    {
+        get => _loggingBus?.IsLoggingEnabled ?? false;
+        set
+        {
+            if (_loggingBus != null)
+            {
+                _loggingBus.IsLoggingEnabled = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShowWaitingMessage));
+            }
+        }
+    }
+
+    private IReadOnlyList<CanLogItem> _canLogItems = [];
+    public IReadOnlyList<CanLogItem> CanLogItems
+    {
+        get => _canLogItems;
+        private set { _canLogItems = value; OnPropertyChanged(); }
+    }
+
+    private bool _hasCanPackets;
+    public bool HasCanPackets
+    {
+        get => _hasCanPackets;
+        private set { _hasCanPackets = value; OnPropertyChanged(); }
+    }
+
+    private bool _hasNoCanPackets = true;
+    public bool HasNoCanPackets
+    {
+        get => _hasNoCanPackets;
+        private set { _hasNoCanPackets = value; OnPropertyChanged(); }
+    }
+
+    public bool ShowWaitingMessage => IsLoggingEnabled && HasNoCanPackets;
+
+    public event Action? CanLogUpdated;
+
+    public void ClearCanLog()
+    {
+        _log?.Clear();
+        CanLogItems = [];
+        HasCanPackets = false;
+        HasNoCanPackets = true;
+        OnPropertyChanged(nameof(HasCanPackets));
+        OnPropertyChanged(nameof(HasNoCanPackets));
+        OnPropertyChanged(nameof(ShowWaitingMessage));
+        CanLogUpdated?.Invoke();
+    }
+
+    private DateTime _lastCanTimestamp = DateTime.MinValue;
+    private int _lastCanCount = 0;
+
+    private void RefreshCanLog()
+    {
+        if (_log == null) return;
+        var all = _log.GetAll();
+        var latest = all.Count > 0 ? all[^1].Timestamp : DateTime.MinValue;
+        if (latest == _lastCanTimestamp && all.Count == _lastCanCount) return;
+        _lastCanTimestamp = latest;
+        _lastCanCount = all.Count;
+
+        CanLogItems = BuildCanLog(all);
+
+        var hasPackets = CanLogItems.Count > 0;
+        if (HasCanPackets != hasPackets)
+        {
+            HasCanPackets = hasPackets;
+            HasNoCanPackets = !hasPackets;
+            OnPropertyChanged(nameof(HasCanPackets));
+            OnPropertyChanged(nameof(HasNoCanPackets));
+            OnPropertyChanged(nameof(ShowWaitingMessage));
+        }
+        CanLogUpdated?.Invoke();
+    }
+
+    private IReadOnlyList<CanLogItem> BuildCanLog(IReadOnlyList<CanPacketEntry> packets)
+    {
+        return packets.Select(pkt => new CanLogItem(
+            pkt.Timestamp.ToString("HH:mm:ss.fff"),
+            pkt.Id.ToString("X3"),
+            pkt.IsOutgoing,
+            string.Join(" ", pkt.Data.Take(8).Select(b => b.ToString("X2"))),
+            DescribePacket(pkt)
+        )).ToList();
+    }
+
+    private static string DescribePacket(CanPacketEntry pkt)
+    {
+        var d = pkt.Data;
+        if (d.Length < 2) return "";
+
+        byte lenByte = d[0];
+        byte isoType = (byte)(lenByte & 0xF0);
+        byte svcByte;
+        int offset;
+        if (isoType == 0x10) { svcByte = d.Length > 2 ? d[2] : (byte)0; offset = 3; }
+        else if (isoType == 0x20) return "ISO-TP Continuation";
+        else if (isoType == 0x30) return "ISO-TP Flow Control";
+        else { svcByte = d.Length > 1 ? d[1] : (byte)0; offset = 2; }
+
+        if (pkt.IsOutgoing)
+        {
+            // Client Request
+            return svcByte switch
+            {
+                0x01 => d.Length > offset ? (d[offset]) switch
+                {
+                    0x00 => "Query Supported PIDs",
+                    0x01 => "Query Monitor Status",
+                    0x05 => "Query Coolant Temp",
+                    0x0C => "Query Engine RPM",
+                    0x0D => "Query Vehicle Speed",
+                    0x11 => "Query Throttle",
+                    0x20 => "Query Supported PIDs 21-40",
+                    0x40 => "Query Supported PIDs 41-60",
+                    0x5C => "Query Trans Fluid Temp",
+                    var p => $"Query PID {p:X2}"
+                } : "Query Current Data",
+                0x03 => "Query Stored DTCs",
+                0x04 => "Clear DTCs",
+                0x07 => "Query Pending DTCs",
+                0x09 => d.Length > offset ? (d[offset]) switch
+                {
+                    0x00 => "Query Veh Info PIDs",
+                    0x02 => "Query VIN",
+                    0x04 => "Query Cal ID",
+                    0x06 => "Query CVN",
+                    0x0A => "Query ECU Name",
+                    var p => $"Query Veh Info {p:X2}"
+                } : "Query Vehicle Info",
+                0x0A => "Query Permanent DTCs",
+                _ => $"Service {svcByte:X2}"
+            };
+        }
+        else
+        {
+            // ECU Response
+            if (svcByte >= 0x40)
+            {
+                byte service = (byte)(svcByte - 0x40);
+                return service switch
+                {
+                    0x01 => d.Length > offset ? (d[offset]) switch
+                    {
+                        0x00 => "Supported PIDs Response",
+                        0x01 => "Monitor Status Data",
+                        0x05 => "Coolant Temp Data",
+                        0x0C => "Engine RPM Data",
+                        0x0D => "Vehicle Speed Data",
+                        0x11 => "Throttle Position Data",
+                        0x20 => "Supported PIDs 21-40 Response",
+                        0x5C => "Trans Fluid Temp Data",
+                        var p => $"PID {p:X2} Response"
+                    } : "Current Data Response",
+                    0x03 => "Stored DTCs Response",
+                    0x04 => "DTCs Cleared Confirmation",
+                    0x07 => "Pending DTCs Response",
+                    0x09 => d.Length > offset ? (d[offset]) switch
+                    {
+                        0x02 => "VIN Response",
+                        0x04 => "Cal ID Response",
+                        0x06 => "CVN Response",
+                        0x0A => "ECU Name Response",
+                        _ => "Vehicle Info Response"
+                    } : "Vehicle Info Response",
+                    0x0A => "Permanent DTCs Response",
+                    _ => $"Response {svcByte:X2}"
+                };
+            }
+            else if (svcByte == 0x7F)
+            {
+                byte reqSvc = d.Length > 2 ? d[2] : (byte)0;
+                byte nrc = d.Length > 3 ? d[3] : (byte)0;
+                string nrcName = nrc switch
+                {
+                    0x10 => "General Reject",
+                    0x11 => "Service Not Supported",
+                    0x12 => "SubFunction Not Supported",
+                    0x13 => "Incorrect Message Length Or Invalid Format",
+                    0x21 => "Busy Repeat Request",
+                    0x22 => "Conditions Not Correct",
+                    0x24 => "Request Sequence Error",
+                    0x78 => "Request Correctly Received-Response Pending",
+                    _ => $"Error {nrc:X2}"
+                };
+                return $"Negative Response: Service {reqSvc:X2} - {nrcName}";
+            }
+            else
+            {
+                return $"RX Service {svcByte:X2}";
+            }
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

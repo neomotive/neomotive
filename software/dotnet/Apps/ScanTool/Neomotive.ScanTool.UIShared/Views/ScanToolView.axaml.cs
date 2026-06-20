@@ -22,4 +22,5 @@ public partial class ScanToolView : UserControl
     private void OnShowVehicle(object? sender, RoutedEventArgs e)    => Vm.ShowVehicle();
     private void OnShowEmissions(object? sender, RoutedEventArgs e)  => Vm.ShowEmissions();
     private void OnShowDtcs(object? sender, RoutedEventArgs e)       => Vm.ShowDtcs();
+    private void OnShowCanLog(object? sender, RoutedEventArgs e)     => Vm.ShowCanLog();
 }

@@ -43,9 +43,11 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
             bus = new NullCanBus();
         }
 
-        Resolver.Services.Add<ICanBus>(bus);
+        var log = new CanPacketLog(200);
+        var loggingBus = new LoggingCanBus(bus, log);
+        Resolver.Services.Add<ICanBus>(loggingBus);
 
-        var scanner = new Obd2Scanner(bus);
+        var scanner = new Obd2Scanner(loggingBus);
         var vm      = new MainWindowViewModel(scanner);
 
         Dispatcher.UIThread.Post(() =>

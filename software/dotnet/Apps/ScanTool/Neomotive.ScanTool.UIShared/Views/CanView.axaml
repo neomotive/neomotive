@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.CanView"
+             x:DataType="local:MainWindowViewModel">
+    <Grid RowDefinitions="Auto, *">
+        <!-- ── Bus Status Header ────────────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Background="#1A1F28"
+                BorderBrush="#2E3440"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid ColumnDefinitions="*, Auto, Auto">
+                <TextBlock Grid.Column="0" Classes="heading" Text="CAN PACKET LOG" VerticalAlignment="Center" />
+                <CheckBox Grid.Column="1" Content="Log CAN Frames" IsChecked="{Binding IsLoggingEnabled}" 
+                          FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <Button Grid.Column="2" Classes="action-sm" Content="Clear Log"
+                        IsVisible="{Binding HasCanPackets}"
+                        Click="OnClearCanLog" />
+            </Grid>
+        </Border>
+
+        <!-- ── Packet Log ───────────────────────────────────────────────── -->
+        <Border Grid.Row="1"
+                Background="#0E1115"
+                Padding="12,6">
+            <Grid RowDefinitions="*">
+                <TextBlock Grid.Row="0" Classes="dim"
+                           Text="Logging is disabled. Check 'Log CAN Frames' to start."
+                           IsVisible="{Binding !IsLoggingEnabled}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="0" Classes="dim"
+                           Text="Waiting for CAN frames..."
+                           IsVisible="{Binding ShowWaitingMessage}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+
+                <ScrollViewer Grid.Row="0" x:Name="CanLogScroller"
+                              IsVisible="{Binding HasCanPackets}"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding CanLogItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:CanLogItem">
+                                <Grid ColumnDefinitions="100, 38, 28, 185, *" Margin="0,1">
+                                    <TextBlock Grid.Column="0" Classes="muted sm" Text="{Binding Time}" />
+                                    <TextBlock Grid.Column="1" Classes="sm"       Text="{Binding Id}" />
+                                    <TextBlock Grid.Column="2" Classes="tx sm"    Text="TX" IsVisible="{Binding IsOutgoing}" />
+                                    <TextBlock Grid.Column="2" Classes="rx sm"    Text="RX" IsVisible="{Binding !IsOutgoing}" />
+                                    <TextBlock Grid.Column="3" Classes="muted sm" Text="{Binding Data}" />
+                                    <TextBlock Grid.Column="4" Classes="sm"       Text="{Binding Description}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
