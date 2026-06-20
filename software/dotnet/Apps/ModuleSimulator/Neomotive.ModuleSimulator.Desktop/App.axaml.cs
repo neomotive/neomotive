@@ -20,17 +20,20 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
 
     public override Task MeadowInitialize()
     {
+        Resolver.Log.AddProvider(new Meadow.Logging.DebugLogProvider());
+        Resolver.Log.LogLevel = Meadow.Logging.LogLevel.Trace;
+
         ICanBus rawBus;
-        string feedback;
         try
         {
+            Resolver.Log.Info("Simulator: initializing PCAN USB adapter at 500 kbps...");
             rawBus = new PCanUsb().CreateCanBus(CanBitrate.Can_500kbps);
-            feedback = "CAN bus connected (PCanUsb, 500 kbps)";
+            Resolver.Log.Info($"Simulator: PCAN USB adapter initialized ({rawBus.GetType().Name}).");
         }
         catch (Exception ex)
         {
+            Resolver.Log.Warn($"Simulator: PCAN USB init failed ({ex.GetType().Name}: {ex.Message}) — using NullCanBus.");
             rawBus = new NullCanBus();
-            feedback = $"Offline mode — {ex.Message}";
         }
 
         Resolver.Services.Add<ICanBus>(rawBus);

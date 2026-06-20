@@ -191,6 +191,7 @@
 - [x] Simulator builds and renders identically after A1–A4 refactor
 - [x] `dotnet test Neomotive.ScanTool.Core.Tests` — 25/25 tests pass after H-series enum refactor
 - [x] Core and Core.Tests projects build with 0 errors / 0 warnings
+- [x] Debug logging added throughout connect flow (App init, SendAndReceive TX/RX/timeout, ConnectAsync result)
 - [ ] ScanTool Desktop builds in Release with no errors
 - [ ] App opens with no PCAN adapter — Connection tab shows offline/disconnected gracefully (NullCanBus)
 - [ ] App connects with PCAN adapter + vehicle — VIN populates, monitors display, DTCs list populates
