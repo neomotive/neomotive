@@ -1,18 +1,13 @@
 using Meadow;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.Core;
 
 public class Obd2Scanner : IObd2Scanner
 {
     private static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(3);
-    private static readonly TimeSpan CollectTimeout  = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan CollectTimeout = TimeSpan.FromSeconds(1);
 
     private readonly ICanBus _bus;
 
@@ -81,6 +76,32 @@ public class Obd2Scanner : IObd2Scanner
         return Task.Delay(500, ct);
     }
 
+    public async Task ClearModuleDtcsAsync(ushort moduleResponseAddress, CancellationToken ct = default)
+    {
+        short physicalAddress = (short)(moduleResponseAddress - Obd2Addresses.EcuPhysicalOffset);
+        SendRequestTo(physicalAddress, [(byte)Service.ClearDtcs]);
+        await Task.Delay(500, ct);
+    }
+
+    public async Task<IReadOnlyList<ModuleDtcGroup>> ReadDtcsByModuleAsync(CancellationToken ct = default)
+    {
+        var storedByModule = await SendAndCollectAll(
+            [(byte)Service.StoredDtcs], ResponseServiceId(Service.StoredDtcs), ct);
+        var pendingByModule = await SendAndCollectAll(
+            [(byte)Service.PendingDtcs], ResponseServiceId(Service.PendingDtcs), ct);
+
+        var allIds = new HashSet<ushort>(storedByModule.Keys);
+        foreach (var id in pendingByModule.Keys) allIds.Add(id);
+
+        return allIds.OrderBy(id => id).Select(id =>
+        {
+            var stored = storedByModule.TryGetValue(id, out var sd) ? Obd2Protocol.ParseDtcs(sd, DtcStatus.Stored) : (IReadOnlyList<DiagnosticTroubleCode>)[];
+            var pending = pendingByModule.TryGetValue(id, out var pd) ? Obd2Protocol.ParseDtcs(pd, DtcStatus.Pending) : (IReadOnlyList<DiagnosticTroubleCode>)[];
+            var module = new VehicleModule(id, ModuleName(id), stored.Count, pending.Count);
+            return new ModuleDtcGroup(module, stored, pending);
+        }).ToList();
+    }
+
     public async Task<IReadOnlyList<VehicleModule>> ScanModulesAsync(CancellationToken ct = default)
     {
         // Step 1: discover all modules via Mode 01 PID 01 (Monitor Status) ping
@@ -100,14 +121,14 @@ public class Obd2Scanner : IObd2Scanner
 
         // Union of all responding module IDs
         var allIds = new HashSet<ushort>(discovered);
-        foreach (var id in storedByModule.Keys)  allIds.Add(id);
+        foreach (var id in storedByModule.Keys) allIds.Add(id);
         foreach (var id in pendingByModule.Keys) allIds.Add(id);
 
         return allIds
             .OrderBy(id => id)
             .Select(id =>
             {
-                int stored  = storedByModule .TryGetValue(id, out var sd) && sd.Length > 1 ? sd[1] : 0;
+                int stored = storedByModule.TryGetValue(id, out var sd) && sd.Length > 1 ? sd[1] : 0;
                 int pending = pendingByModule.TryGetValue(id, out var pd) && pd.Length > 1 ? pd[1] : 0;
                 return new VehicleModule(id, ModuleName(id), stored, pending);
             })
@@ -129,6 +150,15 @@ public class Obd2Scanner : IObd2Scanner
 
     private static byte ResponseServiceId(Service svc) =>
         (byte)((byte)svc + Obd2Addresses.ResponseOffset);
+
+    private void SendRequestTo(short targetId, byte[] obd2Data)
+    {
+        var payload = new byte[8];
+        payload[0] = (byte)obd2Data.Length;
+        Array.Copy(obd2Data, 0, payload, 1, obd2Data.Length);
+        Resolver.Log.Info($"TX 0x{targetId:X3}: [{string.Join(" ", payload.Select(b => $"{b:X2}"))}]");
+        _bus.WriteFrame(new StandardDataFrame { ID = targetId, Payload = payload });
+    }
 
     private void SendRequest(byte[] obd2Data)
     {
@@ -261,7 +291,7 @@ public class Obd2Scanner : IObd2Scanner
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(CollectTimeout);
 
-        var results    = new Dictionary<ushort, byte[]>();
+        var results = new Dictionary<ushort, byte[]>();
         var assemblers = new Dictionary<ushort, MultiFrameAssembler>();
         var tcs = new TaskCompletionSource<Dictionary<ushort, byte[]>>(
             TaskCreationOptions.RunContinuationsAsynchronously);

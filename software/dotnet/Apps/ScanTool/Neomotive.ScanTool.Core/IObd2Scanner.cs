@@ -13,4 +13,6 @@ public interface IObd2Scanner
     Task ClearDtcsAsync(CancellationToken ct = default);
     Task<IReadOnlyList<ReadinessMonitor>> ReadReadinessAsync(CancellationToken ct = default);
     Task<IReadOnlyList<VehicleModule>> ScanModulesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<ModuleDtcGroup>> ReadDtcsByModuleAsync(CancellationToken ct = default);
+    Task ClearModuleDtcsAsync(ushort moduleResponseAddress, CancellationToken ct = default);
 }

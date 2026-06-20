@@ -5,6 +5,7 @@ using Neomotive.ScanTool.Core;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -65,7 +66,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public bool CanConnect => !_isConnecting;
-    public bool IsIdle => !_isConnected && !_isConnecting;
+    public bool IsIdle     => !_isConnected && !_isConnecting;
 
     public string StatusText
     {
@@ -125,8 +126,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         Vin = null;
         Protocol = "";
         ReadinessMonitors = [];
-        StoredDtcs = [];
-        PendingDtcs = [];
+        ModuleDtcGroups = [];
         Modules = [];
     }
 
@@ -165,37 +165,49 @@ public class MainWindowViewModel : INotifyPropertyChanged
         private set { _readinessMonitors = value; OnPropertyChanged(); }
     }
 
-    // ── DTCs ──────────────────────────────────────────────────────────────────
+    // ── DTCs (per module) ─────────────────────────────────────────────────────
 
-    public bool MilOn  => _storedDtcs.Count > 0;
-    public bool MilOff => _storedDtcs.Count == 0;
-
-    private IReadOnlyList<DiagnosticTroubleCode> _storedDtcs = [];
-    public IReadOnlyList<DiagnosticTroubleCode> StoredDtcs
+    private IReadOnlyList<ModuleDtcGroup> _moduleDtcGroups = [];
+    public IReadOnlyList<ModuleDtcGroup> ModuleDtcGroups
     {
-        get => _storedDtcs;
-        private set { _storedDtcs = value; OnPropertyChanged(); OnPropertyChanged(nameof(MilOn)); OnPropertyChanged(nameof(MilOff)); OnPropertyChanged(nameof(HasStoredDtcs)); }
+        get => _moduleDtcGroups;
+        private set
+        {
+            _moduleDtcGroups = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MilOn));
+            OnPropertyChanged(nameof(MilOff));
+        }
     }
 
-    private IReadOnlyList<DiagnosticTroubleCode> _pendingDtcs = [];
-    public IReadOnlyList<DiagnosticTroubleCode> PendingDtcs
-    {
-        get => _pendingDtcs;
-        private set { _pendingDtcs = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasPendingDtcs)); }
-    }
-
-    public bool HasStoredDtcs  => _storedDtcs.Count > 0;
-    public bool HasPendingDtcs => _pendingDtcs.Count > 0;
+    public bool MilOn  => _moduleDtcGroups.Any(g => g.HasStoredDtcs);
+    public bool MilOff => !MilOn;
 
     public async Task ClearDtcsAsync()
     {
         if (!_isConnected) return;
-        StatusText = "Clearing DTCs…";
+        StatusText = "Clearing all DTCs…";
         try
         {
             await Task.Run(() => _scanner.ClearDtcsAsync());
-            await RefreshDtcsAsync(CancellationToken.None);
+            await RefreshDtcsByModuleAsync(CancellationToken.None);
             StatusText = "DTCs cleared";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Clear failed: {ex.Message}";
+        }
+    }
+
+    public async Task ClearModuleDtcsAsync(VehicleModule module)
+    {
+        if (!_isConnected) return;
+        StatusText = $"Clearing {module.Name} DTCs…";
+        try
+        {
+            await Task.Run(() => _scanner.ClearModuleDtcsAsync(module.Address));
+            await RefreshDtcsByModuleAsync(CancellationToken.None);
+            StatusText = "Connected";
         }
         catch (Exception ex)
         {
@@ -247,19 +259,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         await Task.WhenAll(
             RefreshVinAsync(ct),
             RefreshReadinessAsync(ct),
-            RefreshDtcsAsync(ct),
-            RefreshModulesAsync(ct));
+            RefreshDtcsByModuleAsync(ct));
         Dispatcher.UIThread.Post(() => Protocol = "ISO 15765-4 (CAN)");
-    }
-
-    private async Task RefreshModulesAsync(CancellationToken ct)
-    {
-        try
-        {
-            var modules = await Task.Run(() => _scanner.ScanModulesAsync(ct), ct);
-            Dispatcher.UIThread.Post(() => Modules = modules);
-        }
-        catch (OperationCanceledException) { }
     }
 
     private async Task RefreshVinAsync(CancellationToken ct)
@@ -282,13 +283,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
         catch (OperationCanceledException) { }
     }
 
-    private async Task RefreshDtcsAsync(CancellationToken ct)
+    private async Task RefreshDtcsByModuleAsync(CancellationToken ct)
     {
         try
         {
-            var stored  = await Task.Run(() => _scanner.ReadStoredDtcsAsync(ct), ct);
-            var pending = await Task.Run(() => _scanner.ReadPendingDtcsAsync(ct), ct);
-            Dispatcher.UIThread.Post(() => { StoredDtcs = stored; PendingDtcs = pending; });
+            var groups = await Task.Run(() => _scanner.ReadDtcsByModuleAsync(ct), ct);
+            Dispatcher.UIThread.Post(() =>
+            {
+                ModuleDtcGroups = groups;
+                Modules = groups.Select(g => g.Module).ToList();
+            });
         }
         catch (OperationCanceledException) { }
     }
