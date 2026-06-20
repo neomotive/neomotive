@@ -163,6 +163,16 @@
 
 ---
 
+## Group I — Move shared OBD2 types to Telematics.J1979
+
+- [x] **I1** Add `Obd2Addresses`, `IsoTpFrameType`, `VehicleInfoPid`, `ReadinessMonitorBits` to `wilderness/Meadow.Foundation/.../Telematics.J1979/Driver/` under `Meadow.Foundation.Telematics.J1979` namespace
+- [x] **I2** Remove intermediate `Neomotive.OBD2` library (deleted)
+- [x] **I3** Remove `Neomotive.OBD2` project reference from `Neomotive.ScanTool.Core.csproj` and `Neomotive.ModuleSimulator.Core.csproj`
+- [x] **I4** Types now available to both ScanTool and Simulator via existing J1979 references (Simulator gets it transitively through `Neomotive.ControlModule`)
+- [x] **I5** Verify 25/25 unit tests still pass
+
+---
+
 ## Group H — Eliminate magic numbers (enums and named constants)
 
 - [x] **H1** Audit J1979 library for existing enums — `Service`, `Pid`, `DtcCategory` already exist in `Meadow.Foundation.Telematics.J1979`
