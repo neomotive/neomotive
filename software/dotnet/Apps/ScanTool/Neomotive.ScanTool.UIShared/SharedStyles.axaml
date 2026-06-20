@@ -1,0 +1,29 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StyleInclude Source="avares://Neomotive.UI.Styles/Styles.axaml" />
+
+    <!-- ScanTool-specific additions -->
+
+    <Style Selector="TextBlock.vin">
+        <Setter Property="FontSize"   Value="20" />
+        <Setter Property="Foreground" Value="{StaticResource BrushFgValue}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.status-ok">
+        <Setter Property="Foreground" Value="{StaticResource BrushOk}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.status-warn">
+        <Setter Property="Foreground" Value="{StaticResource BrushWarn}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.status-na">
+        <Setter Property="Foreground" Value="{StaticResource BrushFgDim}" />
+        <Setter Property="FontStyle"  Value="Italic" />
+    </Style>
+
+</Styles>

@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
+             x:Class="Neomotive.ScanTool.UI.Views.DtcsView"
+             x:DataType="local:MainWindowViewModel"
+             Padding="20,16">
+
+    <Grid RowDefinitions="Auto, Auto, *, Auto, *">
+
+        <!-- MIL status -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,12">
+            <TextBlock Classes="label" Text="MIL:" VerticalAlignment="Center" />
+            <TextBlock Classes="mil-on"  IsVisible="{Binding MilOn}"  Text="ON  (Check Engine)" />
+            <TextBlock Classes="mil-off" IsVisible="{Binding MilOff}" Text="OFF" />
+        </StackPanel>
+
+        <!-- Stored DTCs heading -->
+        <TextBlock Grid.Row="1" Classes="heading" Text="STORED DTCs" Margin="0,0,0,6" />
+
+        <!-- Stored DTC list -->
+        <ScrollViewer Grid.Row="2">
+            <StackPanel>
+                <TextBlock Classes="dim" IsVisible="{Binding !HasStoredDtcs}" Text="No stored DTCs" />
+                <ItemsControl ItemsSource="{Binding StoredDtcs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="core:DiagnosticTroubleCode">
+                            <Grid ColumnDefinitions="80, *" Margin="0,2">
+                                <TextBlock Grid.Column="0" Classes="error" Text="{Binding Code}" />
+                                <TextBlock Grid.Column="1" Classes="muted" Text="{Binding Description}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Pending DTCs heading -->
+        <TextBlock Grid.Row="3" Classes="heading" Text="PENDING DTCs" Margin="0,10,0,6" />
+
+        <!-- Pending DTC list + Clear button -->
+        <Grid Grid.Row="4" RowDefinitions="*, Auto">
+            <ScrollViewer Grid.Row="0">
+                <StackPanel>
+                    <TextBlock Classes="dim" IsVisible="{Binding !HasPendingDtcs}" Text="No pending DTCs" />
+                    <ItemsControl ItemsSource="{Binding PendingDtcs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="core:DiagnosticTroubleCode">
+                                <Grid ColumnDefinitions="80, *" Margin="0,2">
+                                    <TextBlock Grid.Column="0" Classes="warn" Text="{Binding Code}" />
+                                    <TextBlock Grid.Column="1" Classes="muted" Text="{Binding Description}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Button Grid.Row="1"
+                    Content="Clear DTCs"
+                    Classes="action-sm"
+                    IsEnabled="{Binding IsConnected}"
+                    Margin="0,8,0,0"
+                    Click="OnClearDtcs" />
+        </Grid>
+
+    </Grid>
+
+</UserControl>

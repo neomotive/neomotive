@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+        xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
+        x:Class="Neomotive.ScanTool.UI.MainWindow"
+        x:DataType="local:MainWindowViewModel"
+        Title="Neomotive Scan Tool"
+        Width="800" Height="480"
+        MinWidth="800" MinHeight="480"
+        CanResize="False"
+        WindowDecorations="None"
+        Position="0,0"
+        Background="#111418">
+
+    <views:ScanToolView />
+
+</Window>

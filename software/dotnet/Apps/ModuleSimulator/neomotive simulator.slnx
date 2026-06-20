@@ -13,6 +13,9 @@
     <Project Path="Neomotive.ModuleSimulator.RaspberryPi/Neomotive.ModuleSimulator.RaspberryPi.csproj" Id="2924b058-5d05-4129-a9c6-59e0fb1ad822" />
     <Project Path="Neomotive.ModuleSimulator.UIShared/Neomotive.ModuleSimulator.UIShared.csproj" />
   </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="../Shared/Neomotive.UI.Styles/Neomotive.UI.Styles.csproj" />
+  </Folder>
   <Folder Name="/_refs/">
     <Project Path="../../../../../wilderness/Meadow.Contracts/Source/Meadow.Contracts/Meadow.Contracts.csproj">
       <Deploy />

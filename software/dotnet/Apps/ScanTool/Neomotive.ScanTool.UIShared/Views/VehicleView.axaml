@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.VehicleView"
+             x:DataType="local:MainWindowViewModel"
+             Padding="20,16">
+
+    <StackPanel Spacing="16">
+
+        <TextBlock Classes="heading" Text="VEHICLE INFO" />
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="VIN" />
+            <TextBlock Classes="vin" Text="{Binding DisplayVin}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Protocol" />
+            <TextBlock Classes="value" Text="{Binding Protocol}" />
+        </StackPanel>
+
+        <TextBlock Classes="dim"
+                   IsVisible="{Binding IsNotConnected}"
+                   Text="Connect to a vehicle to read vehicle information." />
+
+    </StackPanel>
+
+</UserControl>

@@ -1,0 +1,178 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <!-- Foreground roles -->
+            <SolidColorBrush x:Key="BrushFgDefault">#C8CDD6</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgSubtle">#8A9BB0</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgMuted">#6A7888</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgDim">#556878</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgValue">#88C0D0</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgActive">#E0E5EC</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushFgHover">#C0C8D4</SolidColorBrush>
+
+            <!-- Semantic colors -->
+            <SolidColorBrush x:Key="BrushOk">#6DBF67</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushWarn">#D4A050</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushError">#E06060</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushTx">#5E9FE0</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushRx">#C8A040</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushPcm">#6DBF67</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushTcu">#6BB8D4</SolidColorBrush>
+
+            <!-- Backgrounds -->
+            <SolidColorBrush x:Key="BrushBgModule">#1C2028</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgModuleSelected">#1A2A1A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtc">#1A1E26</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtcHover">#222830</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtcActive">#3A1A1A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgDtcActiveHover">#4A2020</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgMonitorHover">#1A2030</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgActionHover">#2A1A1A</SolidColorBrush>
+
+            <!-- Borders -->
+            <SolidColorBrush x:Key="BrushBorder">#2E3440</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderSelected">#4A7C4A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderTabActive">#4A7C59</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderDtcActive">#8A3030</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBorderAction">#3A4050</SolidColorBrush>
+
+            <!-- Scrollbar -->
+            <SolidColorBrush x:Key="BrushScrollThumb">#445060</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushScrollThumbHover">#607080</SolidColorBrush>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- ── Typography ──────────────────────────────────────────────────── -->
+
+    <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="Consolas,Cascadia Code,monospace" />
+        <Setter Property="FontSize"   Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource BrushFgDefault}" />
+    </Style>
+
+    <Style Selector="TextBlock.label">
+        <Setter Property="Foreground" Value="{StaticResource BrushFgSubtle}" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{StaticResource BrushFgMuted}" />
+    </Style>
+    <Style Selector="TextBlock.dim">
+        <Setter Property="Foreground" Value="{StaticResource BrushFgDim}" />
+        <Setter Property="FontStyle"  Value="Italic" />
+    </Style>
+    <Style Selector="TextBlock.value">
+        <Setter Property="Foreground" Value="{StaticResource BrushFgValue}" />
+    </Style>
+    <Style Selector="TextBlock.ok">
+        <Setter Property="Foreground" Value="{StaticResource BrushOk}" />
+    </Style>
+    <Style Selector="TextBlock.warn">
+        <Setter Property="Foreground" Value="{StaticResource BrushWarn}" />
+    </Style>
+    <Style Selector="TextBlock.error">
+        <Setter Property="Foreground" Value="{StaticResource BrushError}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.tx">
+        <Setter Property="Foreground" Value="{StaticResource BrushTx}" />
+    </Style>
+    <Style Selector="TextBlock.rx">
+        <Setter Property="Foreground" Value="{StaticResource BrushRx}" />
+    </Style>
+    <Style Selector="TextBlock.mil-on">
+        <Setter Property="Foreground" Value="{StaticResource BrushError}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize"    Value="18" />
+    </Style>
+    <Style Selector="TextBlock.mil-off">
+        <Setter Property="Foreground" Value="{StaticResource BrushOk}" />
+        <Setter Property="FontSize"    Value="18" />
+    </Style>
+    <Style Selector="TextBlock.pcm-name">
+        <Setter Property="Foreground"  Value="{StaticResource BrushPcm}" />
+        <Setter Property="FontWeight"  Value="SemiBold" />
+        <Setter Property="FontSize"    Value="15" />
+    </Style>
+    <Style Selector="TextBlock.tcu-name">
+        <Setter Property="Foreground"  Value="{StaticResource BrushTcu}" />
+        <Setter Property="FontWeight"  Value="SemiBold" />
+        <Setter Property="FontSize"    Value="15" />
+    </Style>
+    <Style Selector="TextBlock.sm">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.xs">
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+    <Style Selector="TextBlock.heading">
+        <Setter Property="FontSize"      Value="9" />
+        <Setter Property="FontWeight"    Value="Bold" />
+        <Setter Property="Foreground"    Value="{StaticResource BrushFgMuted}" />
+        <Setter Property="LetterSpacing" Value="2" />
+    </Style>
+
+    <!-- ── Tab buttons ─────────────────────────────────────────────────── -->
+
+    <Style Selector="Button.tab">
+        <Setter Property="Background"      Value="Transparent" />
+        <Setter Property="Foreground"      Value="{StaticResource BrushFgSubtle}" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="BorderBrush"     Value="Transparent" />
+        <Setter Property="Padding"         Value="16,8" />
+        <Setter Property="CornerRadius"    Value="0" />
+        <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+        <Setter Property="FontSize"        Value="14" />
+    </Style>
+    <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource BrushFgHover}" />
+    </Style>
+    <Style Selector="Button.tab.active">
+        <Setter Property="Foreground"  Value="{StaticResource BrushFgActive}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderTabActive}" />
+        <Setter Property="FontWeight"  Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.tab.active:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource BrushFgActive}" />
+    </Style>
+
+    <!-- ── Small action buttons ────────────────────────────────────────── -->
+
+    <Style Selector="Button.action-sm">
+        <Setter Property="Background"      Value="Transparent" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushBorderAction}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius"    Value="3" />
+        <Setter Property="Padding"         Value="10,7" />
+        <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+        <Setter Property="FontSize"        Value="10" />
+        <Setter Property="Foreground"      Value="{StaticResource BrushFgSubtle}" />
+    </Style>
+    <Style Selector="Button.action-sm:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgActionHover}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushError}" />
+    </Style>
+
+    <!-- ── Touch-friendly scrollbars ──────────────────────────────────── -->
+
+    <Style Selector="ScrollViewer">
+        <Setter Property="AllowAutoHide"                  Value="True" />
+        <Setter Property="HorizontalScrollBarVisibility"  Value="Disabled" />
+        <Setter Property="VerticalScrollBarVisibility"    Value="Auto" />
+    </Style>
+    <Style Selector="ScrollBar:vertical">
+        <Setter Property="Width" Value="10" />
+    </Style>
+    <Style Selector="ScrollBar:vertical /template/ Thumb">
+        <Setter Property="MinHeight"    Value="40" />
+        <Setter Property="Background"   Value="{StaticResource BrushScrollThumb}" />
+        <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="ScrollBar:vertical /template/ Thumb:pointerover">
+        <Setter Property="Background" Value="{StaticResource BrushScrollThumbHover}" />
+    </Style>
+
+</Styles>

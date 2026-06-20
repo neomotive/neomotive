@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
+             x:Class="Neomotive.ScanTool.UI.Views.EmissionsView"
+             x:DataType="local:MainWindowViewModel"
+             Padding="20,16">
+
+    <Grid RowDefinitions="Auto, *">
+
+        <TextBlock Grid.Row="0" Classes="heading" Text="READINESS MONITORS" Margin="0,0,0,10" />
+
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding ReadinessMonitors}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="core:ReadinessMonitor">
+                        <Grid ColumnDefinitions="200, *" Margin="0,3">
+                            <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                            <TextBlock Grid.Column="1"
+                                       Classes.ok="{Binding Ready}"
+                                       Classes.warn="{Binding !Ready}"
+                                       Classes.status-na="{Binding !Supported}"
+                                       Text="{Binding Ready, StringFormat='{}{0:Ready;Ready;Not Ready}'}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Grid.Row="1"
+                   Classes="dim"
+                   IsVisible="{Binding IsNotConnected}"
+                   Text="Connect to a vehicle to read readiness monitors." />
+
+    </Grid>
+
+</UserControl>

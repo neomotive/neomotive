@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <RootNamespace>Neomotive.ModuleSimulator.UI</RootNamespace>
+    <RootNamespace>Neomotive.ScanTool.UI</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
@@ -13,8 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Neomotive.ControlModule\Neomotive.ControlModule.csproj" />
-    <ProjectReference Include="..\Neomotive.ModuleSimulator.Core\Neomotive.ModuleSimulator.Core.csproj" />
+    <ProjectReference Include="..\Neomotive.ScanTool.Core\Neomotive.ScanTool.Core.csproj" />
     <ProjectReference Include="..\..\Shared\Neomotive.UI.Styles\Neomotive.UI.Styles.csproj" />
   </ItemGroup>
 </Project>

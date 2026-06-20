@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.ConnectionView"
+             x:DataType="local:MainWindowViewModel"
+             Padding="20,16">
+
+    <StackPanel Spacing="16" MaxWidth="400">
+
+        <TextBlock Classes="heading" Text="ADAPTER" />
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Status" />
+            <TextBlock Text="{Binding StatusText}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Bitrate" />
+            <TextBlock Classes="value" Text="500 kbps (ISO 15765-4)" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+            <Button Content="Connect"
+                    Classes="action-sm"
+                    IsEnabled="{Binding CanConnect}"
+                    IsVisible="{Binding IsNotConnected}"
+                    Click="OnConnect" />
+            <Button Content="Disconnect"
+                    Classes="action-sm"
+                    IsVisible="{Binding IsConnected}"
+                    Click="OnDisconnect" />
+        </StackPanel>
+
+        <TextBlock Classes="muted xs"
+                   IsVisible="{Binding IsConnected}"
+                   Text="Connected — switch to Vehicle or DTCs tab to view data." />
+
+        <TextBlock Classes="dim"
+                   IsVisible="{Binding IsNotConnected}"
+                   Text="Connect a Peak PCAN USB adapter and plug into vehicle OBD2 port." />
+
+    </StackPanel>
+
+</UserControl>
