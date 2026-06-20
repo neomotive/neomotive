@@ -28,11 +28,14 @@ public class SimulatorTcu : TransmissionControlModule
     protected override Temperature? GetTransFluidTemp()
         => new Temperature(_state.TransTempCelsius, Temperature.UnitType.Celsius);
 
+    public event Action? DtcsCleared;
+
     protected override void OnDtcsCleared()
     {
         _state.StoredDtcs.Clear();
         _state.PendingDtcs.Clear();
         _state.PermanentDtcs.Clear();
+        DtcsCleared?.Invoke();
     }
 
     public void SyncDtcsFromState()

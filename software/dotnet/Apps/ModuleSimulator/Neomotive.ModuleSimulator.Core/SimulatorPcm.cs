@@ -52,12 +52,15 @@ public class SimulatorPcm : PcmBase
     protected override Length GetDistanceWithMilOn()
         => new Length(_state.DistanceWithMilOnKm, Length.UnitType.Kilometers);
 
+    public event Action? DtcsCleared;
+
     protected override void OnDtcsCleared()
     {
         _state.StoredDtcs.Clear();
         _state.PendingDtcs.Clear();
         _state.PermanentDtcs.Clear();
         _state.DtcsClearedAt = DateTime.UtcNow;
+        DtcsCleared?.Invoke();
     }
 
     public void SyncDtcsFromState()

@@ -111,6 +111,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _pcm = new SimulatorPcm(_bus, _pcmState);
         _tcu = new SimulatorTcu(_bus, _tcuState);
 
+        _pcm.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
+        _tcu.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
+
         Refresh();
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
