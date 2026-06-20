@@ -12,6 +12,7 @@ namespace Neomotive.ScanTool.Core;
 public class Obd2Scanner : IObd2Scanner
 {
     private static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan CollectTimeout  = TimeSpan.FromSeconds(1);
 
     private readonly ICanBus _bus;
 
@@ -79,6 +80,52 @@ public class Obd2Scanner : IObd2Scanner
         SendRequest([(byte)Service.ClearDtcs]);
         return Task.Delay(500, ct);
     }
+
+    public async Task<IReadOnlyList<VehicleModule>> ScanModulesAsync(CancellationToken ct = default)
+    {
+        // Step 1: discover all modules via Mode 01 PID 01 (Monitor Status) ping
+        var discovered = (await SendAndCollectAll(
+            [(byte)Service.Current, (byte)Pid.MonitorStatus],
+            ResponseServiceId(Service.Current), ct)).Keys;
+
+        // Step 2: stored DTC counts per module
+        var storedByModule = await SendAndCollectAll(
+            [(byte)Service.StoredDtcs],
+            ResponseServiceId(Service.StoredDtcs), ct);
+
+        // Step 3: pending DTC counts per module
+        var pendingByModule = await SendAndCollectAll(
+            [(byte)Service.PendingDtcs],
+            ResponseServiceId(Service.PendingDtcs), ct);
+
+        // Union of all responding module IDs
+        var allIds = new HashSet<ushort>(discovered);
+        foreach (var id in storedByModule.Keys)  allIds.Add(id);
+        foreach (var id in pendingByModule.Keys) allIds.Add(id);
+
+        return allIds
+            .OrderBy(id => id)
+            .Select(id =>
+            {
+                int stored  = storedByModule .TryGetValue(id, out var sd) && sd.Length > 1 ? sd[1] : 0;
+                int pending = pendingByModule.TryGetValue(id, out var pd) && pd.Length > 1 ? pd[1] : 0;
+                return new VehicleModule(id, ModuleName(id), stored, pending);
+            })
+            .ToList();
+    }
+
+    private static string ModuleName(ushort id) => id switch
+    {
+        0x7E8 => "PCM",
+        0x7E9 => "TCU",
+        0x7EA => "BCM",
+        0x7EB => "HVAC",
+        0x7EC => "ABS",
+        0x7ED => "SRS",
+        0x7EE => "IC",
+        0x7EF => "GW",
+        _ => "ECU"
+    };
 
     private static byte ResponseServiceId(Service svc) =>
         (byte)((byte)svc + Obd2Addresses.ResponseOffset);
@@ -196,6 +243,82 @@ public class Obd2Scanner : IObd2Scanner
             Resolver.Log.Warn($"SendAndReceive: timeout waiting for service 0x{expectedResponseService:X2} response.");
             _bus.FrameReceived -= handler;
             tcs.TrySetResult(null);
+        });
+
+        _bus.FrameReceived += handler;
+        SendRequest(obd2Data);
+
+        return await tcs.Task;
+    }
+
+    /// <summary>
+    /// Sends a broadcast request and collects responses from all responding modules
+    /// until <see cref="CollectTimeout"/> elapses. Returns a map of module CAN ID → response payload.
+    /// </summary>
+    private async Task<Dictionary<ushort, byte[]>> SendAndCollectAll(
+        byte[] obd2Data, byte expectedResponseService, CancellationToken ct)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(CollectTimeout);
+
+        var results    = new Dictionary<ushort, byte[]>();
+        var assemblers = new Dictionary<ushort, MultiFrameAssembler>();
+        var tcs = new TaskCompletionSource<Dictionary<ushort, byte[]>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        EventHandler<ICanFrame>? handler = null;
+        handler = (_, frame) =>
+        {
+            if (frame is not StandardDataFrame sdf) return;
+            if (sdf.ID < Obd2Addresses.EcuResponseBase || sdf.ID > Obd2Addresses.EcuResponseMax) return;
+
+            var p = sdf.Payload;
+            if (p == null || p.Length == 0) return;
+
+            byte frameTypeByte = p[0];
+            var frameType = (IsoTpFrameType)(frameTypeByte >> 4);
+
+            if (frameType == IsoTpFrameType.Single)
+            {
+                int len = frameTypeByte & 0x0F;
+                if (len == 0 || len > p.Length - 1) return;
+                var data = new byte[len];
+                Array.Copy(p, 1, data, 0, len);
+                if (data.Length > 0 && data[0] == expectedResponseService)
+                    results[(ushort)sdf.ID] = data;
+            }
+            else if (frameType == IsoTpFrameType.First)
+            {
+                int totalLen = ((frameTypeByte & 0x0F) << 8) | p[1];
+                int firstBytes = Math.Min(6, p.Length - 2);
+                var initial = new byte[firstBytes];
+                Array.Copy(p, 2, initial, 0, firstBytes);
+                var asm = new MultiFrameAssembler();
+                assemblers[(ushort)sdf.ID] = asm;
+                asm.Start(totalLen, initial);
+                SendFlowControl((short)(sdf.ID - Obd2Addresses.EcuPhysicalOffset));
+            }
+            else if (frameType == IsoTpFrameType.Consecutive)
+            {
+                if (!assemblers.TryGetValue((ushort)sdf.ID, out var asm)) return;
+                int available = p.Length - 1;
+                if (available <= 0) return;
+                var chunk = new byte[available];
+                Array.Copy(p, 1, chunk, 0, available);
+                asm.Append(chunk);
+                if (asm.IsComplete)
+                {
+                    var data = asm.GetData();
+                    if (data.Length > 0 && data[0] == expectedResponseService)
+                        results[(ushort)sdf.ID] = data;
+                }
+            }
+        };
+
+        cts.Token.Register(() =>
+        {
+            _bus.FrameReceived -= handler;
+            tcs.TrySetResult(results);
         });
 
         _bus.FrameReceived += handler;

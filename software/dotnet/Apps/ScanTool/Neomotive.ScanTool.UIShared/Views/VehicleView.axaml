@@ -1,28 +1,66 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
              x:Class="Neomotive.ScanTool.UI.Views.VehicleView"
              x:DataType="local:MainWindowViewModel"
              Padding="20,16">
 
-    <StackPanel Spacing="16">
+    <ScrollViewer>
+        <StackPanel Spacing="16">
 
-        <TextBlock Classes="heading" Text="VEHICLE INFO" />
+            <TextBlock Classes="heading" Text="VEHICLE INFO" />
 
-        <StackPanel Spacing="4">
-            <TextBlock Classes="label" Text="VIN" />
-            <TextBlock Classes="vin" Text="{Binding DisplayVin}" />
+            <StackPanel Spacing="4">
+                <TextBlock Classes="label" Text="VIN" />
+                <TextBlock Classes="vin" Text="{Binding DisplayVin}" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Classes="label" Text="Protocol" />
+                <TextBlock Classes="value" Text="{Binding Protocol}" />
+            </StackPanel>
+
+            <TextBlock Classes="dim"
+                       IsVisible="{Binding IsNotConnected}"
+                       Text="Connect to a vehicle to read vehicle information." />
+
+            <!-- Module tiles -->
+            <TextBlock Classes="heading" Text="MODULES" IsVisible="{Binding IsConnected}" />
+
+            <ItemsControl ItemsSource="{Binding Modules}" IsVisible="{Binding IsConnected}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="core:VehicleModule">
+                        <Border Classes="module-tile"
+                                Classes.fault="{Binding HasFaults}"
+                                Margin="0,0,8,8">
+                            <StackPanel Spacing="6">
+                                <TextBlock Classes="value" FontSize="18" FontWeight="SemiBold"
+                                           Text="{Binding Name}" />
+                                <TextBlock Classes="dim xs"
+                                           Text="{Binding AddressHex}" />
+                                <Separator Height="1" Background="#2E3440" Margin="0,2" />
+                                <TextBlock Classes="error"
+                                           IsVisible="{Binding HasFaults}"
+                                           Text="{Binding StoredDtcCount, StringFormat='{}{0} stored'}" />
+                                <TextBlock Classes="warn xs"
+                                           IsVisible="{Binding HasPendingDtcs}"
+                                           Text="{Binding PendingDtcCount, StringFormat='{}{0} pending'}" />
+                                <TextBlock Classes="ok"
+                                           IsVisible="{Binding !HasFaults}"
+                                           Text="Clean" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
         </StackPanel>
-
-        <StackPanel Spacing="4">
-            <TextBlock Classes="label" Text="Protocol" />
-            <TextBlock Classes="value" Text="{Binding Protocol}" />
-        </StackPanel>
-
-        <TextBlock Classes="dim"
-                   IsVisible="{Binding IsNotConnected}"
-                   Text="Connect to a vehicle to read vehicle information." />
-
-    </StackPanel>
+    </ScrollViewer>
 
 </UserControl>

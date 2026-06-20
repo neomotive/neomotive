@@ -156,6 +156,20 @@
         <Setter Property="Foreground" Value="{StaticResource BrushError}" />
     </Style>
 
+    <!-- ── Module tiles ─────────────────────────────────────────────────── -->
+
+    <Style Selector="Border.module-tile">
+        <Setter Property="Background"      Value="{StaticResource BrushBgModule}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushOk}" />
+        <Setter Property="BorderThickness" Value="0,3,0,0" />
+        <Setter Property="CornerRadius"    Value="4" />
+        <Setter Property="Padding"         Value="12,10" />
+        <Setter Property="Width"           Value="130" />
+    </Style>
+    <Style Selector="Border.module-tile.fault">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushError}" />
+    </Style>
+
     <!-- ── Touch-friendly scrollbars ──────────────────────────────────── -->
 
     <Style Selector="ScrollViewer">

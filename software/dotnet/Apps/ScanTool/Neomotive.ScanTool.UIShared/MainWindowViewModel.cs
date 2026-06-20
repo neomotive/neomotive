@@ -127,6 +127,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
         ReadinessMonitors = [];
         StoredDtcs = [];
         PendingDtcs = [];
+        Modules = [];
+    }
+
+    // ── Modules ───────────────────────────────────────────────────────────────
+
+    private IReadOnlyList<VehicleModule> _modules = [];
+    public IReadOnlyList<VehicleModule> Modules
+    {
+        get => _modules;
+        private set { _modules = value; OnPropertyChanged(); }
     }
 
     // ── Vehicle data ──────────────────────────────────────────────────────────
@@ -237,8 +247,19 @@ public class MainWindowViewModel : INotifyPropertyChanged
         await Task.WhenAll(
             RefreshVinAsync(ct),
             RefreshReadinessAsync(ct),
-            RefreshDtcsAsync(ct));
+            RefreshDtcsAsync(ct),
+            RefreshModulesAsync(ct));
         Dispatcher.UIThread.Post(() => Protocol = "ISO 15765-4 (CAN)");
+    }
+
+    private async Task RefreshModulesAsync(CancellationToken ct)
+    {
+        try
+        {
+            var modules = await Task.Run(() => _scanner.ScanModulesAsync(ct), ct);
+            Dispatcher.UIThread.Post(() => Modules = modules);
+        }
+        catch (OperationCanceledException) { }
     }
 
     private async Task RefreshVinAsync(CancellationToken ct)
