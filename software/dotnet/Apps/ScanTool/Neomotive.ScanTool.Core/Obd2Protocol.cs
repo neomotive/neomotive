@@ -1,4 +1,5 @@
 using Meadow.Foundation.Telematics.J1979;
+using Neomotive.Obd2;
 using System;
 using System.Collections.Generic;
 using System.Text;

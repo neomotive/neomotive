@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Neomotive.ControlModule\Neomotive.ControlModule.csproj" />
+    <ProjectReference Include="..\..\Shared\Neomotive.Obd2\Neomotive.Obd2.csproj" />
   </ItemGroup>
 
 </Project>

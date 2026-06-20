@@ -7,5 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.J1979\Driver\Telematics.J1979.csproj" />
+    <ProjectReference Include="..\..\Shared\Neomotive.Obd2\Neomotive.Obd2.csproj" />
   </ItemGroup>
 </Project>

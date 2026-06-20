@@ -1,0 +1,244 @@
+# SAE J2012 / ISO 15031-6 Standard DTC Descriptions
+# Format: CODE,Description
+# Lines beginning with # are ignored.
+# To localize, add a dtc-descriptions.{locale}.csv alongside this file (e.g. dtc-descriptions.es.csv).
+# Manufacturer-specific codes (P1xxx, C1xxx, B1xxx, U1xxx) vary by OEM and are not listed here.
+
+# ── P01xx — Fuel & Air Metering ───────────────────────────────────────────────
+P0100,Mass Air Flow Sensor Circuit
+P0101,Mass Air Flow Sensor Range/Performance
+P0102,Mass Air Flow Sensor Low Input
+P0103,Mass Air Flow Sensor High Input
+P0104,Mass Air Flow Sensor Intermittent
+P0105,MAP/BARO Sensor Circuit
+P0106,MAP Sensor Range/Performance
+P0107,MAP Sensor Low Input
+P0108,MAP Sensor High Input
+P0110,Intake Air Temperature Sensor Circuit
+P0111,Intake Air Temperature Sensor Range/Performance
+P0112,Intake Air Temperature Sensor Low Input
+P0113,Intake Air Temperature Sensor High Input
+P0115,Engine Coolant Temperature Sensor Circuit
+P0116,Engine Coolant Temperature Sensor Range/Performance
+P0117,Engine Coolant Temperature Sensor Low Input
+P0118,Engine Coolant Temperature Sensor High Input
+P0120,Throttle Position Sensor Circuit
+P0121,Throttle Position Sensor Range/Performance
+P0122,Throttle Position Sensor Low Input
+P0123,Throttle Position Sensor High Input
+P0125,Insufficient Coolant Temperature for Closed Loop Fuel Control
+P0128,Coolant Thermostat Below Regulating Temperature
+P0130,O2 Sensor Circuit (Bank 1 Sensor 1)
+P0131,O2 Sensor Low Voltage (Bank 1 Sensor 1)
+P0132,O2 Sensor High Voltage (Bank 1 Sensor 1)
+P0133,O2 Sensor Slow Response (Bank 1 Sensor 1)
+P0134,O2 Sensor No Activity (Bank 1 Sensor 1)
+P0135,O2 Sensor Heater Circuit (Bank 1 Sensor 1)
+P0136,O2 Sensor Circuit (Bank 1 Sensor 2)
+P0137,O2 Sensor Low Voltage (Bank 1 Sensor 2)
+P0138,O2 Sensor High Voltage (Bank 1 Sensor 2)
+P0139,O2 Sensor Slow Response (Bank 1 Sensor 2)
+P0140,O2 Sensor No Activity (Bank 1 Sensor 2)
+P0141,O2 Sensor Heater Circuit (Bank 1 Sensor 2)
+P0150,O2 Sensor Circuit (Bank 2 Sensor 1)
+P0151,O2 Sensor Low Voltage (Bank 2 Sensor 1)
+P0152,O2 Sensor High Voltage (Bank 2 Sensor 1)
+P0153,O2 Sensor Slow Response (Bank 2 Sensor 1)
+P0154,O2 Sensor No Activity (Bank 2 Sensor 1)
+P0155,O2 Sensor Heater Circuit (Bank 2 Sensor 1)
+P0156,O2 Sensor Circuit (Bank 2 Sensor 2)
+P0157,O2 Sensor Low Voltage (Bank 2 Sensor 2)
+P0158,O2 Sensor High Voltage (Bank 2 Sensor 2)
+P0159,O2 Sensor Slow Response (Bank 2 Sensor 2)
+P0160,O2 Sensor No Activity (Bank 2 Sensor 2)
+P0161,O2 Sensor Heater Circuit (Bank 2 Sensor 2)
+P0170,Fuel Trim Malfunction (Bank 1)
+P0171,System Too Lean (Bank 1)
+P0172,System Too Rich (Bank 1)
+P0173,Fuel Trim Malfunction (Bank 2)
+P0174,System Too Lean (Bank 2)
+P0175,System Too Rich (Bank 2)
+
+# ── P02xx — Fuel & Air Metering / Injectors ───────────────────────────────────
+P0200,Injector Circuit Malfunction
+P0201,Injector Circuit – Cylinder 1
+P0202,Injector Circuit – Cylinder 2
+P0203,Injector Circuit – Cylinder 3
+P0204,Injector Circuit – Cylinder 4
+P0205,Injector Circuit – Cylinder 5
+P0206,Injector Circuit – Cylinder 6
+P0207,Injector Circuit – Cylinder 7
+P0208,Injector Circuit – Cylinder 8
+P0217,Engine Overtemperature
+P0218,Transmission Over Temperature
+P0230,Fuel Pump Primary Circuit
+P0231,Fuel Pump Secondary Circuit Low
+P0232,Fuel Pump Secondary Circuit High
+
+# ── P03xx — Ignition / Misfire ────────────────────────────────────────────────
+P0300,Random/Multiple Cylinder Misfire Detected
+P0301,Cylinder 1 Misfire Detected
+P0302,Cylinder 2 Misfire Detected
+P0303,Cylinder 3 Misfire Detected
+P0304,Cylinder 4 Misfire Detected
+P0305,Cylinder 5 Misfire Detected
+P0306,Cylinder 6 Misfire Detected
+P0307,Cylinder 7 Misfire Detected
+P0308,Cylinder 8 Misfire Detected
+P0316,Misfire Detected on Startup (First 1000 Revolutions)
+P0320,Ignition/Distributor Engine Speed Input Circuit
+P0325,Knock Sensor 1 Circuit (Bank 1)
+P0326,Knock Sensor 1 Range/Performance (Bank 1)
+P0327,Knock Sensor 1 Circuit Low (Bank 1)
+P0328,Knock Sensor 1 Circuit High (Bank 1)
+P0330,Knock Sensor 2 Circuit (Bank 2)
+P0335,Crankshaft Position Sensor A Circuit
+P0336,Crankshaft Position Sensor A Range/Performance
+P0337,Crankshaft Position Sensor A Circuit Low
+P0338,Crankshaft Position Sensor A Circuit High
+P0340,Camshaft Position Sensor A Circuit (Bank 1)
+P0341,Camshaft Position Sensor A Range/Performance (Bank 1)
+P0342,Camshaft Position Sensor A Circuit Low (Bank 1)
+P0343,Camshaft Position Sensor A Circuit High (Bank 1)
+P0345,Camshaft Position Sensor A Circuit (Bank 2)
+P0350,Ignition Coil Primary/Secondary Circuit
+P0351,Ignition Coil A Primary/Secondary Circuit
+P0352,Ignition Coil B Primary/Secondary Circuit
+P0353,Ignition Coil C Primary/Secondary Circuit
+P0354,Ignition Coil D Primary/Secondary Circuit
+P0355,Ignition Coil E Primary/Secondary Circuit
+P0356,Ignition Coil F Primary/Secondary Circuit
+P0357,Ignition Coil G Primary/Secondary Circuit
+P0358,Ignition Coil H Primary/Secondary Circuit
+
+# ── P04xx — Emissions ─────────────────────────────────────────────────────────
+P0400,EGR Flow Malfunction
+P0401,EGR Insufficient Flow Detected
+P0402,EGR Excessive Flow Detected
+P0403,EGR Circuit Malfunction
+P0404,EGR Circuit Range/Performance
+P0405,EGR Sensor A Circuit Low
+P0406,EGR Sensor A Circuit High
+P0410,Secondary Air Injection System Malfunction
+P0411,Secondary Air Injection Incorrect Flow
+P0412,Secondary Air Injection Solenoid Valve A Circuit
+P0420,Catalyst System Efficiency Below Threshold (Bank 1)
+P0421,Warm Up Catalyst Efficiency Below Threshold (Bank 1)
+P0422,Main Catalyst Efficiency Below Threshold (Bank 1)
+P0430,Catalyst System Efficiency Below Threshold (Bank 2)
+P0431,Warm Up Catalyst Efficiency Below Threshold (Bank 2)
+P0432,Main Catalyst Efficiency Below Threshold (Bank 2)
+P0440,Evaporative Emission Control System Malfunction
+P0441,Evap System Incorrect Purge Flow
+P0442,Evap System Leak Detected (Small Leak)
+P0443,Evap System Purge Control Valve Circuit
+P0444,Evap System Purge Control Valve Circuit Open
+P0445,Evap System Purge Control Valve Circuit Shorted
+P0446,Evap System Vent Control Circuit
+P0447,Evap System Vent Control Circuit Open
+P0448,Evap System Vent Control Circuit Shorted
+P0449,Evap System Vent Valve/Solenoid Circuit
+P0450,Evap System Pressure Sensor/Switch
+P0451,Evap System Pressure Sensor Range/Performance
+P0452,Evap System Pressure Sensor Low Input
+P0453,Evap System Pressure Sensor High Input
+P0455,Evap System Leak Detected (Large Leak)
+P0456,Evap System Leak Detected (Very Small Leak)
+P0457,Evap System Leak Detected (Fuel Cap Loose/Off)
+P0460,Fuel Level Sensor A Circuit
+P0461,Fuel Level Sensor A Range/Performance
+P0462,Fuel Level Sensor A Circuit Low
+P0463,Fuel Level Sensor A Circuit High
+P0480,Cooling Fan 1 Control Circuit
+P0481,Cooling Fan 2 Control Circuit
+
+# ── P05xx — Vehicle Speed / Idle ──────────────────────────────────────────────
+P0500,Vehicle Speed Sensor
+P0501,Vehicle Speed Sensor Range/Performance
+P0502,Vehicle Speed Sensor Low Input
+P0503,Vehicle Speed Sensor Intermittent/Erratic/High
+P0505,Idle Control System Malfunction
+P0506,Idle Control System RPM Lower Than Expected
+P0507,Idle Control System RPM Higher Than Expected
+P0520,Engine Oil Pressure Sensor/Switch Circuit
+P0521,Engine Oil Pressure Sensor Range/Performance
+P0522,Engine Oil Pressure Sensor Low Voltage
+P0523,Engine Oil Pressure Sensor High Voltage
+P0560,System Voltage Malfunction
+P0562,System Voltage Low
+P0563,System Voltage High
+
+# ── P06xx — Computer / Auxiliary ─────────────────────────────────────────────
+P0600,Serial Communication Link Malfunction
+P0601,Internal Control Module Memory Check Sum Error
+P0602,Control Module Programming Error
+P0603,Internal Control Module Keep Alive Memory Error
+P0604,Internal Control Module RAM Error
+P0605,Internal Control Module ROM Error
+P0606,PCM Processor Fault
+P0620,Generator Control Circuit
+P0621,Generator Lamp L Terminal Circuit
+P0622,Generator Field F Terminal Circuit
+P0627,Fuel Pump A Control Circuit Open
+P0628,Fuel Pump A Control Circuit Low
+P0629,Fuel Pump A Control Circuit High
+P0630,VIN Not Programmed or Incompatible
+
+# ── P07xx — Transmission ─────────────────────────────────────────────────────
+P0700,Transmission Control System Malfunction
+P0701,Transmission Control System Range/Performance
+P0702,Transmission Control System Electrical
+P0705,Transmission Range Sensor Circuit (PRNDL Input)
+P0706,Transmission Range Sensor Range/Performance
+P0707,Transmission Range Sensor Circuit Low
+P0708,Transmission Range Sensor Circuit High
+P0710,Transmission Fluid Temperature Sensor Circuit
+P0711,Transmission Fluid Temperature Sensor Range/Performance
+P0712,Transmission Fluid Temperature Sensor Low
+P0713,Transmission Fluid Temperature Sensor High
+P0715,Input/Turbine Speed Sensor Circuit
+P0716,Input/Turbine Speed Sensor Range/Performance
+P0717,Input/Turbine Speed Sensor No Signal
+P0720,Output Speed Sensor Circuit
+P0721,Output Speed Sensor Range/Performance
+P0722,Output Speed Sensor No Signal
+P0730,Incorrect Gear Ratio
+P0731,Gear 1 Incorrect Ratio
+P0732,Gear 2 Incorrect Ratio
+P0733,Gear 3 Incorrect Ratio
+P0734,Gear 4 Incorrect Ratio
+P0735,Gear 5 Incorrect Ratio
+P0736,Reverse Incorrect Ratio
+P0740,Torque Converter Clutch Circuit Malfunction
+P0741,Torque Converter Clutch Circuit Performance/Stuck Off
+P0742,Torque Converter Clutch Circuit Stuck On
+P0743,Torque Converter Clutch Circuit Electrical
+P0745,Pressure Control Solenoid A
+P0748,Pressure Control Solenoid A Electrical
+P0750,Shift Solenoid A
+P0751,Shift Solenoid A Performance/Stuck Off
+P0752,Shift Solenoid A Stuck On
+P0753,Shift Solenoid A Electrical
+P0755,Shift Solenoid B
+P0756,Shift Solenoid B Performance/Stuck Off
+P0757,Shift Solenoid B Stuck On
+P0758,Shift Solenoid B Electrical
+P0760,Shift Solenoid C
+P0761,Shift Solenoid C Performance/Stuck Off
+P0762,Shift Solenoid C Stuck On
+P0763,Shift Solenoid C Electrical
+P0765,Shift Solenoid D
+P0770,Shift Solenoid E
+P0780,Shift Malfunction
+P0781,1-2 Shift Malfunction
+P0782,2-3 Shift Malfunction
+P0783,3-4 Shift Malfunction
+P0784,4-5 Shift Malfunction
+P0840,Transmission Fluid Pressure Sensor/Switch A Circuit
+P0841,Transmission Fluid Pressure Sensor/Switch A Range/Performance
+P0850,Park/Neutral Switch Input Circuit
+P0868,Transmission Fluid Pressure Low
+P0869,Transmission Fluid Pressure High
+P0882,TCM Power Input Signal Low
+P0883,TCM Power Input Signal High
+P0894,Transmission Component Slipping

@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="../Shared/Neomotive.UI.Styles/Neomotive.UI.Styles.csproj" />
+    <Project Path="../Shared/Neomotive.Obd2/Neomotive.Obd2.csproj" />
   </Folder>
   <Folder Name="/_refs/">
     <Project Path="../../../../../wilderness/Meadow.Contracts/Source/Meadow.Contracts/Meadow.Contracts.csproj">
