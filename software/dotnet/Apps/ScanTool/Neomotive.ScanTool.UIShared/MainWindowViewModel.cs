@@ -53,7 +53,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsConnected
     {
         get => _isConnected;
-        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); }
+        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(CanRefresh)); }
     }
 
     public bool IsNotConnected => !_isConnected;
@@ -189,6 +189,43 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     // ── Refresh ───────────────────────────────────────────────────────────────
+
+    private bool _isRefreshing;
+    public bool IsRefreshing
+    {
+        get => _isRefreshing;
+        private set { _isRefreshing = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanRefresh)); }
+    }
+    public bool CanRefresh => _isConnected && !_isRefreshing;
+
+    public async Task RefreshAsync()
+    {
+        if (!_isConnected || _isRefreshing) return;
+
+        _opCts?.Cancel();
+        _opCts = new CancellationTokenSource();
+
+        IsRefreshing = true;
+        StatusText = "Refreshing…";
+
+        try
+        {
+            await RefreshAllAsync(_opCts.Token);
+            StatusText = "Connected";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "Refresh cancelled";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Refresh error: {ex.Message}";
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
+    }
 
     private async Task RefreshAllAsync(CancellationToken ct)
     {

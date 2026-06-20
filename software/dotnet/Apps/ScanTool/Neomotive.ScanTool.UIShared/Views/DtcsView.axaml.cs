@@ -18,5 +18,6 @@ public partial class DtcsView : UserControl
 
     private MainWindowViewModel Vm => (MainWindowViewModel)DataContext!;
 
+    private void OnRefresh(object? sender, RoutedEventArgs e) => _ = Vm.RefreshAsync();
     private void OnClearDtcs(object? sender, RoutedEventArgs e) => _ = Vm.ClearDtcsAsync();
 }

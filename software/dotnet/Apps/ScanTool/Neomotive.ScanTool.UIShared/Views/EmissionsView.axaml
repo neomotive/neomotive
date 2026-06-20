@@ -6,7 +6,7 @@
              x:DataType="local:MainWindowViewModel"
              Padding="20,16">
 
-    <Grid RowDefinitions="Auto, *">
+    <Grid RowDefinitions="Auto, *, Auto">
 
         <TextBlock Grid.Row="0" Classes="heading" Text="READINESS MONITORS" Margin="0,0,0,10" />
 
@@ -31,6 +31,13 @@
                    Classes="dim"
                    IsVisible="{Binding IsNotConnected}"
                    Text="Connect to a vehicle to read readiness monitors." />
+
+        <Button Grid.Row="2"
+                Content="Refresh"
+                Classes="action-sm"
+                IsEnabled="{Binding CanRefresh}"
+                Margin="0,8,0,0"
+                Click="OnRefresh" />
 
     </Grid>
 
