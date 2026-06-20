@@ -1,3 +1,4 @@
+using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using System;
 using System.Collections.Generic;
@@ -8,9 +9,6 @@ namespace Neomotive.ScanTool.Core;
 
 public class Obd2Scanner : IObd2Scanner
 {
-    private const short RequestId = 0x7DF;
-    private const short EcuResponseIdMin = 0x7E8;
-    private const short EcuResponseIdMax = 0x7EF;
     private static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(3);
 
     private readonly ICanBus _bus;
@@ -35,47 +33,59 @@ public class Obd2Scanner : IObd2Scanner
 
     public async Task<string?> ReadVinAsync(CancellationToken ct = default)
     {
-        var data = await SendAndReceive([0x09, 0x02], 0x49, ct);
+        var data = await SendAndReceive(
+            [(byte)Service.VehicleInfo, (byte)VehicleInfoPid.Vin],
+            ResponseServiceId(Service.VehicleInfo), ct);
         return data != null ? Obd2Protocol.ParseVin(data) : null;
     }
 
     public async Task<IReadOnlyList<ReadinessMonitor>> ReadReadinessAsync(CancellationToken ct = default)
     {
-        var data = await SendAndReceive([0x01, 0x01], 0x41, ct);
+        var data = await SendAndReceive(
+            [(byte)Service.Current, (byte)Pid.MonitorStatus],
+            ResponseServiceId(Service.Current), ct);
         if (data == null || data.Length < 6) return [];
         return Obd2Protocol.ParseReadiness(data[2], data[3], data[4], data[5]);
     }
 
     public async Task<IReadOnlyList<DiagnosticTroubleCode>> ReadStoredDtcsAsync(CancellationToken ct = default)
     {
-        var data = await SendAndReceive([0x03], 0x43, ct);
+        var data = await SendAndReceive(
+            [(byte)Service.StoredDtcs],
+            ResponseServiceId(Service.StoredDtcs), ct);
         return data != null ? Obd2Protocol.ParseDtcs(data, DtcStatus.Stored) : [];
     }
 
     public async Task<IReadOnlyList<DiagnosticTroubleCode>> ReadPendingDtcsAsync(CancellationToken ct = default)
     {
-        var data = await SendAndReceive([0x07], 0x47, ct);
+        var data = await SendAndReceive(
+            [(byte)Service.PendingDtcs],
+            ResponseServiceId(Service.PendingDtcs), ct);
         return data != null ? Obd2Protocol.ParseDtcs(data, DtcStatus.Pending) : [];
     }
 
     public Task ClearDtcsAsync(CancellationToken ct = default)
     {
-        SendRequest([0x04]);
+        SendRequest([(byte)Service.ClearDtcs]);
         return Task.Delay(500, ct);
     }
+
+    private static byte ResponseServiceId(Service svc) =>
+        (byte)((byte)svc + Obd2Addresses.ResponseOffset);
 
     private void SendRequest(byte[] obd2Data)
     {
         var payload = new byte[8];
         payload[0] = (byte)obd2Data.Length;
         Array.Copy(obd2Data, 0, payload, 1, obd2Data.Length);
-        _bus.WriteFrame(new StandardDataFrame { ID = RequestId, Payload = payload });
+        _bus.WriteFrame(new StandardDataFrame { ID = Obd2Addresses.FunctionalRequest, Payload = payload });
     }
 
     private void SendFlowControl(short ecuPhysicalId)
     {
         // CTS (continue to send), block size = 0 (all frames), ST = 0 ms
-        var payload = new byte[] { 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        byte fcByte = (byte)((byte)IsoTpFrameType.FlowControl << 4);
+        var payload = new byte[] { fcByte, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
         _bus.WriteFrame(new StandardDataFrame { ID = ecuPhysicalId, Payload = payload });
     }
 
@@ -91,15 +101,15 @@ public class Obd2Scanner : IObd2Scanner
         handler = (_, frame) =>
         {
             if (frame is not StandardDataFrame sdf) return;
-            if (sdf.ID < EcuResponseIdMin || sdf.ID > EcuResponseIdMax) return;
+            if (sdf.ID < Obd2Addresses.EcuResponseBase || sdf.ID > Obd2Addresses.EcuResponseMax) return;
 
             var p = sdf.Payload;
             if (p == null || p.Length == 0) return;
 
             byte frameTypeByte = p[0];
-            byte frameType = (byte)(frameTypeByte >> 4);
+            var frameType = (IsoTpFrameType)(frameTypeByte >> 4);
 
-            if (frameType == 0) // single frame
+            if (frameType == IsoTpFrameType.Single)
             {
                 int len = frameTypeByte & 0x0F;
                 if (len == 0 || len > p.Length - 1) return;
@@ -111,7 +121,7 @@ public class Obd2Scanner : IObd2Scanner
                     tcs.TrySetResult(data);
                 }
             }
-            else if (frameType == 1) // first frame
+            else if (frameType == IsoTpFrameType.First)
             {
                 int totalLen = ((frameTypeByte & 0x0F) << 8) | p[1];
                 int firstBytes = Math.Min(6, p.Length - 2);
@@ -119,10 +129,10 @@ public class Obd2Scanner : IObd2Scanner
                 Array.Copy(p, 2, initial, 0, firstBytes);
                 assembler.Start(totalLen, initial);
 
-                // physical address is response ID minus 8 (0x7E8 → 0x7E0)
-                SendFlowControl((short)(sdf.ID - 8));
+                // physical address = response ID - 8  (e.g. 0x7E8 → 0x7E0)
+                SendFlowControl((short)(sdf.ID - Obd2Addresses.EcuPhysicalOffset));
             }
-            else if (frameType == 2) // consecutive frame
+            else if (frameType == IsoTpFrameType.Consecutive)
             {
                 int available = p.Length - 1;
                 if (available <= 0) return;

@@ -1,3 +1,4 @@
+using Meadow.Foundation.Telematics.J1979;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,12 +18,13 @@ public static class Obd2Protocol
     {
         if (hi == 0 && lo == 0) return null;
 
-        char prefix = ((hi >> 6) & 0x03) switch
+        var category = (DtcCategory)(hi & Obd2Addresses.DtcCategoryMask);
+        char prefix = category switch
         {
-            0 => 'P',
-            1 => 'C',
-            2 => 'B',
-            3 => 'U',
+            DtcCategory.P => 'P',
+            DtcCategory.C => 'C',
+            DtcCategory.B => 'B',
+            DtcCategory.U => 'U',
             _ => '?'
         };
         int d1 = (hi >> 4) & 0x03;
@@ -40,17 +42,39 @@ public static class Obd2Protocol
     {
         return
         [
-            new ReadinessMonitor("Misfire",           (b & 0x01) != 0, (b & 0x10) == 0),
-            new ReadinessMonitor("Fuel System",       (b & 0x02) != 0, (b & 0x20) == 0),
-            new ReadinessMonitor("Comprehensive",     (b & 0x04) != 0, (b & 0x40) == 0),
-            new ReadinessMonitor("Catalyst",          (c & 0x01) != 0, (d & 0x01) == 0),
-            new ReadinessMonitor("Heated Catalyst",   (c & 0x02) != 0, (d & 0x02) == 0),
-            new ReadinessMonitor("Evap System",       (c & 0x04) != 0, (d & 0x04) == 0),
-            new ReadinessMonitor("Secondary Air",     (c & 0x08) != 0, (d & 0x08) == 0),
-            new ReadinessMonitor("A/C Refrigerant",   (c & 0x10) != 0, (d & 0x10) == 0),
-            new ReadinessMonitor("O2 Sensor",         (c & 0x20) != 0, (d & 0x20) == 0),
-            new ReadinessMonitor("O2 Sensor Heater",  (c & 0x40) != 0, (d & 0x40) == 0),
-            new ReadinessMonitor("EGR System",        (c & 0x80) != 0, (d & 0x80) == 0),
+            new ReadinessMonitor("Misfire",
+                (b & ReadinessMonitorBits.MisfireSupported) != 0,
+                (b & ReadinessMonitorBits.MisfireIncomplete) == 0),
+            new ReadinessMonitor("Fuel System",
+                (b & ReadinessMonitorBits.FuelSystemSupported) != 0,
+                (b & ReadinessMonitorBits.FuelSystemIncomplete) == 0),
+            new ReadinessMonitor("Comprehensive",
+                (b & ReadinessMonitorBits.ComprehensiveSupported) != 0,
+                (b & ReadinessMonitorBits.ComprehensiveIncomplete) == 0),
+            new ReadinessMonitor("Catalyst",
+                (c & ReadinessMonitorBits.CatalystBit) != 0,
+                (d & ReadinessMonitorBits.CatalystBit) == 0),
+            new ReadinessMonitor("Heated Catalyst",
+                (c & ReadinessMonitorBits.HeatedCatalystBit) != 0,
+                (d & ReadinessMonitorBits.HeatedCatalystBit) == 0),
+            new ReadinessMonitor("Evap System",
+                (c & ReadinessMonitorBits.EvapSystemBit) != 0,
+                (d & ReadinessMonitorBits.EvapSystemBit) == 0),
+            new ReadinessMonitor("Secondary Air",
+                (c & ReadinessMonitorBits.SecondaryAirBit) != 0,
+                (d & ReadinessMonitorBits.SecondaryAirBit) == 0),
+            new ReadinessMonitor("A/C Refrigerant",
+                (c & ReadinessMonitorBits.AcRefrigerantBit) != 0,
+                (d & ReadinessMonitorBits.AcRefrigerantBit) == 0),
+            new ReadinessMonitor("O2 Sensor",
+                (c & ReadinessMonitorBits.OxygenSensorBit) != 0,
+                (d & ReadinessMonitorBits.OxygenSensorBit) == 0),
+            new ReadinessMonitor("O2 Sensor Heater",
+                (c & ReadinessMonitorBits.OxygenSensorHeaterBit) != 0,
+                (d & ReadinessMonitorBits.OxygenSensorHeaterBit) == 0),
+            new ReadinessMonitor("EGR System",
+                (c & ReadinessMonitorBits.EgrSystemBit) != 0,
+                (d & ReadinessMonitorBits.EgrSystemBit) == 0),
         ];
     }
 
@@ -60,9 +84,10 @@ public static class Obd2Protocol
     /// </summary>
     public static string? ParseVin(byte[] responseData)
     {
-        // minimum: service(1) + pid(1) + count(1) + at least 1 vin byte
         if (responseData == null || responseData.Length < 4) return null;
-        if (responseData[0] != 0x49 || responseData[1] != 0x02) return null;
+
+        byte expectedService = (byte)((byte)Service.VehicleInfo + Obd2Addresses.ResponseOffset);
+        if (responseData[0] != expectedService || responseData[1] != (byte)VehicleInfoPid.Vin) return null;
 
         int vinStart = 3;
         int vinLen = Math.Min(17, responseData.Length - vinStart);
@@ -93,7 +118,7 @@ public static class Obd2Protocol
             var code = DecodeDtcCode(hi, lo);
             if (code == null) continue;
 
-            var type = (hi & 0x30) == 0 ? DtcType.Generic : DtcType.Manufacturer;
+            var type = (hi & Obd2Addresses.DtcManufacturerMask) == 0 ? DtcType.Generic : DtcType.Manufacturer;
             result.Add(new DiagnosticTroubleCode(code, "", status, type));
         }
 
