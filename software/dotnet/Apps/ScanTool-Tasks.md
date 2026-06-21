@@ -235,3 +235,17 @@
 - [x] **L6** `Views/LiveDataWaveformPane.axaml[.cs]` — 4 stacked Canvas slots (95px each), 250ms DispatcherTimer, selection-order fill (PIDs 1-4=primary, 5-8=secondary), 60s rolling window
 - [x] **L7** `SharedStyles.axaml` — `Button.live-pid-row` style (44px, full-width, hover/press states)
 - [x] **L8** `Views/ScanToolView.axaml[.cs]` — "Live Data" tab button + `<views:LiveDataView>` wired
+
+---
+
+## Group M — Simulator detection
+
+- [x] **M1** Add `bool IsSimulated { get; }` and `Task<string?> ReadEcuNameAsync(CancellationToken ct)` to `IObd2Scanner`
+- [x] **M2** Add `ParseEcuName(byte[] responseData)` static helper to `Obd2Protocol`
+  - Layout: `[0x49, 0x0A, 0x01, name[20 bytes ASCII, space-padded]]`
+  - Trims null chars and whitespace; returns null if service/PID byte mismatch
+- [x] **M3** Implement `ReadEcuNameAsync` in `Obd2Scanner` — Service $09 PID $0A via existing `SendAndReceive` path
+- [x] **M4** Update `ConnectAsync` to call `ReadEcuNameAsync` after VIN; set `IsSimulated = true` when ECU name starts with "NEOMOTIVE" (case-insensitive)
+  - Simulator already returns `EcuName = "NEOMOTIVE_PCM"` — no changes needed to simulator side
+- [x] **M5** Add 9 new tests: 5 `ParseEcuName` protocol tests in `VinParsingTests`, 4 scanner integration tests in `Obd2ScannerTests` (ECU name multi-frame, timeout→null, `IsSimulated=true`, `IsSimulated=false`)
+  - 37/37 tests pass

@@ -11,6 +11,8 @@ public class Obd2Scanner : IObd2Scanner
 
     private readonly ICanBus _bus;
 
+    public bool IsSimulated { get; private set; }
+
     public Obd2Scanner(ICanBus bus)
     {
         _bus = bus;
@@ -24,14 +26,18 @@ public class Obd2Scanner : IObd2Scanner
             var vin = await ReadVinAsync(ct);
             if (vin != null)
             {
-                Resolver.Log?.Info($"ConnectAsync: vehicle responded — VIN={vin}");
+                var ecuName = await ReadEcuNameAsync(ct);
+                IsSimulated = ecuName?.StartsWith("NEOMOTIVE", StringComparison.OrdinalIgnoreCase) == true;
+                Resolver.Log?.Info($"ConnectAsync: vehicle responded — VIN={vin}, ECU={ecuName ?? "none"}, IsSimulated={IsSimulated}");
                 return true;
             }
+            IsSimulated = false;
             Resolver.Log?.Warn("ConnectAsync: no VIN response — vehicle not detected.");
             return false;
         }
         catch (Exception ex)
         {
+            IsSimulated = false;
             Resolver.Log?.Error($"ConnectAsync exception: {ex.GetType().Name}: {ex.Message}");
             return false;
         }
@@ -43,6 +49,14 @@ public class Obd2Scanner : IObd2Scanner
             [(byte)Service.VehicleInfo, (byte)VehicleInfoPid.Vin],
             ResponseServiceId(Service.VehicleInfo), ct);
         return data != null ? Obd2Protocol.ParseVin(data) : null;
+    }
+
+    public async Task<string?> ReadEcuNameAsync(CancellationToken ct = default)
+    {
+        var data = await SendAndReceive(
+            [(byte)Service.VehicleInfo, (byte)VehicleInfoPid.EcuName],
+            ResponseServiceId(Service.VehicleInfo), ct);
+        return data != null ? Obd2Protocol.ParseEcuName(data) : null;
     }
 
     public async Task<IReadOnlyList<ReadinessMonitor>> ReadReadinessAsync(CancellationToken ct = default)

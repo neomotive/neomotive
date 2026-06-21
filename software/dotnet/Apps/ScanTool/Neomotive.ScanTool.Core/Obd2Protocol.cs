@@ -99,6 +99,25 @@ public static class Obd2Protocol
     }
 
     /// <summary>
+    /// Extracts the ECU name from a Mode $09 PID $0A assembled response payload.
+    /// Expected layout: [0x49, 0x0A, 0x01, name[20 bytes ASCII, space-padded]]
+    /// </summary>
+    public static string? ParseEcuName(byte[] responseData)
+    {
+        if (responseData == null || responseData.Length < 4) return null;
+
+        byte expectedService = (byte)((byte)Service.VehicleInfo + Obd2Addresses.ResponseOffset);
+        if (responseData[0] != expectedService || responseData[1] != (byte)VehicleInfoPid.EcuName) return null;
+
+        int nameStart = 3;
+        int nameLen = Math.Min(20, responseData.Length - nameStart);
+        if (nameLen <= 0) return null;
+
+        var name = Encoding.ASCII.GetString(responseData, nameStart, nameLen).TrimEnd('\0').Trim();
+        return string.IsNullOrEmpty(name) ? null : name;
+    }
+
+    /// <summary>
     /// Parses a DTC list from an assembled Mode $03 or $07 response payload.
     /// Expected layout: [service_echo, count, hi0, lo0, hi1, lo1, ...]
     /// </summary>

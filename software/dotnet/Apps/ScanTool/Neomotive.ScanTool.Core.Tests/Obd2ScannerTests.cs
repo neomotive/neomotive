@@ -215,6 +215,151 @@ public class Obd2ScannerTests
     }
 
     [Fact]
+    public async Task ReadEcuNameAsync_returns_ecu_name_from_multiframe_response()
+    {
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(10);
+            // First frame: total=23, [0x49, 0x0A, 0x01, 'N', 'E', 'O']
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x10, 0x17, 0x49, 0x0A, 0x01, 0x4E, 0x45, 0x4F] });
+
+            await Task.Delay(10); // flow control is sent synchronously; let scheduler tick
+
+            // CF1: 'M','O','T','I','V','E','_'
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x21, 0x4D, 0x4F, 0x54, 0x49, 0x56, 0x45, 0x5F] });
+            // CF2: 'P','C','M',sp,sp,sp,sp
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x22, 0x50, 0x43, 0x4D, 0x20, 0x20, 0x20, 0x20] });
+            // CF3: sp,sp,sp + padding
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x23, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0x00] });
+        });
+
+        var name = await scanner.ReadEcuNameAsync();
+
+        Assert.Equal("NEOMOTIVE_PCM", name);
+    }
+
+    [Fact]
+    public async Task ReadEcuNameAsync_returns_null_on_timeout()
+    {
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        var result = await scanner.ReadEcuNameAsync(cts.Token);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_sets_IsSimulated_true_for_neomotive_ecu()
+    {
+        const string expectedVin = "1HGCM82633A004352";
+        var vinBytes = Encoding.ASCII.GetBytes(expectedVin);
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        _ = Task.Run(async () =>
+        {
+            while (bus.SentFrames.Count < 1) await Task.Delay(2);
+
+            var vinFF = new byte[8];
+            vinFF[0] = 0x10; vinFF[1] = 20;
+            vinFF[2] = 0x49; vinFF[3] = 0x02; vinFF[4] = 0x01;
+            vinFF[5] = vinBytes[0]; vinFF[6] = vinBytes[1]; vinFF[7] = vinBytes[2];
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId, Payload = vinFF });
+
+            while (bus.SentFrames.Count < 2) await Task.Delay(2); // await flow control
+
+            var vinCf1 = new byte[8]; vinCf1[0] = 0x21;
+            Array.Copy(vinBytes, 3, vinCf1, 1, 7);
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId, Payload = vinCf1 });
+
+            var vinCf2 = new byte[8]; vinCf2[0] = 0x22;
+            Array.Copy(vinBytes, 10, vinCf2, 1, 7);
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId, Payload = vinCf2 });
+
+            while (bus.SentFrames.Count < 3) await Task.Delay(2); // await ECU name request
+
+            // ECU name "NEOMOTIVE_PCM" (padded to 20 with spaces), total payload = 23 bytes
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x10, 0x17, 0x49, 0x0A, 0x01, 0x4E, 0x45, 0x4F] });
+
+            while (bus.SentFrames.Count < 4) await Task.Delay(2); // await ECU name flow control
+
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x21, 0x4D, 0x4F, 0x54, 0x49, 0x56, 0x45, 0x5F] });
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x22, 0x50, 0x43, 0x4D, 0x20, 0x20, 0x20, 0x20] });
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x23, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0x00] });
+        });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var connected = await scanner.ConnectAsync(cts.Token);
+
+        Assert.True(connected);
+        Assert.True(scanner.IsSimulated);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_sets_IsSimulated_false_for_non_neomotive_ecu()
+    {
+        const string expectedVin = "1HGCM82633A004352";
+        var vinBytes = Encoding.ASCII.GetBytes(expectedVin);
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        _ = Task.Run(async () =>
+        {
+            while (bus.SentFrames.Count < 1) await Task.Delay(2);
+
+            var vinFF = new byte[8];
+            vinFF[0] = 0x10; vinFF[1] = 20;
+            vinFF[2] = 0x49; vinFF[3] = 0x02; vinFF[4] = 0x01;
+            vinFF[5] = vinBytes[0]; vinFF[6] = vinBytes[1]; vinFF[7] = vinBytes[2];
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId, Payload = vinFF });
+
+            while (bus.SentFrames.Count < 2) await Task.Delay(2);
+
+            var vinCf1 = new byte[8]; vinCf1[0] = 0x21;
+            Array.Copy(vinBytes, 3, vinCf1, 1, 7);
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId, Payload = vinCf1 });
+
+            var vinCf2 = new byte[8]; vinCf2[0] = 0x22;
+            Array.Copy(vinBytes, 10, vinCf2, 1, 7);
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId, Payload = vinCf2 });
+
+            while (bus.SentFrames.Count < 3) await Task.Delay(2);
+
+            // ECU name "DELPHI_PCM" (not NEOMOTIVE), total payload = 23 bytes
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x10, 0x17, 0x49, 0x0A, 0x01, 0x44, 0x45, 0x4C] }); // 'D','E','L'
+
+            while (bus.SentFrames.Count < 4) await Task.Delay(2);
+
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x21, 0x50, 0x48, 0x49, 0x5F, 0x50, 0x43, 0x4D] }); // 'P','H','I','_','P','C','M'
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x22, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20] }); // 7 spaces
+            bus.InjectFrame(new StandardDataFrame { ID = EcuResponseId,
+                Payload = [0x23, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0x00] }); // 3 spaces + pad
+        });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var connected = await scanner.ConnectAsync(cts.Token);
+
+        Assert.True(connected);
+        Assert.False(scanner.IsSimulated);
+    }
+
+    [Fact]
     public async Task ReadPidAsync_coolant_temp_applies_offset()
     {
         var bus = new FakeCanBus();
