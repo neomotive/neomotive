@@ -1,0 +1,392 @@
+[
+  {
+    "wmi": "1B3",
+    "manufacturer": "Stellantis",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Dodge"
+    ]
+  },
+  {
+    "wmi": "1C6",
+    "manufacturer": "Stellantis",
+    "country": "United States",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ram"
+    ]
+  },
+  {
+    "wmi": "1FA",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1G1",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Chevrolet"
+    ]
+  },
+  {
+    "wmi": "1G2",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Pontiac"
+    ]
+  },
+  {
+    "wmi": "1G3",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Oldsmobile"
+    ]
+  },
+  {
+    "wmi": "1G4",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Buick"
+    ]
+  },
+  {
+    "wmi": "1G6",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Cadillac"
+    ]
+  },
+  {
+    "wmi": "1G8",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Saturn"
+    ]
+  },
+  {
+    "wmi": "1GT",
+    "manufacturer": "General Motors LLC",
+    "country": "United States",
+    "vehicleType": "Truck",
+    "makes": [
+      "GMC"
+    ]
+  },
+  {
+    "wmi": "1J4",
+    "manufacturer": "Stellantis",
+    "country": "United States",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Jeep"
+    ]
+  },
+  {
+    "wmi": "1LN",
+    "manufacturer": "Ford Motor Company",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Lincoln"
+    ]
+  },
+  {
+    "wmi": "1ME",
+    "manufacturer": "Ford Motor Company",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercury"
+    ]
+  },
+  {
+    "wmi": "1P3",
+    "manufacturer": "Chrysler LLC",
+    "country": "United States",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Plymouth"
+    ]
+  },
+  {
+    "wmi": "2XM",
+    "manufacturer": "CHRYSLER GROUP LLC(USA),CHRYSLER CANADA, CHRYSLER DE MEXICO",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "4S3",
+    "manufacturer": "SUBARU OF AMERICA, INC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Subaru"
+    ]
+  },
+  {
+    "wmi": "5YJ",
+    "manufacturer": "TESLA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Tesla"
+    ]
+  },
+  {
+    "wmi": "JA3",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JAB",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "JH4",
+    "manufacturer": "Honda Motor Co., Ltd.",
+    "country": "Japan",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Acura"
+    ]
+  },
+  {
+    "wmi": "JHM",
+    "manufacturer": "HONDA MOTOR CO., LTD.",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "JM1",
+    "manufacturer": "MAZDA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "JN1",
+    "manufacturer": "Nissan Motor Co., Ltd.",
+    "country": "Japan",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Infiniti",
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "JS2",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "JT8",
+    "manufacturer": "Toyota Motor Corporation",
+    "country": "Japan",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Lexus"
+    ]
+  },
+  {
+    "wmi": "JTH",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JTK",
+    "manufacturer": "Toyota Motor Corporation",
+    "country": "Japan",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Scion"
+    ]
+  },
+  {
+    "wmi": "KMH",
+    "manufacturer": "Hyundai Motor Company",
+    "country": "South Korea",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Genesis",
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "KNA",
+    "manufacturer": "KIA CORPORATION",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "SAJ",
+    "manufacturer": "JAGUAR LAND ROVER LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Jaguar",
+      "Land Rover"
+    ]
+  },
+  {
+    "wmi": "SCB",
+    "manufacturer": "BENTLEY MOTORS LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Bentley"
+    ]
+  },
+  {
+    "wmi": "SCF",
+    "manufacturer": "ASTON MARTIN LAGONDA LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Aston Martin"
+    ]
+  },
+  {
+    "wmi": "WAU",
+    "manufacturer": "AUDI AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Audi"
+    ]
+  },
+  {
+    "wmi": "WBA",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "WDD",
+    "manufacturer": "MERCEDES-BENZ CARS",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WMW",
+    "manufacturer": "BMW AG",
+    "country": "Germany",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mini"
+    ]
+  },
+  {
+    "wmi": "WP0",
+    "manufacturer": "DR. ING. H.C.F. PORSCHE AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Porsche"
+    ]
+  },
+  {
+    "wmi": "WVW",
+    "manufacturer": "VOLKSWAGEN AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "YS3",
+    "manufacturer": "SAAB CARS NORTH AMERICA, INC.",
+    "country": "SWEDEN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Saab"
+    ]
+  },
+  {
+    "wmi": "YV1",
+    "manufacturer": "VOLVO CAR CORPORATION",
+    "country": "SWEDEN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "ZAM",
+    "manufacturer": "MASERATI S.P.A.",
+    "country": "ITALY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Maserati"
+    ]
+  },
+  {
+    "wmi": "ZAR",
+    "manufacturer": "ALFA ROMEO S.P.A.",
+    "country": "ITALY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Alfa Romeo"
+    ]
+  },
+  {
+    "wmi": "ZFA",
+    "manufacturer": "Fiat Group Automobiles S.p.A.",
+    "country": "Italy",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Fiat"
+    ]
+  }
+]

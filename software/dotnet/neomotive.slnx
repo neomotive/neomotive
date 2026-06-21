@@ -1,5 +1,10 @@
 <Solution>
   <Folder Name="/Apps/" />
+  <Folder Name="/Apps/Shared/">
+    <Project Path="Apps/Shared/Neomotive.Vin/Neomotive.Vin.csproj" />
+    <Project Path="Apps/Shared/Neomotive.Vin.Tests/Neomotive.Vin.Tests.csproj" />
+    <Project Path="Apps/Shared/Neomotive.Vin.CatalogGenerator/Neomotive.Vin.CatalogGenerator.csproj" />
+  </Folder>
   <Folder Name="/Apps/SignCamera/">
     <Project Path="Apps/SignCamera/SignCamera.DesktopTest/SignCamera.DesktopTest.csproj" />
     <Project Path="Apps/SignCamera/SignCamera.HeadlessTest/SignCamera.HeadlessTest.csproj" />
