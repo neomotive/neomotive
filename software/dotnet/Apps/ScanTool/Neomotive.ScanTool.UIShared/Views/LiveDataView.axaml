@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
+             x:Class="Neomotive.ScanTool.UI.Views.LiveDataView"
+             x:DataType="local:MainWindowViewModel">
+
+    <Grid ColumnDefinitions="220, *">
+
+        <!-- Left: PID selector list -->
+        <Grid Grid.Column="0" RowDefinitions="*, Auto">
+
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding LivePidItems}" Padding="0,4,0,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:LivePidItem">
+                            <Button Classes="live-pid-row" Click="OnPidToggle" HorizontalAlignment="Stretch">
+                                <Grid ColumnDefinitions="22, *">
+                                    <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}"
+                                               FontSize="12" VerticalAlignment="Center"
+                                               Margin="0,0,4,0"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{Binding Descriptor.Name}"
+                                                   FontSize="12" Foreground="{StaticResource BrushFgDefault}"/>
+                                        <TextBlock Text="{Binding DisplayValue}"
+                                                   FontSize="10" Foreground="{StaticResource BrushFgSubtle}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="8,4,8,6">
+                <Button Content="All"  Classes="action-sm" Click="OnSelectAll"/>
+                <Button Content="None" Classes="action-sm" Click="OnSelectNone"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Vertical divider -->
+        <Rectangle Grid.Column="0" Width="1" HorizontalAlignment="Right"
+                   Fill="{StaticResource BrushBorder}" IsHitTestVisible="False"/>
+
+        <!-- Right: sub-tab bar + panes -->
+        <Grid Grid.Column="1" RowDefinitions="36, *">
+
+            <!-- Sub-tab bar -->
+            <Border Grid.Row="0" Background="#141820"
+                    BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Content="Table"    Classes="tab" Classes.active="{Binding IsTableView}"    Click="OnShowTable"/>
+                        <Button Content="Gauges"   Classes="tab" Classes.active="{Binding IsGaugesView}"   Click="OnShowGauges"/>
+                        <Button Content="Waveform" Classes="tab" Classes.active="{Binding IsWaveformView}" Click="OnShowWaveform"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center" Margin="0,0,8,0">
+                        <Button Content="▶ Start" Classes="action-sm"
+                                IsVisible="{Binding !IsPolling}"
+                                IsEnabled="{Binding CanStartPolling}"
+                                Click="OnStartPolling"/>
+                        <Button Content="■ Stop" Classes="action-sm"
+                                IsVisible="{Binding IsPolling}"
+                                Click="OnStopPolling"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content panes -->
+            <Grid Grid.Row="1">
+                <views:LiveDataTablePane    IsVisible="{Binding IsTableView}"/>
+                <views:LiveDataGaugePane    IsVisible="{Binding IsGaugesView}"/>
+                <views:LiveDataWaveformPane IsVisible="{Binding IsWaveformView}" Name="WaveformPane"/>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</UserControl>

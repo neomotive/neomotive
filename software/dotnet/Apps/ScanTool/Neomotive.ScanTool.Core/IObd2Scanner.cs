@@ -1,3 +1,4 @@
+using Meadow.Foundation.Telematics.J1979;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,4 +16,5 @@ public interface IObd2Scanner
     Task<IReadOnlyList<VehicleModule>> ScanModulesAsync(CancellationToken ct = default);
     Task<IReadOnlyList<ModuleDtcGroup>> ReadDtcsByModuleAsync(CancellationToken ct = default);
     Task ClearModuleDtcsAsync(ushort moduleResponseAddress, CancellationToken ct = default);
+    Task<PidValue?> ReadPidAsync(Pid pid, CancellationToken ct = default);
 }

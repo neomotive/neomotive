@@ -196,3 +196,42 @@
 - [ ] App opens with no PCAN adapter — Connection tab shows offline/disconnected gracefully (NullCanBus)
 - [ ] App connects with PCAN adapter + vehicle — VIN populates, monitors display, DTCs list populates
 - [ ] Clear DTCs empties the list and updates MIL status
+
+---
+
+## Group J — Core live data layer
+
+- [x] **J1** `PidDescriptor`, `PidValue`, `PidRegistry` (15 curated PIDs)
+- [x] **J2** `IObd2Scanner.ReadPidAsync` + `Obd2Scanner` implementation
+  - Sends Mode $01 request, parses response bytes via Scale/Offset/ByteCount
+  - Fixed pre-existing `Resolver.Log` null issue (all calls guarded with `?.`)
+- [x] **J3** Unit tests for PID parsing: vehicle speed (1-byte, scale=1), engine RPM (2-byte, scale=0.25), coolant temp (offset=-40) — 28/28 total tests pass
+
+---
+
+## Group K — ViewModel & polling
+
+- [x] **K1** `LivePidItem.cs` — INotifyPropertyChanged wrapper with IsSelected, CurrentValue, DisplayValue, SelectionIndicator, History ring buffer (120 samples)
+- [x] **K2** `MainWindowViewModel` additions:
+  - `ScanView.LiveData`, `LiveSubView` enum (Table/Gauges/Waveform)
+  - `IsLiveDataView`, `IsTableView`, `IsGaugesView`, `IsWaveformView` properties
+  - `ShowLiveData()`, `ShowTable()`, `ShowGauges()`, `ShowWaveform()`
+  - `LivePidItems`, `SelectedLivePids`, `GaugePids`, `HasSelectedPids`, `HasNoSelectedPids`
+  - `IsPolling`, `CanStartPolling`, `CanStopPolling`
+  - `StartPolling()`, `StopPolling()`, `RunPollingLoopAsync()` — 2Hz background loop
+  - `SelectAllPids()`, `SelectNoPids()`
+  - Item PropertyChanged subscription (notifies SelectedLivePids, GaugePids, HasSelectedPids on selection change)
+  - `StopPolling()` called on Disconnect and when switching away from Live Data tab
+
+---
+
+## Group L — UI views
+
+- [x] **L1** No OxyPlot — using custom Canvas+Polyline waveform (Avalonia 12.0.4 compat uncertain)
+- [x] **L2** `Controls/GaugeControl.axaml[.cs]` — arc gauge with StyledProperty Value/Min/Max/Label/Unit, PathGeometry arc calculation, green/yellow/red color by percentage
+- [x] **L3** `Views/LiveDataView.axaml[.cs]` — 220px left PID list + right sub-tab panel, Start/Stop polling buttons
+- [x] **L4** `Views/LiveDataTablePane.axaml[.cs]` — scrollable table: PID name / value / unit, 44px touch targets
+- [x] **L5** `Views/LiveDataGaugePane.axaml[.cs]` — WrapPanel of up to 6 GaugeControls (first 6 selected PIDs)
+- [x] **L6** `Views/LiveDataWaveformPane.axaml[.cs]` — 4 stacked Canvas slots (95px each), 250ms DispatcherTimer, selection-order fill (PIDs 1-4=primary, 5-8=secondary), 60s rolling window
+- [x] **L7** `SharedStyles.axaml` — `Button.live-pid-row` style (44px, full-width, hover/press states)
+- [x] **L8** `Views/ScanToolView.axaml[.cs]` — "Live Data" tab button + `<views:LiveDataView>` wired

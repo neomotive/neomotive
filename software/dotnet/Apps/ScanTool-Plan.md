@@ -126,9 +126,21 @@ The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles
 
 **Goal:** Stream real-time PIDs with charts and optional logging to file.
 
-**Tasks:**
-1. Add `LiveDataView` — PID selector, scrolling strip chart (OxyPlot or LiveCharts2 for Avalonia)
-2. Add `ILiveDataReader` polling loop with configurable PID set
+**Completed:**
+- `PidDescriptor`, `PidValue`, `PidRegistry` (15 curated PIDs with scale/offset/unit/range)
+- `IObd2Scanner.ReadPidAsync` — generic Mode $01 PID request using descriptor metadata
+- `LivePidItem` — VM wrapper with IsSelected, CurrentValue, 120-sample ring buffer history
+- `LiveDataView` — 220px left PID list + right tabbed panel (Table/Gauges/Waveform)
+- `GaugeControl` — custom arc gauge (no library dependency), green/yellow/red by %
+- `LiveDataTablePane` — scrollable table view, 44px touch targets
+- `LiveDataGaugePane` — WrapPanel of up to 6 gauges (first 6 selected PIDs)
+- `LiveDataWaveformPane` — 4 stacked canvas slots, 250ms refresh timer, 60s rolling window
+- 2Hz polling loop in MainWindowViewModel, stops on disconnect or tab switch
+- Charting: Canvas+Polyline approach (OxyPlot skipped — Avalonia 12.0.4 compat unverified)
+- Fixed pre-existing Resolver.Log null issue in Obd2Scanner — 28/28 tests pass
+- Fixed Avalonia 12.0.4 crash: `Polyline.Points = null` → `new Points()` (ArgumentNullException in PolylineGeometry)
+
+**Remaining (Phase 3):**
 3. CSV/JSON recording with start/stop controls
 4. Playback of recorded sessions (offline review)
 

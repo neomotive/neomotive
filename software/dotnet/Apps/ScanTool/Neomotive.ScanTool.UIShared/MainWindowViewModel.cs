@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core;
 using System;
 using System.Collections.Generic;
@@ -14,14 +15,17 @@ public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, s
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog, LiveData }
+    private enum LiveSubView { Table, Gauges, Waveform }
 
     private ScanView _view = ScanView.Connection;
+    private LiveSubView _liveSubView = LiveSubView.Table;
     private readonly IObd2Scanner _scanner;
     private readonly LoggingCanBus? _loggingBus;
     private readonly CanPacketLog? _log;
     private DispatcherTimer? _logTimer;
     private CancellationTokenSource? _opCts;
+    private CancellationTokenSource? _pollCts;
 
     public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null)
     {
@@ -29,6 +33,20 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _loggingBus = loggingBus;
         if (_loggingBus != null)
             _log = _loggingBus.Log;
+
+        LivePidItems = PidRegistry.CommonPids.Select(d => new LivePidItem(d)).ToList();
+        foreach (var item in LivePidItems)
+            item.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(LivePidItem.IsSelected))
+                {
+                    OnPropertyChanged(nameof(HasSelectedPids));
+                    OnPropertyChanged(nameof(HasNoSelectedPids));
+                    OnPropertyChanged(nameof(SelectedLivePids));
+                    OnPropertyChanged(nameof(GaugePids));
+                    OnPropertyChanged(nameof(CanStartPolling));
+                }
+            };
     }
 
     public void StartCanLogTimer()
@@ -46,12 +64,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsEmissionsView => _view == ScanView.Emissions;
     public bool IsDtcsView => _view == ScanView.Dtcs;
     public bool IsCanLogView => _view == ScanView.CanLog;
+    public bool IsLiveDataView => _view == ScanView.LiveData;
 
-    public void ShowConnection() { _view = ScanView.Connection; NotifyViewChanged(); }
-    public void ShowVehicle() { _view = ScanView.Vehicle; NotifyViewChanged(); }
-    public void ShowEmissions() { _view = ScanView.Emissions; NotifyViewChanged(); }
-    public void ShowDtcs() { _view = ScanView.Dtcs; NotifyViewChanged(); }
-    public void ShowCanLog() { _view = ScanView.CanLog; NotifyViewChanged(); }
+    public void ShowConnection() { StopPolling(); _view = ScanView.Connection; NotifyViewChanged(); }
+    public void ShowVehicle() { StopPolling(); _view = ScanView.Vehicle; NotifyViewChanged(); }
+    public void ShowEmissions() { StopPolling(); _view = ScanView.Emissions; NotifyViewChanged(); }
+    public void ShowDtcs() { StopPolling(); _view = ScanView.Dtcs; NotifyViewChanged(); }
+    public void ShowCanLog() { StopPolling(); _view = ScanView.CanLog; NotifyViewChanged(); }
+    public void ShowLiveData() { _view = ScanView.LiveData; NotifyViewChanged(); }
 
     private void NotifyViewChanged()
     {
@@ -60,6 +80,24 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsEmissionsView));
         OnPropertyChanged(nameof(IsDtcsView));
         OnPropertyChanged(nameof(IsCanLogView));
+        OnPropertyChanged(nameof(IsLiveDataView));
+    }
+
+    // ── Live Data sub-views ───────────────────────────────────────────────────
+
+    public bool IsTableView => _liveSubView == LiveSubView.Table;
+    public bool IsGaugesView => _liveSubView == LiveSubView.Gauges;
+    public bool IsWaveformView => _liveSubView == LiveSubView.Waveform;
+
+    public void ShowTable() { _liveSubView = LiveSubView.Table; NotifyLiveSubViewChanged(); }
+    public void ShowGauges() { _liveSubView = LiveSubView.Gauges; NotifyLiveSubViewChanged(); }
+    public void ShowWaveform() { _liveSubView = LiveSubView.Waveform; NotifyLiveSubViewChanged(); }
+
+    private void NotifyLiveSubViewChanged()
+    {
+        OnPropertyChanged(nameof(IsTableView));
+        OnPropertyChanged(nameof(IsGaugesView));
+        OnPropertyChanged(nameof(IsWaveformView));
     }
 
     // ── Connection state ──────────────────────────────────────────────────────
@@ -71,7 +109,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsConnected
     {
         get => _isConnected;
-        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); }
+        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); OnPropertyChanged(nameof(CanStartPolling)); }
     }
 
     public bool IsNotConnected => !_isConnected;
@@ -138,6 +176,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void Disconnect()
     {
         _opCts?.Cancel();
+        StopPolling();
         IsConnected = false;
         StatusText = "Disconnected";
         Vin = null;
@@ -145,6 +184,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         ReadinessMonitors = [];
         ModuleDtcGroups = [];
         Modules = [];
+        foreach (var item in LivePidItems)
+            item.Reset();
     }
 
     // ── Modules ───────────────────────────────────────────────────────────────
@@ -312,6 +353,85 @@ public class MainWindowViewModel : INotifyPropertyChanged
             });
         }
         catch (OperationCanceledException) { }
+    }
+
+    // ── Live Data ─────────────────────────────────────────────────────────────
+
+    public IReadOnlyList<LivePidItem> LivePidItems { get; }
+
+    public IEnumerable<LivePidItem> SelectedLivePids => LivePidItems.Where(p => p.IsSelected);
+    public IEnumerable<LivePidItem> GaugePids => LivePidItems.Where(p => p.IsSelected).Take(6);
+    public bool HasSelectedPids => LivePidItems.Any(p => p.IsSelected);
+    public bool HasNoSelectedPids => !HasSelectedPids;
+
+    private bool _isPolling;
+    public bool IsPolling
+    {
+        get => _isPolling;
+        private set { _isPolling = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanStartPolling)); OnPropertyChanged(nameof(CanStopPolling)); }
+    }
+
+    public bool CanStartPolling => _isConnected && !_isPolling;
+    public bool CanStopPolling => _isPolling;
+
+    public void StartPolling()
+    {
+        if (!_isConnected || _isPolling) return;
+        _pollCts = new CancellationTokenSource();
+        IsPolling = true;
+        _ = RunPollingLoopAsync(_pollCts.Token);
+    }
+
+    public void StopPolling()
+    {
+        _pollCts?.Cancel();
+        _pollCts = null;
+        IsPolling = false;
+    }
+
+    private async Task RunPollingLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                var selected = LivePidItems.Where(p => p.IsSelected).ToList();
+                foreach (var item in selected)
+                {
+                    if (ct.IsCancellationRequested) break;
+                    try
+                    {
+                        var pidValue = await Task.Run(() => _scanner.ReadPidAsync(item.Descriptor.Id, ct), ct);
+                        if (pidValue != null)
+                        {
+                            var captured = item;
+                            var v = pidValue.Value;
+                            Dispatcher.UIThread.Post(() => captured.UpdateValue(v));
+                        }
+                    }
+                    catch (OperationCanceledException) { break; }
+                    catch { /* skip unresponsive PID */ }
+                }
+                await Task.Delay(500, ct);
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsPolling = false);
+        }
+    }
+
+    public void SelectAllPids()
+    {
+        foreach (var item in LivePidItems)
+            item.IsSelected = true;
+    }
+
+    public void SelectNoPids()
+    {
+        foreach (var item in LivePidItems)
+            item.IsSelected = false;
     }
 
     // ── CAN Logging ───────────────────────────────────────────────────────────

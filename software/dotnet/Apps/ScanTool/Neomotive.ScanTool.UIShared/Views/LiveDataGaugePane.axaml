@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:controls="clr-namespace:Neomotive.ScanTool.UI.Controls"
+             x:Class="Neomotive.ScanTool.UI.Views.LiveDataGaugePane"
+             x:DataType="local:MainWindowViewModel">
+
+    <Grid>
+        <TextBlock Classes="dim"
+                   IsVisible="{Binding HasNoSelectedPids}"
+                   Text="Select up to 6 PIDs from the left panel"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <ScrollViewer IsVisible="{Binding HasSelectedPids}"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding GaugePids}" Margin="8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:LivePidItem">
+                        <Border Background="#161B22" CornerRadius="6" Margin="4" Width="174" Height="164">
+                            <controls:GaugeControl
+                                Value="{Binding CurrentValue}"
+                                Min="{Binding Descriptor.Min}"
+                                Max="{Binding Descriptor.Max}"
+                                Label="{Binding Descriptor.Name}"
+                                Unit="{Binding Descriptor.Unit}"/>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+
+</UserControl>

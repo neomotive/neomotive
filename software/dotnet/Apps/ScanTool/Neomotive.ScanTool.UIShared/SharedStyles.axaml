@@ -26,4 +26,21 @@
         <Setter Property="FontStyle"  Value="Italic" />
     </Style>
 
+    <!-- PID list row button (touch-primary, full-width, 44px min-height) -->
+    <Style Selector="Button.live-pid-row">
+        <Setter Property="Background"       Value="Transparent" />
+        <Setter Property="BorderThickness"  Value="0" />
+        <Setter Property="Padding"          Value="8,6,8,6" />
+        <Setter Property="MinHeight"        Value="44" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius"     Value="0" />
+        <Setter Property="Cursor"           Value="Hand" />
+    </Style>
+    <Style Selector="Button.live-pid-row:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#1A2030" />
+    </Style>
+    <Style Selector="Button.live-pid-row:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#243040" />
+    </Style>
+
 </Styles>

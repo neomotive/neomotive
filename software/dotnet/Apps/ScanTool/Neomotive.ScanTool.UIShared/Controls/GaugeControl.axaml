@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Neomotive.ScanTool.UI.Controls.GaugeControl"
+             Width="170" Height="160">
+    <Grid>
+        <Canvas Width="150" Height="150" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,4,0,0">
+            <Path Name="PART_BgArc"  Stroke="#2A2F3A" StrokeThickness="8" Fill="Transparent" StrokeLineCap="Round"/>
+            <Path Name="PART_ValArc" Stroke="#4CAF50" StrokeThickness="8" Fill="Transparent" StrokeLineCap="Round"/>
+        </Canvas>
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Spacing="0" Margin="0,-8,0,0">
+            <TextBlock Name="PART_Value" FontFamily="Consolas, Cascadia Code, Monospace"
+                       FontSize="20" FontWeight="Bold" Foreground="#D8DEE9"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Name="PART_Unit" FontFamily="Consolas, Cascadia Code, Monospace"
+                       FontSize="10" Foreground="#4D5566"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Name="PART_Name" FontFamily="Consolas, Cascadia Code, Monospace"
+                       FontSize="10" Foreground="#4D5566"
+                       HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="130"
+                       TextAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,3 +1,4 @@
+using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using System.Text;
 using Xunit;
@@ -171,5 +172,65 @@ public class Obd2ScannerTests
         var result = await scanner.ReadVinAsync(cts.Token);
 
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ReadPidAsync_single_byte_vehicle_speed_scales_correctly()
+    {
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(10);
+            // Vehicle speed = 100 km/h (0x64), scale=1, offset=0
+            bus.InjectFrame(SingleFrame(EcuResponseId, [0x41, 0x0D, 0x64]));
+        });
+
+        var result = await scanner.ReadPidAsync(Pid.VehicleSpeed);
+
+        Assert.NotNull(result);
+        Assert.Equal(100.0, result!.Value, precision: 1);
+        Assert.Equal("km/h", result.Descriptor.Unit);
+    }
+
+    [Fact]
+    public async Task ReadPidAsync_two_byte_engine_rpm_scales_correctly()
+    {
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(10);
+            // RPM = 850: raw = 850 / 0.25 = 3400 = 0x0D48
+            bus.InjectFrame(SingleFrame(EcuResponseId, [0x41, 0x0C, 0x0D, 0x48]));
+        });
+
+        var result = await scanner.ReadPidAsync(Pid.EngineRpm);
+
+        Assert.NotNull(result);
+        Assert.Equal(850.0, result!.Value, precision: 1);
+        Assert.Equal("RPM", result.Descriptor.Unit);
+    }
+
+    [Fact]
+    public async Task ReadPidAsync_coolant_temp_applies_offset()
+    {
+        var bus = new FakeCanBus();
+        var scanner = new Obd2Scanner(bus);
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(10);
+            // Coolant temp = 91°C: raw = 91 + 40 = 131 = 0x83
+            bus.InjectFrame(SingleFrame(EcuResponseId, [0x41, 0x05, 0x83]));
+        });
+
+        var result = await scanner.ReadPidAsync(Pid.EngineCoolantTemperature);
+
+        Assert.NotNull(result);
+        Assert.Equal(91.0, result!.Value, precision: 1);
+        Assert.Equal("°C", result.Descriptor.Unit);
     }
 }
