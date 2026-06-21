@@ -16,7 +16,6 @@ public class LoggingCanBus : ICanBus
     public CanAcceptanceFilterCollection AcceptanceFilters => _inner.AcceptanceFilters;
     public CanBitrate BitRate { get => _inner.BitRate; set => _inner.BitRate = value; }
 
-    public bool IsLoggingEnabled { get; set; }
     public CanPacketLog Log => _log;
 
     public LoggingCanBus(ICanBus inner, CanPacketLog log)
@@ -26,7 +25,7 @@ public class LoggingCanBus : ICanBus
 
         _inner.FrameReceived += (s, f) =>
         {
-            if (IsLoggingEnabled && f is StandardDataFrame sdf)
+            if (f is StandardDataFrame sdf)
             {
                 _log.Add(new CanPacketEntry(DateTime.Now, sdf.ID, sdf.Payload.ToArray(), false));
             }
@@ -38,7 +37,7 @@ public class LoggingCanBus : ICanBus
 
     public void WriteFrame(ICanFrame frame)
     {
-        if (IsLoggingEnabled && frame is StandardDataFrame sdf)
+        if (frame is StandardDataFrame sdf)
         {
             _log.Add(new CanPacketEntry(DateTime.Now, sdf.ID, sdf.Payload.ToArray(), true));
         }

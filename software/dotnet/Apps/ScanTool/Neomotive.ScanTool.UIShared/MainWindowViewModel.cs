@@ -1,6 +1,4 @@
 using Avalonia.Threading;
-using Meadow;
-using Meadow.Hardware;
 using Neomotive.ScanTool.Core;
 using System;
 using System.Collections.Generic;
@@ -22,36 +20,38 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly IObd2Scanner _scanner;
     private readonly LoggingCanBus? _loggingBus;
     private readonly CanPacketLog? _log;
-    private readonly DispatcherTimer? _logTimer;
+    private DispatcherTimer? _logTimer;
     private CancellationTokenSource? _opCts;
 
-    public MainWindowViewModel(IObd2Scanner scanner)
+    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null)
     {
         _scanner = scanner;
-
-        _loggingBus = Resolver.Services.Get<ICanBus>() as LoggingCanBus;
+        _loggingBus = loggingBus;
         if (_loggingBus != null)
-        {
             _log = _loggingBus.Log;
-            _logTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-            _logTimer.Tick += (_, _) => RefreshCanLog();
-            _logTimer.Start();
-        }
+    }
+
+    public void StartCanLogTimer()
+    {
+        if (_log == null) return;
+        _logTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        _logTimer.Tick += (_, _) => RefreshCanLog();
+        _logTimer.Start();
     }
 
     // ── View selection ────────────────────────────────────────────────────────
 
     public bool IsConnectionView => _view == ScanView.Connection;
-    public bool IsVehicleView    => _view == ScanView.Vehicle;
-    public bool IsEmissionsView  => _view == ScanView.Emissions;
-    public bool IsDtcsView       => _view == ScanView.Dtcs;
-    public bool IsCanLogView     => _view == ScanView.CanLog;
+    public bool IsVehicleView => _view == ScanView.Vehicle;
+    public bool IsEmissionsView => _view == ScanView.Emissions;
+    public bool IsDtcsView => _view == ScanView.Dtcs;
+    public bool IsCanLogView => _view == ScanView.CanLog;
 
     public void ShowConnection() { _view = ScanView.Connection; NotifyViewChanged(); }
-    public void ShowVehicle()    { _view = ScanView.Vehicle;    NotifyViewChanged(); }
-    public void ShowEmissions()  { _view = ScanView.Emissions;  NotifyViewChanged(); }
-    public void ShowDtcs()       { _view = ScanView.Dtcs;       NotifyViewChanged(); }
-    public void ShowCanLog()     { _view = ScanView.CanLog;     NotifyViewChanged(); }
+    public void ShowVehicle() { _view = ScanView.Vehicle; NotifyViewChanged(); }
+    public void ShowEmissions() { _view = ScanView.Emissions; NotifyViewChanged(); }
+    public void ShowDtcs() { _view = ScanView.Dtcs; NotifyViewChanged(); }
+    public void ShowCanLog() { _view = ScanView.CanLog; NotifyViewChanged(); }
 
     private void NotifyViewChanged()
     {
@@ -83,7 +83,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public bool CanConnect => !_isConnecting;
-    public bool IsIdle     => !_isConnected && !_isConnecting;
+    public bool IsIdle => !_isConnected && !_isConnecting;
 
     public string StatusText
     {
@@ -197,7 +197,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool MilOn  => _moduleDtcGroups.Any(g => g.HasStoredDtcs);
+    public bool MilOn => _moduleDtcGroups.Any(g => g.HasStoredDtcs);
     public bool MilOff => !MilOn;
 
     public async Task ClearDtcsAsync()
@@ -316,17 +316,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     // ── CAN Logging ───────────────────────────────────────────────────────────
 
+    private bool _isLoggingEnabled;
     public bool IsLoggingEnabled
     {
-        get => _loggingBus?.IsLoggingEnabled ?? false;
+        get => _isLoggingEnabled;
         set
         {
-            if (_loggingBus != null)
-            {
-                _loggingBus.IsLoggingEnabled = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(ShowWaitingMessage));
-            }
+            _isLoggingEnabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowWaitingMessage));
+            if (value) RefreshCanLog();
         }
     }
 
@@ -372,7 +371,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private void RefreshCanLog()
     {
-        if (_log == null) return;
+        if (_log == null || !_isLoggingEnabled) return;
         var all = _log.GetAll();
         var latest = all.Count > 0 ? all[^1].Timestamp : DateTime.MinValue;
         if (latest == _lastCanTimestamp && all.Count == _lastCanCount) return;

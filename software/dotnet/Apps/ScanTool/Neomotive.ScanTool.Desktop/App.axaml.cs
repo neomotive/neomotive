@@ -48,12 +48,13 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         Resolver.Services.Add<ICanBus>(loggingBus);
 
         var scanner = new Obd2Scanner(loggingBus);
-        var vm      = new MainWindowViewModel(scanner);
+        var vm      = new MainWindowViewModel(scanner, loggingBus);
 
         Dispatcher.UIThread.Post(() =>
         {
             if (_mainWindow != null)
                 _mainWindow.DataContext = vm;
+            vm.StartCanLogTimer();
         });
 
         return base.MeadowInitialize();
