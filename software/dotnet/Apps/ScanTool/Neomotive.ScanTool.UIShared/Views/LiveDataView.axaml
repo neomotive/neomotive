@@ -14,17 +14,17 @@
                 <ItemsControl ItemsSource="{Binding LivePidItems}" Padding="0,4,0,4">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="local:LivePidItem">
-                            <Button Classes="live-pid-row" Click="OnPidToggle" HorizontalAlignment="Stretch">
-                                <Grid ColumnDefinitions="22, *">
+                            <Button Classes="live-pid-row" Classes.selected="{Binding IsSelected}"
+                                    Click="OnPidToggle" HorizontalAlignment="Stretch">
+                                <Grid ColumnDefinitions="20, *">
                                     <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}"
-                                               FontSize="12" VerticalAlignment="Center"
+                                               Classes="pid-indicator"
+                                               FontSize="16" VerticalAlignment="Center"
                                                Margin="0,0,4,0"/>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                        <TextBlock Text="{Binding Descriptor.Name}"
-                                                   FontSize="12" Foreground="{StaticResource BrushFgDefault}"/>
-                                        <TextBlock Text="{Binding DisplayValue}"
-                                                   FontSize="10" Foreground="{StaticResource BrushFgSubtle}"/>
-                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding Descriptor.Name}"
+                                               Classes="pid-name"
+                                               FontSize="12" Foreground="{StaticResource BrushFgDefault}"
+                                               VerticalAlignment="Center"/>
                                 </Grid>
                             </Button>
                         </DataTemplate>

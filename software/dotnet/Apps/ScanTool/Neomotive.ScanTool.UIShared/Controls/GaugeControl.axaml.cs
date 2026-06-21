@@ -1,8 +1,8 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
+using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace Neomotive.ScanTool.UI.Controls;
@@ -30,6 +30,12 @@ public partial class GaugeControl : UserControl
     public string Label { get => GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
     public string Unit  { get => GetValue(UnitProperty);  set => SetValue(UnitProperty, value); }
 
+    private readonly Path _bgArc;
+    private readonly Path _valArc;
+    private readonly TextBlock _valueText;
+    private readonly TextBlock _unitText;
+    private readonly TextBlock _nameText;
+
     static GaugeControl()
     {
         ValueProperty.Changed.AddClassHandler<GaugeControl>((g, _) => g.UpdateGauge());
@@ -39,61 +45,82 @@ public partial class GaugeControl : UserControl
         UnitProperty.Changed.AddClassHandler<GaugeControl>((g, _) => g.UpdateLabels());
     }
 
-    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    public GaugeControl()
     {
-        base.OnApplyTemplate(e);
+        Width = 170;
+        Height = 160;
+
+        _bgArc  = new Path { Stroke = new SolidColorBrush(Color.Parse("#2A2F3A")), StrokeThickness = 8, Fill = Brushes.Transparent, StrokeLineCap = PenLineCap.Round };
+        _valArc = new Path { Stroke = new SolidColorBrush(Color.Parse("#4CAF50")), StrokeThickness = 8, Fill = Brushes.Transparent, StrokeLineCap = PenLineCap.Round };
+
+        var canvas = new Canvas
+        {
+            Width = 150, Height = 150,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 4, 0, 0),
+            ClipToBounds = true
+        };
+        canvas.Children.Add(_bgArc);
+        canvas.Children.Add(_valArc);
+
+        var mono   = new FontFamily("Consolas, Cascadia Code, Monospace");
+        var subtle = new SolidColorBrush(Color.Parse("#4D5566"));
+
+        _valueText = new TextBlock { FontFamily = mono, FontSize = 20, FontWeight = FontWeight.Bold, Foreground = new SolidColorBrush(Color.Parse("#D8DEE9")), HorizontalAlignment = HorizontalAlignment.Center };
+        _unitText  = new TextBlock { FontFamily = mono, FontSize = 10, Foreground = subtle, HorizontalAlignment = HorizontalAlignment.Center };
+        _nameText  = new TextBlock { FontFamily = mono, FontSize = 10, Foreground = subtle, HorizontalAlignment = HorizontalAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 130, TextAlignment = TextAlignment.Center };
+
+        var stack = new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Spacing = 0,
+            Margin = new Thickness(0, -8, 0, 0)
+        };
+        stack.Children.Add(_valueText);
+        stack.Children.Add(_unitText);
+        stack.Children.Add(_nameText);
+
+        var grid = new Grid();
+        grid.Children.Add(canvas);
+        grid.Children.Add(stack);
+
+        Content = grid;
+
         UpdateGauge();
         UpdateLabels();
     }
-
-    protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        base.OnLoaded(e);
-        UpdateGauge();
-        UpdateLabels();
-    }
-
-    private Path? BgArc    => this.FindControl<Path>("PART_BgArc");
-    private Path? ValArc   => this.FindControl<Path>("PART_ValArc");
-    private TextBlock? ValueText => this.FindControl<TextBlock>("PART_Value");
-    private TextBlock? UnitText  => this.FindControl<TextBlock>("PART_Unit");
-    private TextBlock? NameText  => this.FindControl<TextBlock>("PART_Name");
 
     private void UpdateLabels()
     {
-        if (NameText != null) NameText.Text = Label;
-        if (UnitText  != null) UnitText.Text  = Unit;
+        _nameText.Text = Label;
+        _unitText.Text = Unit;
     }
 
     private void UpdateGauge()
     {
-        var bgArc = BgArc;
-        var valArc = ValArc;
-        if (bgArc == null || valArc == null) return;
-
-        bgArc.Data = BuildArc(CX, CY, R, StartAngle, TotalSweep);
+        _bgArc.Data = BuildArc(CX, CY, R, StartAngle, TotalSweep);
 
         double value = Value;
-        bool noData = value == double.MinValue;
-
-        if (noData)
+        if (value == double.MinValue)
         {
-            valArc.Data = null;
-            if (ValueText != null) ValueText.Text = "—";
-            valArc.Stroke = new SolidColorBrush(Color.Parse("#4CAF50"));
+            _valArc.Data = null;
+            _valueText.Text = "—";
+            _valArc.Stroke = new SolidColorBrush(Color.Parse("#4CAF50"));
         }
         else
         {
             double pct = Max > Min ? Math.Clamp((value - Min) / (Max - Min), 0.0, 1.0) : 0;
             double sweep = pct * TotalSweep;
-            valArc.Data = sweep > 0.5 ? BuildArc(CX, CY, R, StartAngle, sweep) : null;
-            valArc.Stroke = pct switch
+            _valArc.Data = sweep > 0.5 ? BuildArc(CX, CY, R, StartAngle, sweep) : null;
+            _valArc.Stroke = pct switch
             {
                 >= 0.90 => new SolidColorBrush(Color.Parse("#F44336")),
                 >= 0.70 => new SolidColorBrush(Color.Parse("#FFC107")),
                 _       => new SolidColorBrush(Color.Parse("#4CAF50"))
             };
-            if (ValueText != null) ValueText.Text = $"{value:F1}";
+            _valueText.Text = $"{value:F1}";
         }
     }
 
@@ -111,12 +138,7 @@ public partial class GaugeControl : UserControl
             SweepDirection = SweepDirection.Clockwise,
             IsLargeArc = sweepDeg > 180
         };
-        var fig = new PathFigure
-        {
-            StartPoint = start,
-            IsClosed = false,
-            Segments = new PathSegments { seg }
-        };
+        var fig = new PathFigure { StartPoint = start, IsClosed = false, Segments = new PathSegments { seg } };
         return new PathGeometry { Figures = new PathFigures { fig } };
     }
 }
