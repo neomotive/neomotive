@@ -7,6 +7,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Neomotive.Vin.Contracts;
+using Neomotive.Vin.Models;
 using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
@@ -26,11 +28,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private DispatcherTimer? _logTimer;
     private CancellationTokenSource? _opCts;
     private CancellationTokenSource? _pollCts;
+    private readonly IVinDecoder? _vinDecoder;
 
-    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null)
+    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null, IVinDecoder? vinDecoder = null)
     {
         _scanner = scanner;
         _loggingBus = loggingBus;
+        _vinDecoder = vinDecoder;
         if (_loggingBus != null)
             _log = _loggingBus.Log;
 
@@ -150,6 +154,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
                 if (ok)
                 {
+                    IsSimulated = _scanner.IsSimulated;
                     ShowVehicle();
                     _ = RefreshAllAsync(_opCts.Token);
                 }
@@ -178,8 +183,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _opCts?.Cancel();
         StopPolling();
         IsConnected = false;
+        IsSimulated = false;
         StatusText = "Disconnected";
         Vin = null;
+        VinDecode = null;
         Protocol = "";
         ReadinessMonitors = [];
         ModuleDtcGroups = [];
@@ -199,6 +206,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     // ── Vehicle data ──────────────────────────────────────────────────────────
 
+    private bool _isSimulated;
+    public bool IsSimulated
+    {
+        get => _isSimulated;
+        private set { _isSimulated = value; OnPropertyChanged(); }
+    }
+
     private string? _vin;
     public string? Vin
     {
@@ -206,6 +220,28 @@ public class MainWindowViewModel : INotifyPropertyChanged
         private set { _vin = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayVin)); }
     }
     public string DisplayVin => _vin ?? "—";
+
+    private VinDecodeResult? _vinDecode;
+    public VinDecodeResult? VinDecode
+    {
+        get => _vinDecode;
+        private set
+        {
+            _vinDecode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasVinDecode));
+            OnPropertyChanged(nameof(DisplayVinMake));
+            OnPropertyChanged(nameof(DisplayVinModel));
+            OnPropertyChanged(nameof(DisplayVinYear));
+            OnPropertyChanged(nameof(DisplayVinCountry));
+        }
+    }
+
+    public bool HasVinDecode => _vinDecode is { Validation.IsValid: true };
+    public string DisplayVinMake    => _vinDecode?.Make    ?? "—";
+    public string DisplayVinModel   => _vinDecode?.Model   ?? "—";
+    public string DisplayVinYear    => _vinDecode?.Year?.ToString() ?? "—";
+    public string DisplayVinCountry => _vinDecode?.Country ?? "—";
 
     private string _protocol = "";
     public string Protocol
@@ -326,7 +362,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
         try
         {
             var vin = await Task.Run(() => _scanner.ReadVinAsync(ct), ct);
-            Dispatcher.UIThread.Post(() => Vin = vin);
+            VinDecodeResult? decode = null;
+            if (vin != null && _vinDecoder != null)
+                decode = await _vinDecoder.DecodeAsync(vin, ct);
+            Dispatcher.UIThread.Post(() => { Vin = vin; VinDecode = decode; });
         }
         catch (OperationCanceledException) { }
     }

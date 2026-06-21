@@ -9,12 +9,38 @@
     <ScrollViewer>
         <StackPanel Spacing="16">
 
-            <TextBlock Classes="heading" Text="VEHICLE INFO" />
-
             <StackPanel Spacing="4">
                 <TextBlock Classes="label" Text="VIN" />
                 <TextBlock Classes="vin" Text="{Binding DisplayVin}" />
             </StackPanel>
+
+            <!-- VIN decoded info -->
+            <StackPanel Spacing="10" IsVisible="{Binding HasVinDecode}">
+                <Grid ColumnDefinitions="*,*,70">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Classes="label" Text="MAKE" />
+                        <TextBlock Classes="value" Text="{Binding DisplayVinMake}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Classes="label" Text="MODEL" />
+                        <TextBlock Classes="value" Text="{Binding DisplayVinModel}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Classes="label" Text="YEAR" />
+                        <TextBlock Classes="value" Text="{Binding DisplayVinYear}" />
+                    </StackPanel>
+                </Grid>
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="label" Text="COUNTRY OF MANUFACTURE" />
+                    <TextBlock Classes="value" Text="{Binding DisplayVinCountry}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Simulator indicator -->
+            <Border Background="#0D1F0D" BorderBrush="#335033" BorderThickness="1" CornerRadius="4"
+                    Padding="8,5" HorizontalAlignment="Left" IsVisible="{Binding IsSimulated}">
+                <TextBlock Classes="ok" FontSize="11" Text="SIMULATOR" />
+            </Border>
 
             <StackPanel Spacing="4">
                 <TextBlock Classes="label" Text="Protocol" />

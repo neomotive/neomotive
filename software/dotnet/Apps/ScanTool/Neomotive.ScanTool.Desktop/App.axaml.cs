@@ -7,7 +7,13 @@ using Meadow.Foundation.ICs.CAN;
 using Meadow.Hardware;
 using Meadow.Logging;
 using Neomotive.ScanTool.Core;
+using Neomotive.Vin.Contracts;
+using Neomotive.Vin.Core;
+using Neomotive.Vin.Data;
+using Neomotive.Vin.Extensions;
+using Neomotive.Vin.Http;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
@@ -48,7 +54,15 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         Resolver.Services.Add<ICanBus>(loggingBus);
 
         var scanner = new Obd2Scanner(loggingBus);
-        var vm      = new MainWindowViewModel(scanner, loggingBus);
+
+        var vinOpts = new VinOptions();
+        IVinDecoder vinDecoder = new VinDecoder(
+            new VinValidator(),
+            new ManufacturerProvider(),
+            new NhtsaClient(new HttpClient { BaseAddress = vinOpts.NhtsaBaseAddress }),
+            vinOpts);
+
+        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder);
 
         Dispatcher.UIThread.Post(() =>
         {
