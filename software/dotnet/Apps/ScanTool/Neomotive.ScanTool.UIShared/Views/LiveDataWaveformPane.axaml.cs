@@ -49,6 +49,7 @@ public partial class LiveDataWaveformPane : UserControl
     private void Redraw()
     {
         if (DataContext is not MainWindowViewModel vm) return;
+        if (!vm.IsPolling) return;
         var selected = vm.LivePidItems.Where(p => p.IsSelected).ToList();
 
         for (int slot = 0; slot < 4; slot++)

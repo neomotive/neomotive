@@ -16,64 +16,56 @@
 
         <Border Name="Slot0" Height="95" Background="#0E1117"
                 BorderBrush="#1E2530" BorderThickness="0,0,0,1" Margin="0">
-            <Grid ColumnDefinitions="28, *, 28">
-                <TextBlock Name="Slot0LeftLabel"  Grid.Column="0" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
-                <Canvas Name="Slot0Canvas" Grid.Column="1" ClipToBounds="True">
+            <Grid>
+                <Canvas Name="Slot0Canvas" ClipToBounds="True">
                     <Polyline Name="Slot0Primary"   Stroke="#4CAF50" StrokeThickness="1.5"/>
                     <Polyline Name="Slot0Secondary" Stroke="#2196F3" StrokeThickness="1.5"/>
                 </Canvas>
-                <TextBlock Name="Slot0RightLabel" Grid.Column="2" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock Name="Slot0LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
+                <TextBlock Name="Slot0RightLabel" Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
         <Border Name="Slot1" Height="95" Background="#0E1117"
                 BorderBrush="#1E2530" BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="28, *, 28">
-                <TextBlock Name="Slot1LeftLabel"  Grid.Column="0" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
-                <Canvas Name="Slot1Canvas" Grid.Column="1" ClipToBounds="True">
+            <Grid>
+                <Canvas Name="Slot1Canvas" ClipToBounds="True">
                     <Polyline Name="Slot1Primary"   Stroke="#FF9800" StrokeThickness="1.5"/>
                     <Polyline Name="Slot1Secondary" Stroke="#9C27B0" StrokeThickness="1.5"/>
                 </Canvas>
-                <TextBlock Name="Slot1RightLabel" Grid.Column="2" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock Name="Slot1LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
+                <TextBlock Name="Slot1RightLabel" Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
         <Border Name="Slot2" Height="95" Background="#0E1117"
                 BorderBrush="#1E2530" BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="28, *, 28">
-                <TextBlock Name="Slot2LeftLabel"  Grid.Column="0" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
-                <Canvas Name="Slot2Canvas" Grid.Column="1" ClipToBounds="True">
+            <Grid>
+                <Canvas Name="Slot2Canvas" ClipToBounds="True">
                     <Polyline Name="Slot2Primary"   Stroke="#E91E63" StrokeThickness="1.5"/>
                     <Polyline Name="Slot2Secondary" Stroke="#00BCD4" StrokeThickness="1.5"/>
                 </Canvas>
-                <TextBlock Name="Slot2RightLabel" Grid.Column="2" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock Name="Slot2LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
+                <TextBlock Name="Slot2RightLabel" Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
         <Border Name="Slot3" Height="95" Background="#0E1117">
-            <Grid ColumnDefinitions="28, *, 28">
-                <TextBlock Name="Slot3LeftLabel"  Grid.Column="0" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
-                <Canvas Name="Slot3Canvas" Grid.Column="1" ClipToBounds="True">
+            <Grid>
+                <Canvas Name="Slot3Canvas" ClipToBounds="True">
                     <Polyline Name="Slot3Primary"   Stroke="#CDDC39" StrokeThickness="1.5"/>
                     <Polyline Name="Slot3Secondary" Stroke="#FF5722" StrokeThickness="1.5"/>
                 </Canvas>
-                <TextBlock Name="Slot3RightLabel" Grid.Column="2" Classes="xs dim"
-                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                           TextAlignment="Center" TextWrapping="Wrap"/>
+                <TextBlock Name="Slot3LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
+                <TextBlock Name="Slot3RightLabel" Classes="xs dim" TextWrapping="NoWrap"
+                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
