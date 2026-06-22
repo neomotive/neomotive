@@ -7,12 +7,30 @@ sudo apt update
 sudo apt install xorg unclutter fbi feh
 ```
 
+## Directory layout on Pi
+
+The update mechanism uses an A/B slot layout. The Pi deploy root is `/opt/neomotive/`:
+
+```
+/opt/neomotive/
+├── app-current/   ← active binary (what xinitrc launches)
+├── app-previous/  ← last known-good (populated automatically on first update)
+├── app-staging/   ← temporary extraction dir (created/deleted by updater)
+└── config/        ← external catalog JSON overrides (optional)
+```
+
 ## Deploy the app
 
-Include a `splash.png` (800×480) in the published output so the boot splash service has something to show. Copy the published build to the Pi:
+Include a `splash.png` (800×480) in the published output so the boot splash service has something to show. Copy the published build to `app-current/` on the Pi:
 
 ```bash
-scp -r publish/* pi@neomotive-sim:/opt/neomotive/
+# First deployment — run setup-autostart.sh first to create the directories
+scp -r publish/* pi@neomotive-sim:/opt/neomotive/app-current/
+```
+
+`splash.png` can live at `/opt/neomotive/splash.png` (the splash service looks there):
+```bash
+scp publish/splash.png pi@neomotive-sim:/opt/neomotive/splash.png
 ```
 
 ## Configure boot autostart
@@ -29,9 +47,10 @@ sudo reboot
 `setup-autostart.sh` does the following:
 - Installs a systemd autologin drop-in so `pi` logs in on tty1 at boot (no password prompt)
 - Installs `~/.bash_profile` which calls `startx` when logged into tty1
-- Installs `~/.xinitrc` which disables screensaver/blanking and launches the app
+- Installs `~/.xinitrc` which disables screensaver/blanking and launches `/opt/neomotive/app-current/simulator`
 - Installs `/etc/X11/xorg.conf` with an explicit `modesetting` driver so X skips hardware probing
-- Installs and enables `neomotive-splash.service` which shows `/opt/neomotive/splash.png` on the framebuffer before X starts (requires `splash.png` in the deployed output)
+- Installs and enables `neomotive-splash.service` which shows `/opt/neomotive/splash.png` on the framebuffer before X starts
+- Creates `/opt/neomotive/app-current/` and `/opt/neomotive/config/` directories
 
 ## Reduce boot splash time
 

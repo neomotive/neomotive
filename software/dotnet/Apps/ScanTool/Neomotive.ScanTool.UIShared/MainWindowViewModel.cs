@@ -1,14 +1,15 @@
 using Avalonia.Threading;
 using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core;
+using Neomotive.Update;
+using Neomotive.Vin.Contracts;
+using Neomotive.Vin.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Neomotive.Vin.Contracts;
-using Neomotive.Vin.Models;
 using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
@@ -17,7 +18,7 @@ public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, s
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog, LiveData }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog, LiveData, Updates }
     private enum LiveSubView { Table, Gauges, Waveform }
 
     private ScanView _view = ScanView.Connection;
@@ -29,14 +30,23 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private CancellationTokenSource? _opCts;
     private CancellationTokenSource? _pollCts;
     private readonly IVinDecoder? _vinDecoder;
+    private readonly UpdateService? _updateService;
 
-    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null, IVinDecoder? vinDecoder = null)
+    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null, IVinDecoder? vinDecoder = null, UpdateService? updateService = null)
     {
         _scanner = scanner;
         _loggingBus = loggingBus;
         _vinDecoder = vinDecoder;
+        _updateService = updateService;
         if (_loggingBus != null)
             _log = _loggingBus.Log;
+
+        if (_updateService != null)
+        {
+            _updateService.UpdateFound   += m => Dispatcher.UIThread.Post(() => OnUpdateFound(m));
+            _updateService.UpdateApplied += r => Dispatcher.UIThread.Post(() => OnUpdateApplied(r));
+            _updateService.UpdateFailed  += r => Dispatcher.UIThread.Post(() => UpdateStatus = $"Update failed: {r.Reason}");
+        }
 
         LivePidItems = PidRegistry.CommonPids.Select(d => new LivePidItem(d)).ToList();
         foreach (var item in LivePidItems)
@@ -69,6 +79,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsDtcsView => _view == ScanView.Dtcs;
     public bool IsCanLogView => _view == ScanView.CanLog;
     public bool IsLiveDataView => _view == ScanView.LiveData;
+    public bool IsUpdatesView => _view == ScanView.Updates;
 
     public void ShowConnection() { StopPolling(); _view = ScanView.Connection; NotifyViewChanged(); }
     public void ShowVehicle() { StopPolling(); _view = ScanView.Vehicle; NotifyViewChanged(); }
@@ -76,6 +87,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void ShowDtcs() { StopPolling(); _view = ScanView.Dtcs; NotifyViewChanged(); }
     public void ShowCanLog() { StopPolling(); _view = ScanView.CanLog; NotifyViewChanged(); }
     public void ShowLiveData() { _view = ScanView.LiveData; NotifyViewChanged(); }
+    public void ShowUpdates() { StopPolling(); _view = ScanView.Updates; NotifyViewChanged(); }
 
     private void NotifyViewChanged()
     {
@@ -85,6 +97,75 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsDtcsView));
         OnPropertyChanged(nameof(IsCanLogView));
         OnPropertyChanged(nameof(IsLiveDataView));
+        OnPropertyChanged(nameof(IsUpdatesView));
+    }
+
+    // ── Update service ────────────────────────────────────────────────────────
+
+    private string _updateStatus = "No update check performed.";
+    private bool _isCheckingUpdate;
+    private bool _hasUpdate;
+
+    public string UpdateStatus
+    {
+        get => _updateStatus;
+        private set { _updateStatus = value; OnPropertyChanged(); }
+    }
+
+    public bool IsCheckingUpdate
+    {
+        get => _isCheckingUpdate;
+        private set { _isCheckingUpdate = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanCheckUpdate)); }
+    }
+
+    public bool HasUpdate
+    {
+        get => _hasUpdate;
+        private set { _hasUpdate = value; OnPropertyChanged(); }
+    }
+
+    public bool CanCheckUpdate => !_isCheckingUpdate && _updateService != null;
+
+    public async Task CheckForUpdatesAsync()
+    {
+        if (_updateService == null || _isCheckingUpdate) return;
+        IsCheckingUpdate = true;
+        UpdateStatus = "Checking for updates…";
+        HasUpdate = false;
+        try
+        {
+            var result = await _updateService.CheckNetworkAsync();
+            switch (result)
+            {
+                case UpdateResult.NotAvailable:
+                    UpdateStatus = "You are up to date.";
+                    break;
+                case UpdateResult.Applied r:
+                    OnUpdateApplied(r);
+                    break;
+                case UpdateResult.Failed f:
+                    UpdateStatus = $"Update check failed: {f.Reason}";
+                    break;
+            }
+        }
+        finally
+        {
+            IsCheckingUpdate = false;
+        }
+    }
+
+    private void OnUpdateFound(UpdateManifest manifest)
+    {
+        HasUpdate = true;
+        UpdateStatus = $"USB update found: v{manifest.Version}. Applying…";
+    }
+
+    private void OnUpdateApplied(UpdateResult.Applied result)
+    {
+        HasUpdate = false;
+        UpdateStatus = result.RequiresRestart
+            ? $"v{result.Manifest.Version} staged. Restart to apply."
+            : $"v{result.Manifest.Version} applied.";
     }
 
     // ── Live Data sub-views ───────────────────────────────────────────────────

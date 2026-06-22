@@ -19,5 +19,4 @@ unclutter -idle 0 -root &
 # The device isn't always present at the moment X starts during early boot.
 until [ -e /dev/spidev0.0 ]; do sleep 0.2; done
 
-cd /opt/neomotive
-exec ./simulator > /tmp/simulator.log 2>&1
+exec /opt/neomotive/app-current/simulator > /tmp/simulator.log 2>&1

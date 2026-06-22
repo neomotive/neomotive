@@ -65,9 +65,19 @@ sudo cp "$SCRIPTS_DIR/neomotive-splash.service" /etc/systemd/system/neomotive-sp
 sudo systemctl enable neomotive-splash.service
 echo "Installed and enabled neomotive-splash.service"
 
-# 8. Reload systemd so all changes take effect on next boot
+# 8. Create A/B update directory layout under /opt/neomotive/
+#    app-current/ is where the app binary lives; app-previous/ is the rollback slot.
+#    The update mechanism extracts new builds to app-staging/ and promotes them.
+mkdir -p /opt/neomotive/app-current
+mkdir -p /opt/neomotive/config
+echo "Created /opt/neomotive/app-current/ and /opt/neomotive/config/"
+
+# 9. Reload systemd so all changes take effect on next boot
 sudo systemctl daemon-reload
 
 echo ""
 echo "Done. Reboot the Pi to start the app automatically on boot."
 echo "  sudo reboot"
+echo ""
+echo "IMPORTANT: Deploy the app binary to /opt/neomotive/app-current/ (not /opt/neomotive/ directly)."
+echo "  See deployment.md for details."

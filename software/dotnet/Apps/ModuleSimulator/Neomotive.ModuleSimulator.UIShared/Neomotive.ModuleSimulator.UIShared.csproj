@@ -16,5 +16,6 @@
     <ProjectReference Include="..\Neomotive.ControlModule\Neomotive.ControlModule.csproj" />
     <ProjectReference Include="..\Neomotive.ModuleSimulator.Core\Neomotive.ModuleSimulator.Core.csproj" />
     <ProjectReference Include="..\..\Shared\Neomotive.UI.Styles\Neomotive.UI.Styles.csproj" />
+    <ProjectReference Include="..\..\Shared\Neomotive.Update\Neomotive.Update.csproj" />
   </ItemGroup>
 </Project>

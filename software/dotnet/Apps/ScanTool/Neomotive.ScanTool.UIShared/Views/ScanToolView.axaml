@@ -21,6 +21,7 @@
                     <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
                     <Button Content="Live Data"  Classes="tab" Classes.active="{Binding IsLiveDataView}"  Click="OnShowLiveData" />
                     <Button Content="CAN Log"    Classes="tab" Classes.active="{Binding IsCanLogView}"     Click="OnShowCanLog" />
+                    <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
 
                 <!-- Connection state indicator -->
@@ -50,6 +51,7 @@
             <views:DtcsView       IsVisible="{Binding IsDtcsView}" />
             <views:CanView        IsVisible="{Binding IsCanLogView}" />
             <views:LiveDataView   IsVisible="{Binding IsLiveDataView}" />
+            <views:UpdatesView    IsVisible="{Binding IsUpdatesView}" />
         </Grid>
 
     </Grid>

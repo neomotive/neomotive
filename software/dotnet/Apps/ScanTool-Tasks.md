@@ -269,3 +269,46 @@
 
 - [x] **O1** Change `RefreshAllAsync` from `Task.WhenAll` to sequential `await`s — OBD2 is request-response; concurrent requests cause intermittent dropped responses
 - [x] **O2** Split `RefreshVinAsync` into two UI posts: post `Vin` immediately after `ReadVinAsync`, then post `VinDecode` separately after `DecodeAsync` — prevents NHTSA latency (up to 10 s) from delaying the VIN display itself
+
+---
+
+## Group P — Update mechanism
+
+- [x] **P1** Create `Neomotive.Update` shared library (`software/dotnet/Apps/Shared/Neomotive.Update/`)
+  - `UpdateManifest`, `UpdateFileEntry`, `UpdateState`, `UpdateResult` models
+  - `UpdatePackage` — zip extraction + SHA256 verification; cleans staging on failure
+  - `UpdateApplicator` — A/B slot swap (`app-current/`, `app-previous/`, `app-staging/`); platform-aware restart behavior
+  - `IUpdateSource` interface
+  - `UsbUpdateSource` — polls removable drives (Windows) or `/media/` (Linux) every 5 s
+  - `NetworkUpdateSource` — HTTP GET version manifest; downloads + hash-verifies zip
+  - `UpdateService` — top-level orchestrator; USB watcher timer; events: `UpdateFound`, `UpdateApplied`, `UpdateFailed`
+
+- [x] **P2** `Neomotive.Vin` catalog file override
+  - Add `ExternalCatalogPath` to `VinOptions`
+  - `ManufacturerProvider` and `ModelCatalogProvider` check filesystem path before embedded resource
+  - `ServiceCollectionExtensions` passes `VinOptions` into provider constructors
+
+- [x] **P3** ScanTool integration
+  - `<Version>1.0.0</Version>` in `Neomotive.ScanTool.Desktop.csproj`
+  - `AppConfig` + `neomotive.config.json` reader in `App.axaml.cs`
+  - `UpdateService` wired in `App.axaml.cs`; `ExternalCatalogPath` set from base dir
+  - `ScanView.Updates` enum value; `IsUpdatesView`, `ShowUpdates()`, `CheckForUpdatesAsync()`; update event handlers
+  - `UpdatesView.axaml` + `UpdatesView.axaml.cs` — status box + "Check for Updates" button
+  - Tab button wired in `ScanToolView.axaml` + `ScanToolView.axaml.cs`
+
+- [x] **P4** Simulator integration (parallel to P3)
+  - `<Version>1.0.0</Version>` in Desktop + RaspberryPi `.csproj`
+  - `AppConfig` + `neomotive.config.json` reader in `App.axaml.cs`
+  - `UpdateService` wired in `App.axaml.cs`
+  - Update properties (`UpdateStatus`, `CanCheckUpdate`, `CheckForUpdatesAsync()`) on `MainWindowViewModel`
+  - Updates section added to bottom of `ConfigView.axaml`; `OnCheckForUpdates` handler in `ConfigView.axaml.cs`
+
+- [x] **P5** Pi deployment updated for A/B layout
+  - `~/.xinitrc` now execs `/opt/neomotive/app-current/simulator` (not `./simulator`)
+  - `setup-autostart.sh` creates `app-current/` and `config/` directories
+  - `deployment.md` updated with new directory layout and deploy instructions
+
+- [x] **P6** `create-update-package.ps1` build script (`software/dotnet/scripts/`)
+  - Params: `-Target`, `-Platform`, `-Version`, `-OutputDir`
+  - `dotnet publish` self-contained → hashes all files → writes `update.json` → zips
+  - Updates `version-manifest.json` (served by update server) with version + URL + zip SHA256

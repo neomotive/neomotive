@@ -2,6 +2,7 @@ using Avalonia.Threading;
 using Meadow;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
+using Neomotive.Update;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -53,14 +54,23 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private int _lastCanCount = -1;
     private readonly SimulatorConfig _config;
     private readonly HashSet<string> _commandDtcCodes = new();
+    private UpdateService? _updateService;
 
     public InputsViewModel InputsVm { get; private set; }
 
-    public MainWindowViewModel(ISimulatorInputs? inputs, string feedbackText = "")
+    public MainWindowViewModel(ISimulatorInputs? inputs, string feedbackText = "", UpdateService? updateService = null)
     {
         _inputs = inputs;
         FeedbackText = feedbackText;
         _config = ConfigManager.Load();
+        _updateService = updateService;
+
+        if (_updateService != null)
+        {
+            _updateService.UpdateFound   += m => Dispatcher.UIThread.Post(() => OnUpdateFound(m));
+            _updateService.UpdateApplied += r => Dispatcher.UIThread.Post(() => OnUpdateApplied(r));
+            _updateService.UpdateFailed  += r => Dispatcher.UIThread.Post(() => UpdateStatus = $"Update failed: {r.Reason}");
+        }
         if (_config.QuickDtcs.Count == 0)
         {
             SeedDefaultQuickDtcs();
@@ -1212,4 +1222,58 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    // ── Update service ────────────────────────────────────────────────────────
+
+    private string _updateStatus = "No update check performed.";
+    private bool _isCheckingUpdate;
+
+    public string UpdateStatus
+    {
+        get => _updateStatus;
+        private set { _updateStatus = value; OnPropertyChanged(); }
+    }
+
+    public bool IsCheckingUpdate
+    {
+        get => _isCheckingUpdate;
+        private set { _isCheckingUpdate = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanCheckUpdate)); }
+    }
+
+    public bool CanCheckUpdate => !_isCheckingUpdate && _updateService != null;
+
+    public async Task CheckForUpdatesAsync()
+    {
+        if (_updateService == null || _isCheckingUpdate) return;
+        IsCheckingUpdate = true;
+        UpdateStatus = "Checking for updates…";
+        try
+        {
+            var result = await _updateService.CheckNetworkAsync();
+            switch (result)
+            {
+                case UpdateResult.NotAvailable:
+                    UpdateStatus = "You are up to date.";
+                    break;
+                case UpdateResult.Applied r:
+                    OnUpdateApplied(r);
+                    break;
+                case UpdateResult.Failed f:
+                    UpdateStatus = $"Update check failed: {f.Reason}";
+                    break;
+            }
+        }
+        finally
+        {
+            IsCheckingUpdate = false;
+        }
+    }
+
+    private void OnUpdateFound(UpdateManifest manifest)
+        => UpdateStatus = $"USB update found: v{manifest.Version}. Applying…";
+
+    private void OnUpdateApplied(UpdateResult.Applied result)
+        => UpdateStatus = result.RequiresRestart
+            ? $"v{result.Manifest.Version} staged. Restart to apply."
+            : $"v{result.Manifest.Version} applied.";
 }

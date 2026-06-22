@@ -7,13 +7,17 @@ using Meadow.Foundation.ICs.CAN;
 using Meadow.Hardware;
 using Meadow.Logging;
 using Neomotive.ScanTool.Core;
+using Neomotive.Update;
 using Neomotive.Vin.Contracts;
 using Neomotive.Vin.Core;
 using Neomotive.Vin.Data;
 using Neomotive.Vin.Extensions;
 using Neomotive.Vin.Http;
 using System;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
@@ -36,6 +40,15 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         Resolver.Log.AddProvider(new DebugLogProvider());
         Resolver.Log.LogLevel = LogLevel.Trace;
 
+        // Base dir is the parent of app-current/ (or the publish dir itself for dev runs)
+        var appDir = AppContext.BaseDirectory;
+        var baseDir = Path.GetFileName(appDir.TrimEnd(Path.DirectorySeparatorChar))
+                          .Equals("app-current", StringComparison.OrdinalIgnoreCase)
+            ? Path.GetDirectoryName(appDir)!
+            : appDir;
+
+        var appConfig = LoadAppConfig(baseDir);
+
         ICanBus bus;
         try
         {
@@ -55,14 +68,26 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
 
         var scanner = new Obd2Scanner(loggingBus);
 
-        var vinOpts = new VinOptions();
+        var vinOpts = new VinOptions
+        {
+            ExternalCatalogPath = Path.Combine(baseDir, "config")
+        };
         IVinDecoder vinDecoder = new VinDecoder(
             new VinValidator(),
-            new ManufacturerProvider(),
+            new ManufacturerProvider(vinOpts),
             new NhtsaClient(new HttpClient { BaseAddress = vinOpts.NhtsaBaseAddress }),
             vinOpts);
 
-        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder);
+        var currentVersion = typeof(App).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "0.0.0";
+
+        var updateService = new UpdateService("scantool", currentVersion, baseDir);
+        updateService.AcknowledgeStartup();
+        updateService.Configure(appConfig.UpdateServerUrl);
+        updateService.StartUsbWatcher();
+
+        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder, updateService);
 
         Dispatcher.UIThread.Post(() =>
         {
@@ -72,6 +97,18 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         });
 
         return base.MeadowInitialize();
+    }
+
+    private static AppConfig LoadAppConfig(string baseDir)
+    {
+        var path = Path.Combine(baseDir, "neomotive.config.json");
+        if (!File.Exists(path)) return new AppConfig();
+        try
+        {
+            var json = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
+        }
+        catch { return new AppConfig(); }
     }
 
     public override void OnFrameworkInitializationCompleted()

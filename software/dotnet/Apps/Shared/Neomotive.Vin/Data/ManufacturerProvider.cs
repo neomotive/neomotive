@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using Neomotive.Vin.Contracts;
+using Neomotive.Vin.Extensions;
 using Neomotive.Vin.Models;
 
 namespace Neomotive.Vin.Data;
@@ -8,13 +9,31 @@ namespace Neomotive.Vin.Data;
 public sealed class ManufacturerProvider : IManufacturerProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-    private static readonly string ResourceName = "Neomotive.Vin.Resources.manufacturers.json";
+    private const string ResourceName = "Neomotive.Vin.Resources.manufacturers.json";
+    private const string FileName = "manufacturers.json";
 
-    private readonly Lazy<IReadOnlyDictionary<string, ManufacturerInfo>> _byWmi = new(Load);
+    private readonly Lazy<IReadOnlyDictionary<string, ManufacturerInfo>> _byWmi;
 
-    private static IReadOnlyDictionary<string, ManufacturerInfo> Load()
+    public ManufacturerProvider() : this(null) { }
+
+    public ManufacturerProvider(VinOptions? options)
     {
-        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName);
+        var externalPath = options?.ExternalCatalogPath;
+        _byWmi = new(() => Load(externalPath));
+    }
+
+    private static IReadOnlyDictionary<string, ManufacturerInfo> Load(string? externalCatalogPath)
+    {
+        Stream? stream = null;
+
+        if (!string.IsNullOrEmpty(externalCatalogPath))
+        {
+            var externalFile = Path.Combine(externalCatalogPath, FileName);
+            if (File.Exists(externalFile))
+                stream = File.OpenRead(externalFile);
+        }
+
+        stream ??= Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName);
         if (stream == null) return new Dictionary<string, ManufacturerInfo>();
 
         using var reader = new StreamReader(stream);

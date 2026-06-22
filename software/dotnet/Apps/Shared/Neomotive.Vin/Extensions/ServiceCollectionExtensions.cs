@@ -17,8 +17,8 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(options);
         services.AddSingleton<IVinValidator, VinValidator>();
-        services.AddSingleton<IManufacturerProvider, ManufacturerProvider>();
-        services.AddSingleton<IModelCatalogProvider, ModelCatalogProvider>();
+        services.AddSingleton<IManufacturerProvider>(sp => new ManufacturerProvider(sp.GetRequiredService<VinOptions>()));
+        services.AddSingleton<IModelCatalogProvider>(sp => new ModelCatalogProvider(sp.GetRequiredService<VinOptions>()));
         services.AddSingleton<IVinDecoder, VinDecoder>();
         services.AddSingleton<IVinGenerator, VinGenerator>();
 

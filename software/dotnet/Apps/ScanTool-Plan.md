@@ -154,7 +154,42 @@ The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles
 3. Security access flow (seed/key) UI
 4. ODX/CDD file import for PID/DTC descriptions *(stretch goal)*
 
-### Phase 5 — Cloud Integration
+### Phase 5 — Update Mechanism
+
+**Goal:** Reliable, rollback-safe OTA and USB updates for app binaries and config files (VIN catalog). Applies to both ScanTool and ModuleSimulator independently.
+
+**Completed:**
+- `Neomotive.Update` shared library (`software/dotnet/Apps/Shared/Neomotive.Update/`)
+  - A/B slot swap (`app-current/` ↔ `app-previous/` with `app-staging/` as extraction target)
+  - SHA256 verification of every file before committing a swap
+  - `UsbUpdateSource` — polls removable drives every 5 s; auto-detects `neomotive-update*.zip`
+  - `NetworkUpdateSource` — HTTP GET version manifest; downloads + verifies zip on demand
+  - `UpdateService` orchestrator with `UpdateFound` / `UpdateApplied` / `UpdateFailed` events
+- `Neomotive.Vin` catalog override: `VinOptions.ExternalCatalogPath` checked before embedded resources
+- ScanTool: "Updates" 7th tab (`UpdatesView`); `UpdateService` wired in `App.axaml.cs`; `neomotive.config.json` for server URL
+- Simulator: Updates section in `ConfigView`; same `UpdateService` wiring in Desktop + RaspberryPi
+- Pi scripts: `xinitrc` launches `app-current/simulator`; `setup-autostart.sh` creates slot dirs; `deployment.md` updated
+- `create-update-package.ps1` — publishes self-contained, hashes files, writes `update.json`, zips, updates `version-manifest.json`
+
+**Package format:**
+```
+neomotive-update-{version}-{target}-{platform}.zip
+├── update.json          ← manifest (version, target, platform, type, file hashes)
+├── app/                 ← optional: full self-contained publish output
+└── config/              ← optional: catalog JSON overrides
+```
+
+**Windows behavior:** Update staged while app is running; applied on next restart (can't replace running EXE).
+**Pi behavior:** Update applied immediately; app self-restarts.
+
+**Remaining:**
+- Hardening: HTTPS + package signing for cloud distribution
+- Automated health-check rollback (currently manual via slot swap)
+- ScanTool RaspberryPi entry point wiring (when Phase 2 Pi project is created)
+
+---
+
+### Phase 6 — Cloud Integration
 
 **Goal:** Push session data and DTCs to a cloud service (details TBD).
 

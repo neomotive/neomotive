@@ -97,6 +97,21 @@
                 <TextBlock Classes="label" Text="{Binding ConfigFeedback}" />
             </StackPanel>
 
+            <!-- Updates -->
+            <Rectangle Height="1" Fill="#2E3440" Margin="0,8,0,10" />
+            <TextBlock Classes="heading" Text="SOFTWARE UPDATES" Margin="0,0,0,6" />
+            <Border Background="#1A1E24" BorderBrush="#2E3440" BorderThickness="1" Padding="10,8" Margin="0,0,0,8">
+                <TextBlock Text="{Binding UpdateStatus}" TextWrapping="Wrap"
+                           Foreground="#C8CED8" />
+            </Border>
+            <Button Content="Check for Updates"
+                    Classes="action-sm"
+                    IsEnabled="{Binding CanCheckUpdate}"
+                    Click="OnCheckForUpdates"
+                    Margin="0,0,0,6" />
+            <TextBlock Classes="muted xs" FontStyle="Italic" TextWrapping="Wrap"
+                       Text="USB: Insert a drive with neomotive-update*.zip — detected automatically." />
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

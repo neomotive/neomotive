@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using Neomotive.Vin.Extensions;
 using Neomotive.Vin.Models;
 
 namespace Neomotive.Vin.Data;
@@ -7,13 +8,31 @@ namespace Neomotive.Vin.Data;
 internal sealed class ModelCatalogProvider : IModelCatalogProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-    private static readonly string ResourceName = "Neomotive.Vin.Resources.model-catalog.json";
+    private const string ResourceName = "Neomotive.Vin.Resources.model-catalog.json";
+    private const string FileName = "model-catalog.json";
 
-    private readonly Lazy<IReadOnlyList<MakeCatalogEntry>> _entries = new(Load);
+    private readonly Lazy<IReadOnlyList<MakeCatalogEntry>> _entries;
 
-    private static IReadOnlyList<MakeCatalogEntry> Load()
+    public ModelCatalogProvider() : this(null) { }
+
+    public ModelCatalogProvider(VinOptions? options)
     {
-        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName);
+        var externalPath = options?.ExternalCatalogPath;
+        _entries = new(() => Load(externalPath));
+    }
+
+    private static IReadOnlyList<MakeCatalogEntry> Load(string? externalCatalogPath)
+    {
+        Stream? stream = null;
+
+        if (!string.IsNullOrEmpty(externalCatalogPath))
+        {
+            var externalFile = Path.Combine(externalCatalogPath, FileName);
+            if (File.Exists(externalFile))
+                stream = File.OpenRead(externalFile);
+        }
+
+        stream ??= Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName);
         if (stream == null) return [];
 
         using var reader = new StreamReader(stream);

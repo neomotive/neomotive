@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.UpdatesView"
+             x:DataType="local:MainWindowViewModel"
+             Padding="20,16">
+
+    <StackPanel Spacing="16">
+
+        <TextBlock Classes="heading" Text="SOFTWARE UPDATES" />
+
+        <!-- Status area -->
+        <Border Background="#1A1E24" BorderBrush="#2E3440" BorderThickness="1" Padding="14,10">
+            <TextBlock Text="{Binding UpdateStatus}"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource BrushFgDefault}" />
+        </Border>
+
+        <!-- Network check button -->
+        <Button Content="Check for Updates"
+                Classes="action-sm"
+                IsEnabled="{Binding CanCheckUpdate}"
+                Click="OnCheckForUpdates" />
+
+        <!-- USB hint -->
+        <TextBlock Classes="dim"
+                   TextWrapping="Wrap"
+                   Text="USB: Insert a drive containing neomotive-update*.zip — updates are detected and applied automatically." />
+
+    </StackPanel>
+
+</UserControl>
