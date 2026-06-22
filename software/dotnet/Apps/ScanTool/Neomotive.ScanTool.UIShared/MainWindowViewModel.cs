@@ -350,10 +350,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private async Task RefreshAllAsync(CancellationToken ct)
     {
-        await Task.WhenAll(
-            RefreshVinAsync(ct),
-            RefreshReadinessAsync(ct),
-            RefreshDtcsByModuleAsync(ct));
+        await RefreshVinAsync(ct);
+        await RefreshReadinessAsync(ct);
+        await RefreshDtcsByModuleAsync(ct);
         Dispatcher.UIThread.Post(() => Protocol = "ISO 15765-4 (CAN)");
     }
 
@@ -362,10 +361,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
         try
         {
             var vin = await Task.Run(() => _scanner.ReadVinAsync(ct), ct);
-            VinDecodeResult? decode = null;
+            Dispatcher.UIThread.Post(() => Vin = vin);
             if (vin != null && _vinDecoder != null)
-                decode = await _vinDecoder.DecodeAsync(vin, ct);
-            Dispatcher.UIThread.Post(() => { Vin = vin; VinDecode = decode; });
+            {
+                var decode = await _vinDecoder.DecodeAsync(vin, ct);
+                Dispatcher.UIThread.Post(() => VinDecode = decode);
+            }
         }
         catch (OperationCanceledException) { }
     }
