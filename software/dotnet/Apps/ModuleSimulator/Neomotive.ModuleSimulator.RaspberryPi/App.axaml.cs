@@ -4,7 +4,11 @@ using Meadow;
 using Meadow.Avalonia;
 using Meadow.Hardware;
 using Neomotive.ModuleSimulator.UI;
+using Neomotive.Update;
 using System;
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Neomotive.ModuleSimulator;
@@ -15,6 +19,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
     private readonly TaskCompletionSource<SimulatorInputBoard?> _inputsReady = new();
     private WaveshareDualCanHat _hat;
     private MainWindowViewModel? _mainVm;
+    private UpdateService? _updateService;
 
     public override void Initialize()
     {
@@ -25,6 +30,23 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
     public override Task MeadowInitialize()
     {
         Console.WriteLine("Initializing Meadow application...");
+
+        var appDir = AppContext.BaseDirectory;
+        var baseDir = Path.GetFileName(appDir.TrimEnd(Path.DirectorySeparatorChar))
+                          .Equals("app-current", StringComparison.OrdinalIgnoreCase)
+            ? Path.GetDirectoryName(appDir)!
+            : appDir;
+
+        ConfigManager.SetDataDir(Path.Combine(baseDir, "data"));
+
+        var currentVersion = typeof(App).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "0.0.0";
+
+        _updateService = new UpdateService("simulator", currentVersion, baseDir);
+        _updateService.AcknowledgeStartup();
+        _updateService.Configure(LoadUpdateServerUrl(baseDir));
+        _updateService.StartUsbWatcher();
 
         Resolver.Log.AddProvider(new Meadow.Logging.UdpLogger());
 
@@ -62,7 +84,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         {
             Resolver.Log.LogLevel = Meadow.Logging.LogLevel.Trace;
 
-            _mainVm = new MainWindowViewModel(null, "Connecting to hardware...");
+            _mainVm = new MainWindowViewModel(null, "Connecting to hardware...", _updateService);
             desktop.MainWindow = new MainWindow(_mainVm);
             _ = WireInputsAsync();
         }
@@ -74,5 +96,17 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         var inputs = await _inputsReady.Task;
         if (inputs != null)
             Avalonia.Threading.Dispatcher.UIThread.Post(() => _mainVm?.SetInputs(inputs));
+    }
+
+    private static string? LoadUpdateServerUrl(string baseDir)
+    {
+        var path = Path.Combine(baseDir, "neomotive.config.json");
+        if (!File.Exists(path)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            return doc.RootElement.TryGetProperty("updateServerUrl", out var el) ? el.GetString() : null;
+        }
+        catch { return null; }
     }
 }

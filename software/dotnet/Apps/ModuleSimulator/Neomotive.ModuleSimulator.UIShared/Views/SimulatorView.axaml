@@ -65,6 +65,7 @@
                         <Button Content="Inputs"   Classes="tab" Classes.active="{Binding IsInputsView}"   Click="OnShowInputs" />
                         <Button Content="Config"   Classes="tab" Classes.active="{Binding IsConfigView}"   Click="OnShowConfig" />
                         <Button Content="CAN"      Classes="tab" Classes.active="{Binding IsCanView}"      Click="OnShowCan" />
+                        <Button Content="Updates"  Classes="tab" Classes.active="{Binding IsUpdatesView}"  Click="OnShowUpdates" />
                         <TextBlock Classes="muted xs" Text="{Binding SettingsPanelTitle}"
                                    VerticalAlignment="Center" Margin="12,0,0,0" />
                     </StackPanel>
@@ -78,6 +79,7 @@
                     <views:InputsView   IsVisible="{Binding IsInputsView}" />
                     <views:ConfigView   IsVisible="{Binding IsConfigView}" />
                     <views:CanView      IsVisible="{Binding IsCanView}" />
+                    <views:UpdatesView  IsVisible="{Binding IsUpdatesView}" />
                 </Grid>
 
             </Grid>

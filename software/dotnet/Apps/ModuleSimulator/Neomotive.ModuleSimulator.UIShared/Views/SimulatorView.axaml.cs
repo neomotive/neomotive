@@ -43,6 +43,7 @@ public partial class SimulatorView : UserControl
     private void OnShowInputs(object? sender, RoutedEventArgs e)   => Vm?.ShowInputs();
     private void OnShowConfig(object? sender, RoutedEventArgs e)   => Vm?.ShowConfig();
     private void OnShowCan(object? sender, RoutedEventArgs e)      => Vm?.ShowCan();
+    private void OnShowUpdates(object? sender, RoutedEventArgs e)  => Vm?.ShowUpdates();
 
     private void OnClearCanLog(object? sender, RoutedEventArgs e)  => Vm?.ClearCanLog();
 

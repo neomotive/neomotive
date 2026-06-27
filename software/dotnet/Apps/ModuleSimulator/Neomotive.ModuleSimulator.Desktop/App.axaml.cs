@@ -35,6 +35,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
             ? Path.GetDirectoryName(appDir)!
             : appDir;
 
+        ConfigManager.SetDataDir(Path.Combine(baseDir, "data"));
         var appConfig = LoadAppConfig(baseDir);
 
         var currentVersion = typeof(App).Assembly

@@ -49,15 +49,26 @@ public class SimulatorConfig
 
 public static class ConfigManager
 {
-    private static readonly string ConfigPath =
-        Path.Combine(AppContext.BaseDirectory, "neoteric.config.json");
-
+    private static string _dataDir = AppContext.BaseDirectory;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+    private static string ConfigPath => Path.Combine(_dataDir, "neoteric.config.json");
+
+    public static void SetDataDir(string path)
+    {
+        _dataDir = path;
+        Directory.CreateDirectory(path);
+    }
 
     public static SimulatorConfig Load()
     {
         try
         {
+            // One-time migration: move config from old location (next to binary) into data dir
+            var legacyPath = Path.Combine(AppContext.BaseDirectory, "neoteric.config.json");
+            if (!File.Exists(ConfigPath) && File.Exists(legacyPath))
+                File.Copy(legacyPath, ConfigPath);
+
             if (File.Exists(ConfigPath))
             {
                 var json = File.ReadAllText(ConfigPath);

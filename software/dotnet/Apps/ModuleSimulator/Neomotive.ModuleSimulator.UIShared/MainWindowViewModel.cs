@@ -32,7 +32,7 @@ public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, s
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private enum SettingsView { Data, Monitors, Dtcs, Can, Inputs, Config }
+    private enum SettingsView { Data, Monitors, Dtcs, Can, Inputs, Config, Updates }
     private enum SelectedModule { Pcm, Tcu }
 
     private record DtcHolder(
@@ -169,6 +169,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsCanView => _view == SettingsView.Can;
     public bool IsInputsView => _view == SettingsView.Inputs;
     public bool IsConfigView => _view == SettingsView.Config;
+    public bool IsUpdatesView => _view == SettingsView.Updates;
     public bool ShowMonitorsTab => _selectedModule == SelectedModule.Pcm;
 
     public string SettingsPanelTitle => (_selectedModule, _view) switch
@@ -372,6 +373,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void ShowCan()  { _view = SettingsView.Can;  Refresh(); }
     public void ShowInputs() { _view = SettingsView.Inputs; Refresh(); }
     public void ShowConfig() { _view = SettingsView.Config; Refresh(); }
+    public void ShowUpdates() { _view = SettingsView.Updates; Refresh(); }
 
     public void ExecuteCommand()
     {
@@ -725,6 +727,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsCanView));
         OnPropertyChanged(nameof(IsInputsView));
         OnPropertyChanged(nameof(IsConfigView));
+        OnPropertyChanged(nameof(IsUpdatesView));
         OnPropertyChanged(nameof(ShowMonitorsTab));
         OnPropertyChanged(nameof(SettingsPanelTitle));
         OnPropertyChanged(nameof(MilOn));
