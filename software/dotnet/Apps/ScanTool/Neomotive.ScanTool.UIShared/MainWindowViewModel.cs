@@ -1,5 +1,4 @@
 using Avalonia.Threading;
-using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core;
 using Neomotive.Update;
 using Neomotive.Vin.Contracts;
@@ -43,9 +42,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         if (_updateService != null)
         {
-            _updateService.UpdateFound   += m => Dispatcher.UIThread.Post(() => OnUpdateFound(m));
+            _updateService.UpdateFound += m => Dispatcher.UIThread.Post(() => OnUpdateFound(m));
             _updateService.UpdateApplied += r => Dispatcher.UIThread.Post(() => OnUpdateApplied(r));
-            _updateService.UpdateFailed  += r => Dispatcher.UIThread.Post(() => UpdateStatus = $"Update failed: {r.Reason}");
+            _updateService.UpdateFailed += r => Dispatcher.UIThread.Post(() => UpdateStatus = $"Update failed: {r.Reason}");
         }
 
         LivePidItems = PidRegistry.CommonPids.Select(d => new LivePidItem(d)).ToList();
@@ -319,9 +318,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public bool HasVinDecode => _vinDecode is { Validation.IsValid: true };
-    public string DisplayVinMake    => _vinDecode?.Make    ?? "—";
-    public string DisplayVinModel   => _vinDecode?.Model   ?? "—";
-    public string DisplayVinYear    => _vinDecode?.Year?.ToString() ?? "—";
+    public string DisplayVinMake => _vinDecode?.Make ?? "—";
+    public string DisplayVinModel => _vinDecode?.Model ?? "—";
+    public string DisplayVinYear => _vinDecode?.Year?.ToString() ?? "—";
     public string DisplayVinCountry => _vinDecode?.Country ?? "—";
 
     private string _protocol = "";

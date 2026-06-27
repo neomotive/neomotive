@@ -48,6 +48,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
             : appDir;
 
         var appConfig = LoadAppConfig(baseDir);
+        Directory.CreateDirectory(Path.Combine(baseDir, "data"));
 
         ICanBus bus;
         try

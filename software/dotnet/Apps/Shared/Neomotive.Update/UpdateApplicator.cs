@@ -18,6 +18,7 @@ public sealed class UpdateApplicator(string baseDir)
     public string PreviousDir => Path.Combine(baseDir, "app-previous");
     public string StagingDir  => Path.Combine(baseDir, "app-staging");
     public string ConfigDir   => Path.Combine(baseDir, "config");
+    public string DataDir     => Path.Combine(baseDir, "data");
     private string StateFile  => Path.Combine(baseDir, "update-state.json");
 
     public UpdateState ReadState()
