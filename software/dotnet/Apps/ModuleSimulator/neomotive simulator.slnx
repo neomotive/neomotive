@@ -16,6 +16,8 @@
   <Folder Name="/Shared/">
     <Project Path="../Shared/Neomotive.UI.Styles/Neomotive.UI.Styles.csproj" />
     <Project Path="../Shared/Neomotive.Obd2/Neomotive.Obd2.csproj" />
+    <Project Path="../Shared/Neomotive.Update/Neomotive.Update.csproj" />
+    <Project Path="../Shared/Neomotive.Vin/Neomotive.Vin.csproj" />
   </Folder>
   <Folder Name="/_refs/">
     <Project Path="../../../../../wilderness/Meadow.Contracts/Source/Meadow.Contracts/Meadow.Contracts.csproj">

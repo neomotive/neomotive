@@ -19,4 +19,5 @@ public partial class UpdatesView : UserControl
     private MainWindowViewModel Vm => (MainWindowViewModel)DataContext!;
 
     private void OnCheckForUpdates(object? sender, RoutedEventArgs e) => _ = Vm.CheckForUpdatesAsync();
+    private void OnApplyUsbUpdate(object? sender, RoutedEventArgs e)  => _ = Vm.ApplyUsbUpdateAsync();
 }

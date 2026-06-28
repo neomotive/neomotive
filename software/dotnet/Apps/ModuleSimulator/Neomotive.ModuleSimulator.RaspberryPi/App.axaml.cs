@@ -16,7 +16,7 @@ namespace Neomotive.ModuleSimulator;
 public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 {
     private readonly TaskCompletionSource<(ICanBus bus, string feedback)> _busReady = new();
-    private readonly TaskCompletionSource<SimulatorInputBoard?> _inputsReady = new();
+    private readonly TaskCompletionSource<(SimulatorInputBoard? Board, string? Error)> _inputsReady = new();
     private WaveshareDualCanHat _hat;
     private MainWindowViewModel? _mainVm;
     private UpdateService? _updateService;
@@ -67,12 +67,12 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         try
         {
             Resolver.Log.Info("Initializing input board...");
-            _inputsReady.TrySetResult(new SimulatorInputBoard(Device!));
+            _inputsReady.TrySetResult((new SimulatorInputBoard(Device!), null));
         }
         catch (Exception ex)
         {
             Resolver.Log.Error($"Failed to initialize input board: {ex}");
-            _inputsReady.TrySetResult(null);
+            _inputsReady.TrySetResult((null, $"{ex.GetType().Name}: {ex.Message}"));
         }
 
         return base.MeadowInitialize();
@@ -93,9 +93,14 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
     private async Task WireInputsAsync()
     {
-        var inputs = await _inputsReady.Task;
-        if (inputs != null)
-            Avalonia.Threading.Dispatcher.UIThread.Post(() => _mainVm?.SetInputs(inputs));
+        var (board, error) = await _inputsReady.Task;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (board != null)
+                _mainVm?.SetInputs(board);
+            else if (error != null)
+                _mainVm?.SetInputsError(error);
+        });
     }
 
     private static string? LoadUpdateServerUrl(string baseDir)

@@ -67,9 +67,15 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         if (_updateService != null)
         {
-            _updateService.UpdateFound   += m => Dispatcher.UIThread.Post(() => OnUpdateFound(m));
-            _updateService.UpdateApplied += r => Dispatcher.UIThread.Post(() => OnUpdateApplied(r));
-            _updateService.UpdateFailed  += r => Dispatcher.UIThread.Post(() => UpdateStatus = $"Update failed: {r.Reason}");
+            _updateService.UpdateFound           += m => Dispatcher.UIThread.Post(() => OnUpdateFound(m));
+            _updateService.UpdateApplied         += r => Dispatcher.UIThread.Post(() => OnUpdateApplied(r));
+            _updateService.UpdateFailed          += r => Dispatcher.UIThread.Post(() => UpdateStatus = $"Update failed: {r.Reason}");
+            _updateService.StatusChanged         += s => Dispatcher.UIThread.Post(() => UpdateStatus = s);
+            _updateService.UsbDriveInserted      += () => Dispatcher.UIThread.Post(() => OnUsbDriveInserted());
+            _updateService.UsbDriveRemoved       += () => Dispatcher.UIThread.Post(() => OnUsbDriveRemoved());
+            _updateService.UsbUpdateAvailable    += m  => Dispatcher.UIThread.Post(() => OnUsbUpdateAvailable(m));
+            _updateService.UsbMultipleUpdatesFound += n => Dispatcher.UIThread.Post(() => OnUsbMultipleFound());
+            _updateService.UsbNoUpdateOnDrive    += () => Dispatcher.UIThread.Post(() => OnUsbNoUpdate());
         }
         if (_config.QuickDtcs.Count == 0)
         {
@@ -88,6 +94,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _inputs = inputs;
         InputsVm = new InputsViewModel(inputs, _config, () => ConfigManager.Save(_config), SetSimulatedValue, SetSimulatedBoolValue);
         OnPropertyChanged(nameof(InputsVm));
+    }
+
+    public void SetInputsError(string message)
+    {
+        InputsVm.SetHardwareError(message);
+        FeedbackText = "Input board error — see Inputs tab";
     }
 
     private LoggingCanBus _bus;
@@ -116,25 +128,40 @@ public class MainWindowViewModel : INotifyPropertyChanged
             }
             await Task.Delay(100);
         }
-        _pcmState = new SimulatorState(_inputs!) { Vin = _config.Vin };
-        _tcuState = new SimulatorTcuState();
-        _pcm = new SimulatorPcm(_bus, _pcmState);
-        _tcu = new SimulatorTcu(_bus, _tcuState);
+        // On Pi, inputs arrive asynchronously via SetInputs after MeadowInitialize completes.
+        // Wait for them before proceeding, or bail if the hardware reported an error.
+        while (_inputs == null && !InputsVm.HasHardwareError)
+            await Task.Delay(100);
 
-        _pcm.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
-        _tcu.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
-
-        Refresh();
-
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        timer.Tick += (_, _) =>
+        // All UI work (Refresh, DispatcherTimer) must run on the UI thread.
+        // WaitForHardware runs inside Task.Run — marshal back before doing anything UI-facing.
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (_inputs == null)
             {
-                RefreshCanLog();
-                InputsVm.RefreshValues();
-                CheckCanBusWatchdog();
-            };
+                Refresh();
+                return;
+            }
+            _pcmState = new SimulatorState(_inputs) { Vin = _config.Vin };
+            _tcuState = new SimulatorTcuState();
+            _pcm = new SimulatorPcm(_bus, _pcmState);
+            _tcu = new SimulatorTcu(_bus, _tcuState);
 
-        timer.Start();
+            _pcm.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
+            _tcu.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
+
+            Refresh();
+
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            timer.Tick += (_, _) =>
+                {
+                    RefreshCanLog();
+                    InputsVm.RefreshValues();
+                    CheckCanBusWatchdog();
+                };
+
+            timer.Start();
+        });
     }
 
     private void OnCanBusError(object? sender, CanErrorInfo e)
@@ -1273,10 +1300,50 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     private void OnUpdateFound(UpdateManifest manifest)
-        => UpdateStatus = $"USB update found: v{manifest.Version}. Applying…";
+        => UpdateStatus = $"v{manifest.Version} ready.";
 
     private void OnUpdateApplied(UpdateResult.Applied result)
         => UpdateStatus = result.RequiresRestart
             ? $"v{result.Manifest.Version} staged. Restart to apply."
             : $"v{result.Manifest.Version} applied.";
+
+    // ── USB update state ──────────────────────────────────────────────────────
+
+    private bool _usbHasDrive;
+    private bool _usbUpdateReady;
+    private bool _usbMultipleFound;
+    private string _usbUpdateVersion = "";
+
+    public string UsbStatusText => (_usbHasDrive, _usbUpdateReady, _usbMultipleFound) switch
+    {
+        (false, _, _) => "Insert a USB drive containing a neomotive-update*.zip package.",
+        (_, _, true)  => "Multiple update packages found — remove extras and reinsert.",
+        (_, true, _)  => $"Update v{_usbUpdateVersion} ready to install.",
+        _             => "USB drive detected — no matching update found.",
+    };
+
+    public bool UsbUpdateReady    => _usbUpdateReady;
+    public bool CanApplyUsbUpdate => _usbUpdateReady && !_isCheckingUpdate;
+
+    private void OnUsbDriveInserted()  { _usbHasDrive = true;  _usbUpdateReady = false; _usbMultipleFound = false; NotifyUsbChanged(); }
+    private void OnUsbDriveRemoved()   { _usbHasDrive = false; _usbUpdateReady = false; _usbMultipleFound = false; NotifyUsbChanged(); }
+    private void OnUsbNoUpdate()       { _usbUpdateReady = false; _usbMultipleFound = false; NotifyUsbChanged(); }
+    private void OnUsbMultipleFound()  { _usbUpdateReady = false; _usbMultipleFound = true;  NotifyUsbChanged(); }
+    private void OnUsbUpdateAvailable(UpdateManifest m) { _usbUpdateReady = true; _usbMultipleFound = false; _usbUpdateVersion = m.Version; NotifyUsbChanged(); }
+
+    private void NotifyUsbChanged()
+    {
+        OnPropertyChanged(nameof(UsbStatusText));
+        OnPropertyChanged(nameof(UsbUpdateReady));
+        OnPropertyChanged(nameof(CanApplyUsbUpdate));
+    }
+
+    public async Task ApplyUsbUpdateAsync()
+    {
+        if (_updateService == null || !CanApplyUsbUpdate) return;
+        IsCheckingUpdate = true;
+        NotifyUsbChanged();
+        try   { await _updateService.ApplyUsbUpdateAsync(); }
+        finally { IsCheckingUpdate = false; NotifyUsbChanged(); }
+    }
 }

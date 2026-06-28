@@ -22,11 +22,23 @@
                 IsEnabled="{Binding CanCheckUpdate}"
                 Click="OnCheckForUpdates" />
 
-        <!-- USB hint -->
-        <TextBlock Classes="muted xs"
-                   FontStyle="Italic"
-                   TextWrapping="Wrap"
-                   Text="USB: Insert a drive containing neomotive-update*.zip — updates are detected and applied automatically." />
+        <!-- Divider -->
+        <Rectangle Height="1" Fill="#2E3440" Margin="0,4,0,0" />
+        <TextBlock Classes="heading" Text="USB UPDATE" FontSize="10" LetterSpacing="2" Margin="0,4,0,0" />
+
+        <!-- USB status -->
+        <Border Background="#1A1E24" BorderBrush="#2E3440" BorderThickness="1" Padding="14,10">
+            <TextBlock Text="{Binding UsbStatusText}"
+                       TextWrapping="Wrap"
+                       Foreground="#C8CED8" />
+        </Border>
+
+        <!-- Update from USB button — only visible when a single matching update is detected -->
+        <Button Content="Update from USB"
+                Classes="action-sm"
+                IsVisible="{Binding UsbUpdateReady}"
+                IsEnabled="{Binding CanApplyUsbUpdate}"
+                Click="OnApplyUsbUpdate" />
 
     </StackPanel>
 

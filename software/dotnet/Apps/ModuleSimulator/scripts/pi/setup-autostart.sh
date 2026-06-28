@@ -67,12 +67,33 @@ echo "Installed and enabled neomotive-splash.service"
 
 # 8. Create A/B update directory layout under /opt/neomotive/
 #    app-current/ is where the app binary lives; app-previous/ is the rollback slot.
-#    The update mechanism extracts new builds to app-staging/ and promotes them.
+#    data/ holds user settings (VIN config, input mappings) — survives updates.
 mkdir -p /opt/neomotive/app-current
 mkdir -p /opt/neomotive/config
-echo "Created /opt/neomotive/app-current/ and /opt/neomotive/config/"
+mkdir -p /opt/neomotive/data
+echo "Created /opt/neomotive/{app-current,config,data}/"
 
-# 9. Reload systemd so all changes take effect on next boot
+# 9. USB auto-mount for update packages
+#    The Pi runs headless with no udisks2/desktop session, so USB drives are never
+#    auto-mounted. This udev rule mounts any USB block device read-only at /media/usb
+#    so the app's USB update scanner can find update packages.
+sudo cp "$SCRIPTS_DIR/neomotive-usb-mount.sh" /usr/local/bin/neomotive-usb-mount
+sudo chmod +x /usr/local/bin/neomotive-usb-mount
+sudo mkdir -p /media/usb
+
+sudo tee /etc/udev/rules.d/99-neomotive-usb.rules > /dev/null <<'EOF'
+# Mount USB storage at /media/usb for Neomotive update packages.
+# ENV{ID_FS_USAGE}=="filesystem" ensures the kernel has probed and confirmed
+# a mountable filesystem on the partition before we attempt to mount it,
+# avoiding the race where the add event fires before the device is ready.
+ACTION=="add",    SUBSYSTEM=="block", KERNEL=="sd[a-z][0-9]", ENV{ID_FS_USAGE}=="filesystem", RUN+="/usr/local/bin/neomotive-usb-mount add %k"
+ACTION=="remove", SUBSYSTEM=="block", KERNEL=="sd[a-z][0-9]", RUN+="/usr/local/bin/neomotive-usb-mount remove %k"
+EOF
+
+sudo udevadm control --reload-rules
+echo "Installed USB auto-mount udev rule (mounts to /media/usb)"
+
+# 10. Reload systemd so all changes take effect on next boot
 sudo systemctl daemon-reload
 
 echo ""

@@ -47,7 +47,17 @@ public class SimulatedInputRow : INotifyPropertyChanged
 
 public class InputsViewModel : INotifyPropertyChanged
 {
-    private readonly ISimulatorInputs _inputs;
+    private readonly ISimulatorInputs? _inputs;
+
+    private string? _hardwareError;
+    public string? HardwareError
+    {
+        get => _hardwareError;
+        private set { _hardwareError = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasHardwareError)); }
+    }
+    public bool HasHardwareError => _hardwareError != null;
+
+    public void SetHardwareError(string message) => HardwareError = message;
     private readonly Action<string, double>? _applyPotValue;
     private readonly Action<string, bool>?   _applyBoolValue;
     private readonly SimulatorConfig?        _config;
@@ -189,7 +199,7 @@ public class InputsViewModel : INotifyPropertyChanged
     public ICommand NextBoolChannelCommand { get; }
     public ICommand PrevBoolChannelCommand { get; }
 
-    public InputsViewModel(ISimulatorInputs inputs,
+    public InputsViewModel(ISimulatorInputs? inputs,
         SimulatorConfig?        config         = null,
         Action?                 saveConfig     = null,
         Action<string, double>? applyPotValue  = null,
@@ -235,6 +245,7 @@ public class InputsViewModel : INotifyPropertyChanged
 
     public void RefreshValues()
     {
+        if (_inputs == null) return;
         ReadAndApplyPot(0, _inputs.Pot1Volts);
         ReadAndApplyPot(1, _inputs.Pot2Volts);
         ReadAndApplyPot(2, _inputs.Pot3Volts);

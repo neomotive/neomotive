@@ -13,10 +13,17 @@ public sealed class UpdateService : IDisposable
     private NetworkUpdateSource? _network;
     private Timer? _usbTimer;
     private bool _updatePending;
+    private bool _usbDriveWasPresent;
+    private (UpdateManifest Manifest, string ZipPath)? _pendingUsbUpdate;
 
     public event Action<UpdateManifest>? UpdateFound;
     public event Action<UpdateResult.Applied>? UpdateApplied;
     public event Action<UpdateResult.Failed>? UpdateFailed;
+    public event Action? UsbDriveInserted;
+    public event Action? UsbDriveRemoved;
+    public event Action<UpdateManifest>? UsbUpdateAvailable;
+    public event Action<int>? UsbMultipleUpdatesFound;
+    public event Action? UsbNoUpdateOnDrive;
 
     public UpdateService(string appId, string currentVersion, string baseDir)
     {
@@ -33,20 +40,79 @@ public sealed class UpdateService : IDisposable
             : new NetworkUpdateSource(networkUrl);
     }
 
+    public event Action<string>? StatusChanged;
+
     /// <summary>Starts the USB polling timer. Call once at app startup.</summary>
     public void StartUsbWatcher()
     {
         _usbTimer?.Dispose();
-        _usbTimer = new Timer(_ => _ = CheckUsbAsync(), null,
+        _usbTimer = new Timer(_ => CheckUsbBackground(), null,
             TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private void CheckUsbBackground()
+    {
+        Task.Run(async () =>
+        {
+            try   { await CheckUsbAsync(); }
+            catch (Exception ex) { UpdateFailed?.Invoke(new UpdateResult.Failed($"USB scan error: {ex.Message}")); }
+        });
     }
 
     public async Task CheckUsbAsync(CancellationToken ct = default)
     {
         if (_updatePending) return;
-        var result = await _usb.CheckAsync(_appId, _currentVersion, ct);
-        if (result.HasValue)
-            await ApplyAsync(result.Value.Manifest, result.Value.ZipPath, ct);
+
+        var drivePresent = UsbUpdateSource.HasRemovableDrive();
+
+        if (!drivePresent)
+        {
+            if (_usbDriveWasPresent)
+            {
+                _usbDriveWasPresent = false;
+                _pendingUsbUpdate = null;
+                UsbDriveRemoved?.Invoke();
+            }
+            return;
+        }
+
+        if (!_usbDriveWasPresent)
+        {
+            _usbDriveWasPresent = true;
+            UsbDriveInserted?.Invoke();
+        }
+
+        var matches = await _usb.ScanAsync(_appId, _currentVersion, ct);
+
+        if (matches.Count == 0)
+        {
+            if (_pendingUsbUpdate != null)
+            {
+                _pendingUsbUpdate = null;
+                UsbNoUpdateOnDrive?.Invoke();
+            }
+        }
+        else if (matches.Count == 1)
+        {
+            var match = matches[0];
+            if (_pendingUsbUpdate?.Manifest.Version != match.Manifest.Version)
+            {
+                _pendingUsbUpdate = match;
+                UsbUpdateAvailable?.Invoke(match.Manifest);
+            }
+        }
+        else
+        {
+            UsbMultipleUpdatesFound?.Invoke(matches.Count);
+        }
+    }
+
+    public async Task ApplyUsbUpdateAsync(CancellationToken ct = default)
+    {
+        if (_pendingUsbUpdate == null) return;
+        var pending = _pendingUsbUpdate.Value;
+        _pendingUsbUpdate = null;
+        await ApplyAsync(pending.Manifest, pending.ZipPath, ct);
     }
 
     public async Task<UpdateResult> CheckNetworkAsync(CancellationToken ct = default)

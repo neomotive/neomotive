@@ -22,8 +22,8 @@
 #>
 
 param(
-    [Parameter(Mandatory)][ValidateSet("scantool","simulator")] [string] $Target,
-    [Parameter(Mandatory)][ValidateSet("windows","linux-arm64")] [string] $Platform,
+    [ValidateSet("scantool","simulator")]  [string] $Target   = "simulator",
+    [ValidateSet("windows","linux-arm64")] [string] $Platform = "linux-arm64",
     [Parameter(Mandatory)] [string] $Version,
     [string] $OutputDir = "$PSScriptRoot\..\..\..\dist"
 )

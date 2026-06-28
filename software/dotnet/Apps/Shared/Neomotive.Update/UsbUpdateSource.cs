@@ -9,6 +9,44 @@ public sealed class UsbUpdateSource : IUpdateSource
     private static readonly string[] SearchPatterns = ["neomotive-update*.zip"];
     private const string SubfolderName = "NEOMOTIVE";
 
+    /// <summary>Returns true when a removable drive is present and accessible.</summary>
+    public static bool HasRemovableDrive()
+    {
+        if (OperatingSystem.IsWindows())
+            return DriveInfo.GetDrives().Any(d => d.DriveType == DriveType.Removable && d.IsReady);
+        // /proc/mounts is always world-readable; use it to check if our fixed mount point is active.
+        // Directory enumeration is unreliable here because the pi process may lack read access
+        // to the mount point if the drive was mounted without uid= options.
+        try
+        {
+            var lines = File.ReadAllLines("/proc/mounts");
+            return lines.Any(l => l.Split(' ') is { Length: >= 2 } p && p[1] == "/media/usb");
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Returns ALL matching update packages on the drive (used to detect duplicates).</summary>
+    public Task<IReadOnlyList<(UpdateManifest Manifest, string ZipPath)>> ScanAsync(
+        string appId,
+        string currentVersion,
+        CancellationToken ct = default)
+    {
+        var results = new List<(UpdateManifest, string)>();
+        foreach (var zipPath in FindZips())
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                var manifest = UpdatePackage.ReadManifest(zipPath);
+                if (!IsMatch(manifest, appId)) continue;
+                if (!IsNewer(manifest.Version, currentVersion)) continue;
+                results.Add((manifest, zipPath));
+            }
+            catch { }
+        }
+        return Task.FromResult<IReadOnlyList<(UpdateManifest, string)>>(results);
+    }
+
     public Task<(UpdateManifest Manifest, string ZipPath)?> CheckAsync(
         string appId,
         string currentVersion,
@@ -69,13 +107,18 @@ public sealed class UsbUpdateSource : IUpdateSource
 
     private static IEnumerable<string> GetLinuxMediaRoots()
     {
-        // /media/{user}/* or /media/*
+        // Fixed mount point used by the Neomotive udev rule on headless Pi
+        // (set up by setup-autostart.sh — no udisks2/desktop session required)
+        yield return "/media/usb";
+
+        // /media/{user}/* or /media/* (desktop Pi / udisks2 auto-mount)
         var mediaBase = "/media";
         if (!Directory.Exists(mediaBase))
             yield break;
 
         foreach (var dir in SafeEnumerateDirectories(mediaBase))
         {
+            if (dir == "/media/usb") continue; // already yielded above
             // Try one level deep (user subdirs like /media/pi/)
             var subs = SafeEnumerateDirectories(dir).ToList();
             if (subs.Count > 0)

@@ -93,10 +93,31 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="*, Auto">
+    <Grid RowDefinitions="Auto, *, Auto">
+
+        <!-- ── Hardware error banner ────────────────────────────────────────── -->
+        <Border Grid.Row="0"
+                IsVisible="{Binding InputsVm.HasHardwareError}"
+                Background="#3A1010" BorderBrush="#8B0000" BorderThickness="0,0,0,1"
+                Padding="14,10">
+            <StackPanel Spacing="4">
+                <TextBlock Text="INPUT BOARD UNAVAILABLE"
+                           FontFamily="Consolas,Cascadia Code,monospace"
+                           FontSize="11" FontWeight="Bold" LetterSpacing="2"
+                           Foreground="#FF6B6B" />
+                <TextBlock Text="{Binding InputsVm.HardwareError}"
+                           FontFamily="Consolas,Cascadia Code,monospace"
+                           FontSize="11" Foreground="#CC8888"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="Check SPI permissions: ls -la /dev/spidev* and verify the app user is in the spi group."
+                           FontFamily="Consolas,Cascadia Code,monospace"
+                           FontSize="10" Foreground="#886666" FontStyle="Italic"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
 
         <!-- ── Input rows ───────────────────────────────────────────────────── -->
-        <ScrollViewer Grid.Row="0" Padding="12,8">
+        <ScrollViewer Grid.Row="1" Padding="12,8">
             <StackPanel Spacing="0">
 
                 <Grid ColumnDefinitions="80, *, *, 52" Margin="4,0,4,4">
@@ -144,7 +165,7 @@
         </ScrollViewer>
 
         <!-- ── Edit panel ───────────────────────────────────────────────────── -->
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 IsVisible="{Binding InputsVm.IsEditing}"
                 Background="#0D1017"
                 BorderBrush="#2E3440" BorderThickness="0,1,0,0"
