@@ -122,6 +122,14 @@ The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles
 3. Publish/deploy script for Pi (ARM64 self-contained)
 4. Test window renders at 800×480 on Pi display
 
+### Desktop Scaling (recording support)
+
+`MainWindow.axaml`: `ScanToolView` wrapped in `<Viewbox Stretch="Uniform">` with explicit `Width="800" Height="480"` — Avalonia scales the fixed 800×480 layout uniformly to fill any window size.
+
+`MainWindow.axaml.cs`: `RuntimeInformation.IsOSPlatform(OSPlatform.Windows)` → `CanResize=true`, default `1024×614` (perfect 5:3 fill), `MinWidth=400 MinHeight=240`. Pi/Linux: AXAML defaults unchanged (800×480, non-resizable).
+
+---
+
 ### Phase 3 — Live Data, Graphing, Recording
 
 **Goal:** Stream real-time PIDs with charts and optional logging to file.

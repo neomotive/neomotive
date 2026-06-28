@@ -10,6 +10,8 @@
         CanResize="False"
         Background="#111418">
 
-    <views:ScanToolView />
+    <Viewbox Stretch="Uniform">
+        <views:ScanToolView Width="800" Height="480" />
+    </Viewbox>
 
 </Window>

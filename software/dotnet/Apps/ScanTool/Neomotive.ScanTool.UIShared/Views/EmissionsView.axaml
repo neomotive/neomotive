@@ -16,11 +16,9 @@
                     <DataTemplate x:DataType="core:ReadinessMonitor">
                         <Grid ColumnDefinitions="200, *" Margin="0,3">
                             <TextBlock Grid.Column="0" Text="{Binding Name}" />
-                            <TextBlock Grid.Column="1"
-                                       Classes.ok="{Binding Ready}"
-                                       Classes.warn="{Binding !Ready}"
-                                       Classes.status-na="{Binding !Supported}"
-                                       Text="{Binding Ready, StringFormat='{}{0:Ready;Ready;Not Ready}'}" />
+                            <TextBlock Grid.Column="1" Classes="muted" Text="— not supported" IsVisible="{Binding IsNotSupported}" />
+                            <TextBlock Grid.Column="1" Classes="ok"   Text="✓ Ready"          IsVisible="{Binding IsReady}" />
+                            <TextBlock Grid.Column="1" Classes="warn" Text="✗ Incomplete"     IsVisible="{Binding IsIncomplete}" />
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

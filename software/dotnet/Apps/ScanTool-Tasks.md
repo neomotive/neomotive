@@ -312,3 +312,10 @@
   - Params: `-Target`, `-Platform`, `-Version`, `-OutputDir`
   - `dotnet publish` self-contained → hashes all files → writes `update.json` → zips
   - Updates `version-manifest.json` (served by update server) with version + URL + zip SHA256
+
+---
+
+## Group Q — Desktop scaling for recording
+
+- [x] **Q1** Wrap `ScanToolView` in `<Viewbox Stretch="Uniform">` in `MainWindow.axaml`; set `Width="800" Height="480"` on `ScanToolView` so Viewbox has a natural size to scale from
+- [x] **Q2** Add platform detection in `MainWindow.axaml.cs`: on Windows set `CanResize=true`, default `1024×614` (maintains 5:3 ratio), `MinWidth=400 MinHeight=240`; Pi/Linux uses AXAML defaults unchanged
