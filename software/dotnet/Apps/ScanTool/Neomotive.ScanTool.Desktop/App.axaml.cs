@@ -51,16 +51,19 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         Directory.CreateDirectory(Path.Combine(baseDir, "data"));
 
         ICanBus bus;
+        string adapterHint;
         try
         {
             Resolver.Log.Info("Initializing PCAN USB adapter at 500 kbps...");
             bus = new PCanUsb().CreateCanBus(CanBitrate.Can_500kbps);
             Resolver.Log.Info($"PCAN USB adapter initialized successfully ({bus.GetType().Name}).");
+            adapterHint = "Connect a Peak PCAN USB adapter and plug into vehicle OBD2 port.";
         }
         catch (Exception ex)
         {
             Resolver.Log.Warn($"PCAN USB init failed ({ex.GetType().Name}: {ex.Message}) — using NullCanBus.");
             bus = new NullCanBus();
+            adapterHint = $"PCAN USB adapter not available ({ex.GetType().Name}) — running offline.";
         }
 
         var log = new CanPacketLog(200);
@@ -88,7 +91,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         updateService.Configure(appConfig.UpdateServerUrl);
         updateService.StartUsbWatcher();
 
-        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder, updateService);
+        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder, updateService) { AdapterHint = adapterHint };
 
         Dispatcher.UIThread.Post(() =>
         {

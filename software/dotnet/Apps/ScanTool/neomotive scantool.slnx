@@ -3,6 +3,7 @@
     <Project Path="../Shared/Neomotive.Vin/Neomotive.Vin.csproj" />
     <Project Path="Neomotive.ScanTool.Core/Neomotive.ScanTool.Core.csproj" />
     <Project Path="Neomotive.ScanTool.Desktop/Neomotive.ScanTool.Desktop.csproj" />
+    <Project Path="Neomotive.ScanTool.RaspberryPi/Neomotive.ScanTool.RaspberryPi.csproj" />
     <Project Path="Neomotive.ScanTool.UIShared/Neomotive.ScanTool.UIShared.csproj" />
   </Folder>
   <Folder Name="/Tests/">
@@ -17,6 +18,7 @@
     <Project Path="../../../../../wilderness/Meadow.Contracts/Source/Meadow.Contracts/Meadow.Contracts.csproj">
       <Deploy />
     </Project>
+    <Project Path="../../../../../wilderness/Meadow.Core/Source/implementations/linux/Meadow.Linux/Meadow.Linux.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Core/Source/implementations/windows/Meadow.Windows/Meadow.Windows.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Core/Source/Meadow.Core/Meadow.Core.csproj">
       <Deploy />
@@ -26,6 +28,7 @@
       <Deploy />
     </Project>
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.J1979/Driver/Telematics.J1979.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.Mcp2515/Driver/ICs.CAN.Mcp2515.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.PCanBasic/Driver/ICs.CAN.PCanBasic.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Units/Source/Meadow.Units/Meadow.Units.csproj">

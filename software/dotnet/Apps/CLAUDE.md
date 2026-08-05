@@ -4,7 +4,7 @@
 
 Two companion apps that work together over a physical CAN bus (Peak PCAN USB adapter):
 
-- **ScanTool** — Windows desktop OBD2 diagnostic client (reads DTCs, VIN, emissions readiness from a real vehicle or the simulator)
+- **ScanTool** — OBD2 diagnostic client (reads DTCs, VIN, emissions readiness from a real vehicle or the simulator); runs on Windows desktop or as a Raspberry Pi appliance
 - **ModuleSimulator** — Emulates a vehicle's PCM + TCU modules; runs on Windows desktop or Raspberry Pi headless
 
 Solution file: `ScanTool/neomotive scantool.slnx`
@@ -19,7 +19,8 @@ Solution file: `ScanTool/neomotive scantool.slnx`
 |---|---|
 | `Neomotive.ScanTool.Core` | OBD2 protocol logic — no UI dependency, fully unit-testable |
 | `Neomotive.ScanTool.UIShared` | Avalonia views, `MainWindowViewModel`, styles |
-| `Neomotive.ScanTool.Desktop` | WinExe entry point (`Program.cs` → `AppBuilder`) |
+| `Neomotive.ScanTool.Desktop` | WinExe entry point (`Program.cs` → `AppBuilder`), PCAN USB |
+| `Neomotive.ScanTool.RaspberryPi` | Pi entry point — MCP2515 CAN HAT, Avalonia DRM/KMS (no X). Deploys to a Pi Appliance Kit device; see `ScanTool/scripts/pi/README.md` |
 | `Neomotive.ScanTool.Core.Tests` | xUnit tests for decoding and scanner behavior |
 
 ### Key classes

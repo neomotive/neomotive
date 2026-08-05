@@ -37,7 +37,7 @@
 
         <TextBlock Classes="dim"
                    IsVisible="{Binding IsNotConnected}"
-                   Text="Connect a Peak PCAN USB adapter and plug into vehicle OBD2 port." />
+                   Text="{Binding AdapterHint}" />
 
     </StackPanel>
 

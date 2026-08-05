@@ -1,0 +1,29 @@
+#!/bin/sh
+# Pi Appliance Kit entrypoint. app-launch cd's here and exec's this file.
+#
+# The rootfs is a read-only overlay; /data is the only writable mount, and
+# app.service sets ProtectHome=yes, so every path .NET wants to write must be
+# redirected under the app directory.
+set -e
+
+APP_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+export HOME="$APP_DIR"
+export DOTNET_BUNDLE_EXTRACT_BASE_DIR="$APP_DIR/.dotnet-extract"
+export XDG_RUNTIME_DIR="$APP_DIR/.runtime"
+export DOTNET_EnableWriteXorExecute=0
+export DOTNET_gcServer=0
+
+mkdir -p "$DOTNET_BUNDLE_EXTRACT_BASE_DIR" "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+# Avalonia renders directly to DRM/KMS — no X server involved.
+# Override the connector card here if the panel is not on the default.
+# export SCANTOOL_DRM_CARD=/dev/dri/card1
+# export SCANTOOL_DRM_SCALING=1.0
+
+# Defensive: install-app.sh only chmods `run`, so if the payload was rsynced
+# from a filesystem without POSIX modes the binary can arrive non-executable.
+[ -x "$APP_DIR/scantool" ] || chmod +x "$APP_DIR/scantool"
+
+exec "$APP_DIR/scantool" "$@"

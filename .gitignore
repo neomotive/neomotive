@@ -6,3 +6,4 @@ obj/
 
 !software/libs/bin
 ai-ml/models/training/
+software/dotnet/publish/

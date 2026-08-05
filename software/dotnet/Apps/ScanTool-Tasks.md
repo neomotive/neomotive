@@ -318,4 +318,47 @@
 ## Group Q — Desktop scaling for recording
 
 - [x] **Q1** Wrap `ScanToolView` in `<Viewbox Stretch="Uniform">` in `MainWindow.axaml`; set `Width="800" Height="480"` on `ScanToolView` so Viewbox has a natural size to scale from
-- [x] **Q2** Add platform detection in `MainWindow.axaml.cs`: on Windows set `CanResize=true`, default `1024×614` (maintains 5:3 ratio), `MinWidth=400 MinHeight=240`; Pi/Linux uses AXAML defaults unchanged
+- [x] **Q2** Add platform detection in `MainWindow.axaml.cs`: on Windows set `CanResize=true`, default `1024×614` (maintains 5:3 ratio), `MinWidth=400 MinHeight=240`; other desktop hosts use AXAML defaults unchanged
+
+---
+
+## Group R — Raspberry Pi (Phase 2)
+
+Target device: Pi 4 on a [Pi Appliance Kit](../../../../ctacke/Pi-Appliance-Kit) image
+(Raspberry Pi OS Lite arm64, read-only overlay rootfs, `/data` writable, single `app.service`).
+Runbook: `ScanTool/scripts/pi/README.md`.
+
+- [x] **R1** Create `Neomotive.ScanTool.RaspberryPi` (`net10.0`, `AssemblyName=scantool`); project refs
+  `Meadow.Linux`, `Meadow.Avalonia`, `ICs.CAN.Mcp2515`, `Meadow.Logging.LogProviders`, `UIShared`;
+  added to `neomotive scantool.slnx` (along with `Meadow.Linux` + `ICs.CAN.Mcp2515` under `_refs/`)
+- [x] **R2** `WaveshareDualCanHat.cs` — dual MCP2515 on SPI0 (CS pin24/pin26, INT pin16/pin22,
+  500 kbps). CAN0 registered as `ICanBus`, wrapped in `LoggingCanBus`; `NullCanBus` fallback
+- [x] **R3** `App.axaml.cs` — `AvaloniaMeadowApplication<Meadow.RaspberryPi>`; same scanner /
+  `VinDecoder` / VM construction as Desktop, minus `UpdateService`. `UdpLogger` instead of
+  `DebugLogProvider` (journald is volatile on this image)
+- [x] **R4** DRM/KMS rendering — `Program.cs` uses `.UseSkia().StartLinuxDrm(...)`, no X server.
+  Single-view lifetime, so `App` sets `MainView` to an 800×480 `ScanToolView` in a `Viewbox`
+  (`IClassicDesktopStyleApplicationLifetime` branch retained for dev-box layout checks).
+  `SCANTOOL_DRM_CARD` / `SCANTOOL_DRM_SCALING` env overrides
+- [x] **R5** `scripts/pi/run` — appliance entrypoint. Redirects `HOME`,
+  `DOTNET_BUNDLE_EXTRACT_BASE_DIR`, `XDG_RUNTIME_DIR` under `/data/app` (read-only root +
+  `ProtectHome=yes`); sets `DOTNET_EnableWriteXorExecute=0`; chmods the binary before exec
+- [x] **R6** `scripts/publish-scantool-pi.ps1` — force-rebuilds wilderness deps, publishes
+  self-contained single-file `linux-arm64`, stages `run` (LF-normalized) + config, `-Deploy`
+  shells out to the kit's `install-app.sh`
+- [x] **R7** Pi-Appliance-Kit `config/optimizations.yaml` — added `libgl1-mesa-dri`, `libegl1`,
+  `libgles2`, `libinput10`, `libfontconfig1`; `hardware_overlays` now `dtoverlay=spi0-0cs`
+  (userspace CS for MCP2515) + `dtoverlay=vc4-kms-v3d` (creates `/dev/dri/card*`)
+- [x] **R8** Verify solution builds and Core tests still pass (37/37 green)
+- [ ] **R9** Hardware bring-up — **blocked, no device reachable** (`pi-appliance` does not
+  resolve). Needs: apply kit changes + reboot; confirm `/dev/dri/card*` and `/dev/spidev0.0`;
+  deploy; confirm the UI fills 800×480 and `app.service` stays up
+- [ ] **R10** CAN end-to-end against ModuleSimulator — VIN `AWWWWWWWWWWW0YEAH`, the five known
+  DTCs, readiness monitors, CAN log pane traffic
+
+**Known gotchas (learned during R6):**
+- Plain `bash` on Windows resolves to WSL, which cannot see `F:\` paths — the publish script
+  resolves git-bash by explicit path instead
+- git-bash on NTFS infers the exec bit from content (`#!` → 755, ELF → 644) and `chmod` is a
+  silent no-op, so the `scantool` binary cannot be made executable from Windows. `install-app.sh`
+  only chmods `run`, which is why `run` chmods the binary itself

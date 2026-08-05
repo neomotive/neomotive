@@ -259,6 +259,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
         private set { _statusText = value; OnPropertyChanged(); }
     }
 
+    // Shown on the Connection view while disconnected. The CAN adapter is
+    // platform-specific (PCAN USB on the desktop, an MCP2515 HAT on the Pi), so
+    // the platform head sets this — the shared view must not name any one of them.
+    private string _adapterHint = "Connect a CAN adapter and plug into the vehicle OBD2 port.";
+    public string AdapterHint
+    {
+        get => _adapterHint;
+        set { _adapterHint = value; OnPropertyChanged(); }
+    }
+
     public async Task ConnectAsync()
     {
         if (_isConnecting) return;

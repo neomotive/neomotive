@@ -13,7 +13,7 @@ A phased automotive diagnostic application built in C# / .NET 10, sharing stylin
 | Window size | 800 × 480, `CanResize="False"`, `SystemDecorations="None"`, `Position="0,0"` |
 | Background | `#111418` |
 | Font | Consolas, Cascadia Code, monospace — 13 px default |
-| Avalonia | 11.3.9 (Fluent theme + Inter fonts) |
+| Avalonia | 12.0.4 (Fluent theme + Inter fonts) |
 | PCAN driver | `ICs.CAN.PCanBasic` project reference (wilderness/Meadow.Foundation) |
 | Meadow platform | `Meadow.Windows` + `Meadow.Avalonia` (project refs) |
 
@@ -86,9 +86,14 @@ The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles
 - Entry point only — sets up DI, wires `PCanBasicController` into `IScanTool`
 
 ### Neomotive.ScanTool.RaspberryPi *(Phase 2)*
-- `net10.0`, Linux ARM target
-- References MCP2515 HAT driver (Meadow.Foundation SPI CAN)
-- Same entry point pattern as Desktop — swaps hardware adapter only
+- `net10.0`, published self-contained single-file for `linux-arm64` (`AssemblyName=scantool`)
+- `AvaloniaMeadowApplication<Meadow.RaspberryPi>`; references `Meadow.Linux` + `ICs.CAN.Mcp2515`
+- CAN via `WaveshareDualCanHat` (dual MCP2515 on SPI0, CS pin24/pin26, INT pin16/pin22, 500 kbps),
+  registering CAN0 as `ICanBus`; falls back to `NullCanBus` in offline mode
+- **Renders via Avalonia's DRM/KMS backend** (`Avalonia.LinuxFramebuffer`, `StartLinuxDrm`) — no
+  X server. That means a **single-view lifetime**: `App` sets `MainView` to the shared
+  `ScanToolView` in a `Viewbox` rather than a `MainWindow`
+- No `UpdateService` — the Pi Appliance Kit layout replaces A/B slots (see below)
 
 ---
 
@@ -112,21 +117,46 @@ The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles
 - CAN communication runs on a background `Task`; results marshalled to UI thread via `Dispatcher.UIThread.Post`
 - Protocol auto-detection: try CAN 500k first (ISO 15765-4), fall back to 250k
 
-### Phase 2 — Raspberry Pi
+### Phase 2 — Raspberry Pi *(code complete; hardware verification pending)*
 
-**Goal:** Run the same UI on a Pi with an MCP2515 HAT.
+**Goal:** Run the same UI on a Pi with an MCP2515 HAT, deployed onto a
+[Pi Appliance Kit](../../../../ctacke/Pi-Appliance-Kit) device.
 
 **Tasks:**
-1. Create `Neomotive.ScanTool.RaspberryPi` project
-2. Wire MCP2515 SPI driver as `ICanController`
-3. Publish/deploy script for Pi (ARM64 self-contained)
-4. Test window renders at 800×480 on Pi display
+1. ~~Create `Neomotive.ScanTool.RaspberryPi` project~~ ✅
+2. ~~Wire MCP2515 SPI driver as `ICanBus`~~ ✅ — `WaveshareDualCanHat`, CAN0
+3. ~~Publish/deploy script for Pi (ARM64 self-contained)~~ ✅ — `scripts/publish-scantool-pi.ps1`
+4. Test view renders at 800×480 on the Pi display — **blocked on hardware access**
+
+**Deployment model (Pi Appliance Kit):**
+
+Raspberry Pi OS Lite, arm64, read-only overlay rootfs; `/data` is the only writable mount.
+An app is a directory containing an executable `run`; `app.service` (pre-enabled, runs as root
+with `ProtectSystem=strict`, `ReadWritePaths=/data`, `ProtectHome=yes`) execs it via `app-launch`.
+Deploy = `Pi-Appliance-Kit/scripts/install-app.sh <payload> pi@host` (rsync to `/data/app`).
+
+Because the rootfs is read-only and `$HOME` is protected, `scripts/pi/run` redirects `HOME`,
+`DOTNET_BUNDLE_EXTRACT_BASE_DIR` and `XDG_RUNTIME_DIR` under `/data/app`.
+
+**Why DRM instead of X11:** the appliance image ships no display stack. Rendering straight to
+`/dev/dri/card*` avoids adding an X server, window manager and autologin chain to a
+single-daemon image. Cost: single-view lifetime (no `Window`), and the image needs
+`libgl1-mesa-dri`, `libegl1`, `libgles2`, `libinput10`, `libfontconfig1` plus
+`dtoverlay=vc4-kms-v3d` and `dtoverlay=spi0-0cs` — all added to the kit's
+`config/optimizations.yaml`.
+
+Full runbook: `ScanTool/scripts/pi/README.md`.
 
 ### Desktop Scaling (recording support)
 
 `MainWindow.axaml`: `ScanToolView` wrapped in `<Viewbox Stretch="Uniform">` with explicit `Width="800" Height="480"` — Avalonia scales the fixed 800×480 layout uniformly to fill any window size.
 
-`MainWindow.axaml.cs`: `RuntimeInformation.IsOSPlatform(OSPlatform.Windows)` → `CanResize=true`, default `1024×614` (perfect 5:3 fill), `MinWidth=400 MinHeight=240`. Pi/Linux: AXAML defaults unchanged (800×480, non-resizable).
+`MainWindow.axaml.cs`: `RuntimeInformation.IsOSPlatform(OSPlatform.Windows)` → `CanResize=true`, default `1024×614` (perfect 5:3 fill), `MinWidth=400 MinHeight=240`. Non-Windows desktop hosts: AXAML defaults unchanged (800×480, non-resizable).
+
+The Pi does **not** use `MainWindow` at all — the DRM single-view lifetime has no `Window`. It
+applies the same treatment itself in `App.OnFrameworkInitializationCompleted`: an 800×480
+`ScanToolView` inside a `Viewbox Stretch="Uniform"`, so a panel reporting a different mode
+letterboxes instead of stretching.
 
 ---
 
@@ -193,7 +223,13 @@ neomotive-update-{version}-{target}-{platform}.zip
 **Remaining:**
 - Hardening: HTTPS + package signing for cloud distribution
 - Automated health-check rollback (currently manual via slot swap)
-- ScanTool RaspberryPi entry point wiring (when Phase 2 Pi project is created)
+
+**Not applicable to ScanTool on Pi (deliberate):** `Neomotive.ScanTool.RaspberryPi` wires no
+`UpdateService`. The Pi Appliance Kit owns that concern — the whole payload is rsynced into
+`/data/app` and `app.service` restarts it, which supersedes A/B slots and the USB watcher.
+Revisit only if ScanTool needs field updates without a workstation; the A/B code would then
+have to move under `/data` (the rootfs is a read-only overlay, so `/opt/neomotive` is not
+writable).
 
 ---
 
@@ -213,11 +249,11 @@ neomotive-update-{version}-{target}-{platform}.zip
 
 | Package / Reference | Purpose |
 |---|---|
-| `Avalonia` 11.3.9 | UI framework |
-| `Avalonia.Desktop` 11.3.9 | Desktop host |
-| `Avalonia.Themes.Fluent` 11.3.9 | Theme base |
-| `Avalonia.Fonts.Inter` 11.3.9 | Font pack |
-| `Avalonia.Diagnostics` 11.3.9 (Debug only) | Dev tools |
+| `Avalonia` 12.0.4 | UI framework |
+| `Avalonia.Desktop` 12.0.4 | Desktop host |
+| `Avalonia.Themes.Fluent` 12.0.4 | Theme base |
+| `Avalonia.Fonts.Inter` 12.0.4 | Font pack |
+| `Avalonia.Diagnostics` 12.0.4 (Debug only) | Dev tools |
 | `Meadow.Windows` (project ref) | Meadow Windows platform |
 | `Meadow.Avalonia` (project ref) | Meadow Avalonia integration |
 | `ICs.CAN.PCanBasic` (project ref) | Peak PCAN USB driver |
