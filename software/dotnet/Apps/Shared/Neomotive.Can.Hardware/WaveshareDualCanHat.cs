@@ -5,8 +5,12 @@ using Meadow.Units;
 using System;
 using static Meadow.Foundation.ICs.CAN.Mcp2515;
 
-namespace Neomotive.ModuleSimulator;
+namespace Neomotive.Can.Hardware;
 
+/// <summary>
+/// Waveshare 2-CH CAN HAT (dual MCP2515 over SPI0) for the Raspberry Pi.
+/// Shared by ScanTool and ModuleSimulator.
+/// </summary>
 public class WaveshareDualCanHat
 {
     private const int DefaultSpiBusSpeed = 5_000_000; // 5MHz
@@ -19,6 +23,8 @@ public class WaveshareDualCanHat
     private Lazy<ICanBus> _can0;
     private Lazy<ICanBus> _can1;
 
+    // Meadow PinNN == PHYSICAL header pin (Pin24 -> GPIO8/CE0, Pin16 -> GPIO23).
+    //
     // INT0 -> pin16
     // MOSI -> pin19
     // MISO -> pin21
@@ -26,9 +32,27 @@ public class WaveshareDualCanHat
     // SCK -> pin23
     // CS0 -> pin24
     // CS1 -> pin26
+    //
+    // This pin pairing is proven on this HAT. Waveshare's published pinout documents
+    // CAN0's INT as GPIO25 (pin22), which contradicts this, so it is tempting to
+    // "fix"; don't, without hardware evidence.
 
     public ICanBus CAN0 => _can0.Value;
     public ICanBus CAN1 => _can1.Value;
+
+
+    /// <summary>
+    /// Selects a channel by index (0 or 1). Anything else is treated as channel 0.
+    /// </summary>
+    public ICanBus GetChannel(int channel) => channel == 1 ? CAN1 : CAN0;
+
+    /// <summary>
+    /// Human-readable channel description including its header pins — shown in the
+    /// UI so it is clear which transceiver and which pins to probe on the board.
+    /// </summary>
+    public static string DescribeChannel(int channel) => channel == 1
+        ? "CAN1 · CS pin26 · INT pin22"
+        : "CAN0 · CS pin24 · INT pin16";
 
     public WaveshareDualCanHat(
         Meadow.RaspberryPi device,
@@ -51,7 +75,7 @@ public class WaveshareDualCanHat
             }
             catch (NativeException)
             {
-                Resolver.Log.Error("Failed to initialize CAN0 - the SPI CS is probably in use.  Did you update the boot.ini with a no-chip-select overlay? (dtoverlay=spi0-0cs)");
+                Resolver.Log.Error("Failed to initialize CAN0 - the SPI CS is probably in use.  Did you update the boot config with a no-chip-select overlay? (dtoverlay=spi0-0cs)");
                 throw;
             }
         });
@@ -66,10 +90,9 @@ public class WaveshareDualCanHat
             }
             catch (NativeException)
             {
-                Resolver.Log.Error("Failed to initialize CAN1 - the SPI CS is probably in use.  Did you update the boot.ini with a no-chip-select overlay? (dtoverlay=spi0-0cs)");
+                Resolver.Log.Error("Failed to initialize CAN1 - the SPI CS is probably in use.  Did you update the boot config with a no-chip-select overlay? (dtoverlay=spi0-0cs)");
                 throw;
             }
         });
     }
-
 }

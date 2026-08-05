@@ -8,6 +8,7 @@ using Meadow;
 using Meadow.Avalonia;
 using Meadow.Hardware;
 using Meadow.Logging;
+using Neomotive.Can.Hardware;
 using Neomotive.ScanTool.Core;
 using Neomotive.ScanTool.UI.Views;
 using Neomotive.Vin.Contracts;
@@ -55,6 +56,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
         ICanBus bus;
         string adapterHint;
+        string canChannelName;
         try
         {
             // SCANTOOL_CAN_CHANNEL picks the HAT channel (0 = default, 1 = second).
@@ -63,9 +65,11 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
             // path, and swapping channels tells you whether that is the board.
             var channel = Environment.GetEnvironmentVariable("SCANTOOL_CAN_CHANNEL") == "1" ? 1 : 0;
 
-            Resolver.Log.Info($"Initializing Waveshare dual MCP2515 CAN HAT (CAN{channel}) at 500 kbps...");
+            canChannelName = WaveshareDualCanHat.DescribeChannel(channel);
+
+            Resolver.Log.Info($"Initializing Waveshare dual MCP2515 CAN HAT ({canChannelName}) at 500 kbps...");
             _hat = new WaveshareDualCanHat(Device!);
-            bus = channel == 1 ? _hat.CAN1 : _hat.CAN0;
+            bus = _hat.GetChannel(channel);
             Resolver.Log.Info($"CAN{channel} initialized successfully ({bus.GetType().Name}).");
             adapterHint = "Plug the CAN HAT into the vehicle OBD2 port.";
         }
@@ -76,6 +80,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
             // Surface the failure in the UI — otherwise offline mode looks
             // identical to "connected but the vehicle isn't responding".
             adapterHint = $"CAN HAT not available ({ex.GetType().Name}) — running offline.";
+            canChannelName = "offline (no CAN hardware)";
         }
 
         var log = new CanPacketLog(200);
@@ -107,7 +112,11 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
         // No UpdateService on the appliance: updates are delivered by rsyncing a
         // new payload into /data/app (see scripts/pi/README.md), not A/B slots.
-        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder) { AdapterHint = adapterHint };
+        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder)
+        {
+            AdapterHint = adapterHint,
+            CanChannelName = canChannelName
+        };
 
         Dispatcher.UIThread.Post(() =>
         {

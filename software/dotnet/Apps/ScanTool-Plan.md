@@ -267,3 +267,25 @@ writable).
 2. **Meadow.Foundation J1939 NuGet vs. project ref:** Is J1939 published to NuGet or only available as a source project reference (like PCAN)?
 3. **MVVM framework:** Simulator uses plain ViewModels — confirm no ReactiveUI / CommunityToolkit dependency before ScanTool adopts one.
 4. **Shared library refactor timing:** Refactor `ModuleSimulator` to use `Neomotive.UI.Styles` in the same PR as Phase 1, or as a prerequisite step?
+
+---
+
+## Shared Library Layout (as built)
+
+`Apps/Shared/` holds everything used by both ScanTool and ModuleSimulator. Each app's solution
+includes these under a `/Shared/` solution folder.
+
+| Project | Contents |
+|---|---|
+| `Neomotive.Can.Hardware` | `WaveshareDualCanHat` — dual MCP2515 CAN HAT wiring for the Pi |
+| `Neomotive.Can.UI` | `CanView` (bus-health header + packet log), `CanLogItem`, `ICanViewModel` |
+| `Neomotive.Obd2` | `DtcDescriptions` |
+| `Neomotive.UI.Styles` | Common Avalonia styles |
+| `Neomotive.Update` | USB / network update service |
+| `Neomotive.Vin` | VIN decode / generate |
+
+**Sharing an Avalonia view across apps** — the pattern established by `CanView`: put the view in
+the shared project with `x:DataType` pointing at an *interface* (`ICanViewModel`), and have each
+app's `MainWindowViewModel` implement it. Host views reference it via
+`xmlns:canviews="clr-namespace:Neomotive.Can.UI.Views;assembly=Neomotive.Can.UI"`. Styles stay
+resolved at app level, so `Classes="heading"` etc. still work.

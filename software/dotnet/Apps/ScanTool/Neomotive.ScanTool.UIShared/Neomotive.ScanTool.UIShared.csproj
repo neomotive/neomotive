@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Neomotive.ScanTool.Core\Neomotive.ScanTool.Core.csproj" />
+    <ProjectReference Include="..\..\Shared\Neomotive.Can.UI\Neomotive.Can.UI.csproj" />
     <ProjectReference Include="..\..\Shared\Neomotive.UI.Styles\Neomotive.UI.Styles.csproj" />
     <ProjectReference Include="..\..\Shared\Neomotive.Vin\Neomotive.Vin.csproj" />
     <ProjectReference Include="..\..\Shared\Neomotive.Update\Neomotive.Update.csproj" />

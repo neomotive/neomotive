@@ -1,5 +1,6 @@
 using Avalonia.Threading;
 using Meadow.Hardware;
+using Neomotive.Can.UI;
 using Neomotive.ScanTool.Core;
 using Neomotive.Update;
 using Neomotive.Vin.Contracts;
@@ -14,9 +15,7 @@ using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
 
-public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, string Description);
-
-public class MainWindowViewModel : INotifyPropertyChanged
+public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 {
     private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog, LiveData, Updates }
     private enum LiveSubView { Table, Gauges, Waveform }
@@ -87,6 +86,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     // ── CAN health ────────────────────────────────────────────────────────────
     // Mirrors Neomotive.ModuleSimulator.UIShared.MainWindowViewModel so both
     // apps report bus health identically. Keep the two in sync.
+
+    // Set by the platform head — only it knows which adapter/channel it opened.
+    private string _canChannelName = "—";
+    public string CanChannelName
+    {
+        get => _canChannelName;
+        set { _canChannelName = value; OnPropertyChanged(); }
+    }
 
     private DateTime _lastCanActivity = DateTime.MinValue;
     private bool _canBusStuck = false;

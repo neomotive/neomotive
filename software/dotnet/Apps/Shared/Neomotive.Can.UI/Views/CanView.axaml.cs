@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 
-namespace Neomotive.ModuleSimulator.UI.Views;
+namespace Neomotive.Can.UI.Views;
 
 public partial class CanView : UserControl
 {
-    private MainWindowViewModel? Vm => DataContext as MainWindowViewModel;
+    private ICanViewModel? Vm => DataContext as ICanViewModel;
 
     public CanView()
     {
@@ -18,7 +18,7 @@ public partial class CanView : UserControl
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        if (DataContext is MainWindowViewModel vm)
+        if (DataContext is ICanViewModel vm)
         {
             vm.CanLogUpdated += ScrollCanLogToBottom;
         }
@@ -34,5 +34,5 @@ public partial class CanView : UserControl
     }
 
     private void OnResetCanErrors(object? sender, RoutedEventArgs e) => Vm?.ResetCanErrors();
-    private void OnClearCanLog(object? sender, RoutedEventArgs e)    => Vm?.ClearCanLog();
+    private void OnClearCanLog(object? sender, RoutedEventArgs e) => Vm?.ClearCanLog();
 }

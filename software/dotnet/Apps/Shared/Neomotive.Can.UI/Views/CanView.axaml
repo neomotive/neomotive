@@ -1,8 +1,8 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Neomotive.ModuleSimulator.UI"
-             x:Class="Neomotive.ModuleSimulator.UI.Views.CanView"
-             x:DataType="local:MainWindowViewModel">
+             xmlns:can="clr-namespace:Neomotive.Can.UI"
+             x:Class="Neomotive.Can.UI.Views.CanView"
+             x:DataType="can:ICanViewModel">
     <Grid RowDefinitions="Auto, *">
         <!-- ── Bus Status Header ────────────────────────────────────────── -->
         <Border Grid.Row="0"
@@ -11,15 +11,17 @@
                 BorderThickness="0,0,0,1"
                 Padding="12,8">
             <StackPanel>
-                <Grid ColumnDefinitions="Auto, *, Auto, Auto" Margin="0,0,0,5">
+                <Grid ColumnDefinitions="Auto, Auto, *, Auto, Auto" Margin="0,0,0,5">
                     <TextBlock Grid.Column="0" Classes="heading" Text="CAN BUS" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Orientation="Horizontal" VerticalAlignment="Center" IsVisible="{Binding HasAutoReconnects}">
+                    <TextBlock Grid.Column="1" Classes="muted xs" Margin="8,0,0,0" VerticalAlignment="Center"
+                               Text="{Binding CanChannelName}" />
+                    <StackPanel Grid.Column="2" Margin="10,0,0,0" Orientation="Horizontal" VerticalAlignment="Center" IsVisible="{Binding HasAutoReconnects}">
                         <TextBlock Classes="warn xs" Text="● Auto-reconnects: " />
                         <TextBlock Classes="warn xs" Text="{Binding AutoReconnectCount}" FontWeight="Bold" />
                     </StackPanel>
-                    <CheckBox Grid.Column="2" Content="Auto-reconnect" IsChecked="{Binding AutoReconnect}" 
+                    <CheckBox Grid.Column="3" Content="Auto-reconnect" IsChecked="{Binding AutoReconnect}"
                               FontSize="10" VerticalAlignment="Center" Margin="0,0,10,0" />
-                    <Button Grid.Column="3" Classes="action-sm" Content="Reset Errors"
+                    <Button Grid.Column="4" Classes="action-sm" Content="Reset Errors"
                             IsVisible="{Binding HasCanHealthData}"
                             Click="OnResetCanErrors" />
                 </Grid>
@@ -31,7 +33,7 @@
                         <TextBlock Classes="error xs" Text="● Bus Stuck (INT Locked)" IsVisible="{Binding CanBusStuck}" />
                         <TextBlock Classes="warn xs" Text="● Errors active" IsVisible="{Binding HasCanHealthData}" />
                     </StackPanel>
-                    
+
                     <StackPanel Grid.Column="1" Margin="10,0,0,0" IsVisible="{Binding HasCanHealthData}">
                         <TextBlock Classes="label" Text="Error Events" />
                         <TextBlock Classes="error" Text="{Binding CanBusErrorCount}" />
@@ -60,16 +62,25 @@
                 Background="#0E1115"
                 Padding="12,6">
             <Grid RowDefinitions="Auto, *">
-                <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,4">
+                <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto" Margin="0,0,0,4">
                     <TextBlock Grid.Column="0" Classes="heading" Text="CAN PACKETS" VerticalAlignment="Center" />
-                    <Button Grid.Column="1" Classes="action-sm" Content="Clear Log"
+                    <CheckBox Grid.Column="1" Content="Log CAN Frames" IsChecked="{Binding IsLoggingEnabled}"
+                              FontSize="10" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <Button Grid.Column="2" Classes="action-sm" Content="Clear Log"
                             IsVisible="{Binding HasCanPackets}"
                             Click="OnClearCanLog" />
                 </Grid>
 
                 <TextBlock Grid.Row="1" Classes="dim"
+                           Text="Logging is disabled. Check 'Log CAN Frames' to start."
+                           IsVisible="{Binding !IsLoggingEnabled}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="1" Classes="dim"
                            Text="Waiting for CAN frames..."
-                           IsVisible="{Binding HasNoCanPackets}"
+                           IsVisible="{Binding ShowWaitingMessage}"
+                           HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
 
                 <ScrollViewer Grid.Row="1" x:Name="CanLogScroller"
@@ -78,7 +89,7 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding CanLogItems}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="local:CanLogItem">
+                            <DataTemplate x:DataType="can:CanLogItem">
                                 <Grid ColumnDefinitions="100, 38, 28, 185, *" Margin="0,1">
                                     <TextBlock Grid.Column="0" Classes="muted sm" Text="{Binding Time}" />
                                     <TextBlock Grid.Column="1" Classes="sm"       Text="{Binding Id}" />

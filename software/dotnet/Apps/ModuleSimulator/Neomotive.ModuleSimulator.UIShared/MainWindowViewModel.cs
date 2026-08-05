@@ -2,6 +2,7 @@ using Avalonia.Threading;
 using Meadow;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
+using Neomotive.Can.UI;
 using Neomotive.Update;
 using System;
 using System.Collections.Generic;
@@ -28,9 +29,8 @@ public record DtcItem(string Code, string Category, string Description, bool IsA
     public bool IsCommandInactive => !IsQuick && !IsActive;
 }
 public record DtcButtonItem(string Code, string Description, bool IsActive);
-public record CanLogItem(string Time, string Id, bool IsOutgoing, string Data, string Description);
 
-public class MainWindowViewModel : INotifyPropertyChanged
+public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 {
     private enum SettingsView { Data, Monitors, Dtcs, Can, Inputs, Config, Updates }
     private enum SelectedModule { Pcm, Tcu }
@@ -116,10 +116,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 if (rawBus is NullCanBus)
                 {
                     FeedbackText = "No CAN bus detected — offline mode";
+                    CanChannelName = "offline (no CAN hardware)";
                 }
                 else
                 {
                     FeedbackText = "Using CAN bus: " + rawBus.GetType().Name;
+                    // The head registers the bus in the Resolver without saying which
+                    // HAT channel it opened, so report the driver type. The Pi head
+                    // uses CAN0; if that ever becomes selectable, plumb the channel
+                    // description through the same way ScanTool does.
+                    CanChannelName = rawBus.GetType().Name;
                 }
 
                 _bus = new LoggingCanBus(rawBus, _log);
@@ -254,6 +260,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     // ── CAN health ────────────────────────────────────────────────────────────
 
+    // Set by the platform head — only it knows which adapter/channel it opened.
+    private string _canChannelName = "—";
+    public string CanChannelName
+    {
+        get => _canChannelName;
+        set { _canChannelName = value; OnPropertyChanged(); }
+    }
+
     private DateTime _lastCanActivity = DateTime.MinValue;
     private bool _canBusStuck = false;
     private bool _autoReconnect = true;
@@ -354,6 +368,22 @@ public class MainWindowViewModel : INotifyPropertyChanged
         private set { _canLogItems = value; OnPropertyChanged(); }
     }
 
+    // The simulator logs by default; the CAN tab lets the operator turn it off.
+    private bool _isLoggingEnabled = true;
+    public bool IsLoggingEnabled
+    {
+        get => _isLoggingEnabled;
+        set
+        {
+            _isLoggingEnabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowWaitingMessage));
+            if (value) RefreshCanLog();
+        }
+    }
+
+    public bool ShowWaitingMessage => IsLoggingEnabled && HasNoCanPackets;
+
     // ── Command ───────────────────────────────────────────────────────────────
 
     private string _commandInput = "";
@@ -428,6 +458,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         HasNoCanPackets = true;
         OnPropertyChanged(nameof(HasCanPackets));
         OnPropertyChanged(nameof(HasNoCanPackets));
+        OnPropertyChanged(nameof(ShowWaitingMessage));
+        CanLogUpdated?.Invoke();
     }
 
     // ── Config tab ────────────────────────────────────────────────────────────
@@ -774,6 +806,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private void RefreshCanLog()
     {
+        if (!_isLoggingEnabled) return;
         var all = _log.GetAll();
         var latest = all.Count > 0 ? all[^1].Timestamp : DateTime.MinValue;
         if (latest == _lastCanTimestamp && all.Count == _lastCanCount) return;
@@ -796,6 +829,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             HasNoCanPackets = !hasPackets;
             OnPropertyChanged(nameof(HasCanPackets));
             OnPropertyChanged(nameof(HasNoCanPackets));
+            OnPropertyChanged(nameof(ShowWaitingMessage));
         }
         CanLogUpdated?.Invoke();
     }

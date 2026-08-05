@@ -3,6 +3,7 @@ using Avalonia.Markup.Xaml;
 using Meadow;
 using Meadow.Avalonia;
 using Meadow.Hardware;
+using Neomotive.Can.Hardware;
 using Neomotive.ModuleSimulator.UI;
 using Neomotive.Update;
 using System;

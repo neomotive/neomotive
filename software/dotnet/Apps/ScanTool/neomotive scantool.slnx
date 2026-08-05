@@ -10,6 +10,8 @@
     <Project Path="Neomotive.ScanTool.Core.Tests/Neomotive.ScanTool.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/Shared/">
+    <Project Path="../Shared/Neomotive.Can.Hardware/Neomotive.Can.Hardware.csproj" />
+    <Project Path="../Shared/Neomotive.Can.UI/Neomotive.Can.UI.csproj" />
     <Project Path="../Shared/Neomotive.Obd2/Neomotive.Obd2.csproj" />
     <Project Path="../Shared/Neomotive.UI.Styles/Neomotive.UI.Styles.csproj" />
     <Project Path="../Shared/Neomotive.Update/Neomotive.Update.csproj" />

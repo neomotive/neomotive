@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.ADC.Mcp3xxx\Driver\ICs.ADC.Mcp3xxx.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.Mcp2515\Driver\ICs.CAN.Mcp2515.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Logging\Source\Meadow.Logging.LogProviders\Driver\Meadow.Logging.LogProviders.csproj" />
+    <ProjectReference Include="..\..\Shared\Neomotive.Can.Hardware\Neomotive.Can.Hardware.csproj" />
     <ProjectReference Include="..\Neomotive.ModuleSimulator.UIShared\Neomotive.ModuleSimulator.UIShared.csproj" />
   </ItemGroup>
 </Project>

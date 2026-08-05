@@ -92,6 +92,20 @@ Run tests: `dotnet test` from `Neomotive.ScanTool.Core.Tests/`
 - `.NET 10.0` target for all projects
 - CAN adapter driver: `ICS.CAN.PCanBasic` (Peak PCAN USB)
 
+### Shared libraries (`Apps/Shared/`)
+
+| Project | Purpose |
+|---|---|
+| `Neomotive.Can.Hardware` | `WaveshareDualCanHat` — dual MCP2515 CAN HAT for the Pi (used by both RaspberryPi heads) |
+| `Neomotive.Can.UI` | `CanView` (CAN bus health + packet log tab), `CanLogItem`, `ICanViewModel` |
+| `Neomotive.Obd2` | `DtcDescriptions` |
+| `Neomotive.UI.Styles` | Common Avalonia styles |
+| `Neomotive.Update` | Update service (USB / network sources) |
+| `Neomotive.Vin` | VIN decode / generate |
+
+`CanView` binds to `ICanViewModel`, not a concrete VM — both `MainWindowViewModel`s implement
+it. Adding a control to the CAN tab means adding the member to `ICanViewModel` and to both VMs.
+
 # context-mode — MANDATORY routing rules
 
 You have context-mode MCP tools available. These rules are NOT optional — they protect your context window from flooding. A single unrouted command can dump 56 KB into context and waste the entire session.

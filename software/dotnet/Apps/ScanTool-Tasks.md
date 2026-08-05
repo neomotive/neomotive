@@ -362,3 +362,21 @@ Runbook: `ScanTool/scripts/pi/README.md`.
 - git-bash on NTFS infers the exec bit from content (`#!` → 755, ELF → 644) and `chmod` is a
   silent no-op, so the `scantool` binary cannot be made executable from Windows. `install-app.sh`
   only chmods `run`, which is why `run` chmods the binary itself
+
+## Shared-code extraction (2026-08-05)
+
+- [x] **S1** `Shared/Neomotive.Can.Hardware` — `WaveshareDualCanHat` deduplicated out of
+  `ScanTool.RaspberryPi` and `ModuleSimulator.RaspberryPi` (the two copies had drifted:
+  ScanTool carried the pin-mapping warning comment, the simulator carried a stale
+  "boot.ini" message). Both Pi heads now reference the shared project.
+- [x] **S2** `Shared/Neomotive.Can.UI` — `CanView` + `CanLogItem` + new `ICanViewModel`
+  interface. The view binds to the interface, so both apps' `MainWindowViewModel`s implement
+  it. Shared view is the richer ScanTool variant, so the simulator's CAN tab gains the
+  "Log CAN Frames" toggle (`IsLoggingEnabled` defaults to `true` there, preserving today's
+  always-logging behavior).
+- [x] **S3** Both solutions build clean; ScanTool Core tests 37/37 green.
+
+**Not moved (still duplicated, candidates for a later pass):** `CanPacketLog` /
+`CanPacketEntry` / `LoggingCanBus` exist in both `*.Core` projects and are near-identical;
+`DescribePacket` differs meaningfully between the two apps, so the log *formatting* stays
+app-side.
