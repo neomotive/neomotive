@@ -22,6 +22,12 @@ chmod 700 "$XDG_RUNTIME_DIR"
 # export SCANTOOL_DRM_CARD=/dev/dri/card1
 # export SCANTOOL_DRM_SCALING=1.0
 
+# CAN HAT channel: 0 (default) or 1. Swap to 1 to test the other transceiver.
+# export SCANTOOL_CAN_CHANNEL=1
+
+# Ship Meadow logs off-box over UDP as well as to the journal.
+# export SCANTOOL_UDP_LOG=1
+
 # Defensive: install-app.sh only chmods `run`, so if the payload was rsynced
 # from a filesystem without POSIX modes the binary can arrive non-executable.
 [ -x "$APP_DIR/scantool" ] || chmod +x "$APP_DIR/scantool"

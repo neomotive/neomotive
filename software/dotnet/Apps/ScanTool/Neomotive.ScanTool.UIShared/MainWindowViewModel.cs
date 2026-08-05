@@ -1,4 +1,5 @@
 using Avalonia.Threading;
+using Meadow.Hardware;
 using Neomotive.ScanTool.Core;
 using Neomotive.Update;
 using Neomotive.Vin.Contracts;
@@ -38,7 +39,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _vinDecoder = vinDecoder;
         _updateService = updateService;
         if (_loggingBus != null)
+        {
             _log = _loggingBus.Log;
+            _loggingBus.BusError += OnCanBusError;
+        }
 
         if (_updateService != null)
         {
@@ -72,8 +76,126 @@ public class MainWindowViewModel : INotifyPropertyChanged
     {
         if (_log == null) return;
         _logTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        _logTimer.Tick += (_, _) => RefreshCanLog();
+        _logTimer.Tick += (_, _) =>
+        {
+            RefreshCanLog();
+            CheckCanBusWatchdog();
+        };
         _logTimer.Start();
+    }
+
+    // ── CAN health ────────────────────────────────────────────────────────────
+    // Mirrors Neomotive.ModuleSimulator.UIShared.MainWindowViewModel so both
+    // apps report bus health identically. Keep the two in sync.
+
+    private DateTime _lastCanActivity = DateTime.MinValue;
+    private bool _canBusStuck = false;
+    // Defaults to FALSE here, unlike the simulator. Auto-reconnect re-initializes
+    // the CAN controller, which destroys any in-flight transmission — too blunt to
+    // run unattended on the requesting side. Off by default it merely reports
+    // "Bus Stuck"; the operator can enable recovery from the CAN tab.
+    private bool _autoReconnect = false;
+    private int _autoReconnectCount = 0;
+
+    public bool AutoReconnect
+    {
+        get => _autoReconnect;
+        set { _autoReconnect = value; OnPropertyChanged(); }
+    }
+
+    public int AutoReconnectCount
+    {
+        get => _autoReconnectCount;
+        private set
+        {
+            _autoReconnectCount = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasAutoReconnects));
+        }
+    }
+
+    public bool HasAutoReconnects => AutoReconnectCount > 0;
+
+    public int CanBusErrorCount { get; private set; }
+    public int CanLastTxErrors { get; private set; }
+    public int CanLastRxErrors { get; private set; }
+    public bool CanBusStuck => _canBusStuck;
+    public bool HasCanHealthData => CanBusErrorCount > 0 || _canBusStuck;
+    public bool HasNoCanErrors => !HasCanHealthData;
+    public bool CanTxErrorSevere => CanLastTxErrors >= 128;
+
+    public int CanBusWatchdogSeconds => 5;
+
+    private void OnCanBusError(object? sender, CanErrorInfo e)
+    {
+        CanBusErrorCount++;
+        CanLastTxErrors = e.TransmitErrorCount;
+        CanLastRxErrors = e.ReceiveErrorCount;
+        Dispatcher.UIThread.Post(() =>
+        {
+            OnPropertyChanged(nameof(CanBusErrorCount));
+            OnPropertyChanged(nameof(CanLastTxErrors));
+            OnPropertyChanged(nameof(CanLastRxErrors));
+            OnPropertyChanged(nameof(HasCanHealthData));
+            OnPropertyChanged(nameof(HasNoCanErrors));
+            OnPropertyChanged(nameof(CanTxErrorSevere));
+        });
+    }
+
+    private void CheckCanBusWatchdog()
+    {
+        // If we've seen CAN activity before but nothing since, the interrupt
+        // handler is likely stuck (INT pin permanently asserted, no new falling edges).
+        if (_lastCanActivity == DateTime.MinValue) return;
+
+        // Silence alone does NOT mean stuck here. The simulator is a passive
+        // responder on a continuously-driven bus, so a quiet bus really is a
+        // wedged one. The scan tool is the initiator: it transmits only when the
+        // operator asks and is idle the rest of the time. Requiring an actual
+        // error report before declaring the bus stuck keeps the watchdog from
+        // firing — and, with auto-reconnect on, resetting the controller — every
+        // few seconds during perfectly normal idle.
+        if (CanBusErrorCount == 0) return;
+        var stuck = (DateTime.UtcNow - _lastCanActivity).TotalSeconds > CanBusWatchdogSeconds && !_canBusStuck;
+        if (stuck)
+        {
+            if (AutoReconnect)
+            {
+                AutoReconnectCount++;
+                ResetCanErrors();
+            }
+            else
+            {
+                _canBusStuck = true;
+                OnPropertyChanged(nameof(CanBusStuck));
+                OnPropertyChanged(nameof(HasCanHealthData));
+                OnPropertyChanged(nameof(HasNoCanErrors));
+            }
+        }
+    }
+
+    public void ResetCanErrors()
+    {
+        CanBusErrorCount = 0;
+        CanLastTxErrors = 0;
+        CanLastRxErrors = 0;
+        _canBusStuck = false;
+        _lastCanActivity = DateTime.MinValue;
+
+        // Force a hardware re-initialization if using the MCP2515 driver:
+        // the BitRate setter in Mcp2515CanBus triggers a full hardware Initialize().
+        if (_loggingBus != null)
+        {
+            _loggingBus.BitRate = _loggingBus.BitRate;
+        }
+
+        OnPropertyChanged(nameof(CanBusErrorCount));
+        OnPropertyChanged(nameof(CanLastTxErrors));
+        OnPropertyChanged(nameof(CanLastRxErrors));
+        OnPropertyChanged(nameof(CanBusStuck));
+        OnPropertyChanged(nameof(HasCanHealthData));
+        OnPropertyChanged(nameof(HasNoCanErrors));
+        OnPropertyChanged(nameof(CanTxErrorSevere));
     }
 
     // ── View selection ────────────────────────────────────────────────────────
@@ -673,6 +795,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (latest == _lastCanTimestamp && all.Count == _lastCanCount) return;
         _lastCanTimestamp = latest;
         _lastCanCount = all.Count;
+        _lastCanActivity = DateTime.UtcNow;
+        if (_canBusStuck)
+        {
+            _canBusStuck = false;
+            OnPropertyChanged(nameof(CanBusStuck));
+            OnPropertyChanged(nameof(HasCanHealthData));
+            OnPropertyChanged(nameof(HasNoCanErrors));
+        }
 
         CanLogItems = BuildCanLog(all);
 

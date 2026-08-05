@@ -57,10 +57,16 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         string adapterHint;
         try
         {
-            Resolver.Log.Info("Initializing Waveshare dual MCP2515 CAN HAT at 500 kbps...");
+            // SCANTOOL_CAN_CHANNEL picks the HAT channel (0 = default, 1 = second).
+            // Handy for isolating a faulty transceiver: a channel that transmits
+            // but reports TEC climbing with REC stuck at 0 has a dead receive
+            // path, and swapping channels tells you whether that is the board.
+            var channel = Environment.GetEnvironmentVariable("SCANTOOL_CAN_CHANNEL") == "1" ? 1 : 0;
+
+            Resolver.Log.Info($"Initializing Waveshare dual MCP2515 CAN HAT (CAN{channel}) at 500 kbps...");
             _hat = new WaveshareDualCanHat(Device!);
-            bus = _hat.CAN0;
-            Resolver.Log.Info($"CAN0 initialized successfully ({bus.GetType().Name}).");
+            bus = channel == 1 ? _hat.CAN1 : _hat.CAN0;
+            Resolver.Log.Info($"CAN{channel} initialized successfully ({bus.GetType().Name}).");
             adapterHint = "Plug the CAN HAT into the vehicle OBD2 port.";
         }
         catch (Exception ex)
@@ -74,6 +80,17 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
         var log = new CanPacketLog(200);
         var loggingBus = new LoggingCanBus(bus, log);
+
+        // Surface controller-level faults. A node that can transmit but not
+        // receive never sees the ACK bit, so the MCP2515 retransmits forever and
+        // its transmit error counter climbs to error-passive then bus-off. That
+        // is invisible at the frame layer — TX "succeeds" and RX is simply
+        // silent — so without this the only symptom is a bare timeout.
+        // CanErrorInfo has no useful ToString(), so format the counters explicitly —
+        // TEC is the number that matters (>=128 is error-passive, 255 is bus-off).
+        loggingBus.BusError += (_, e) =>
+            Resolver.Log.Warn($"CAN bus error: TEC={e.TransmitErrorCount} REC={e.ReceiveErrorCount}");
+
         Resolver.Services.Add<ICanBus>(loggingBus);
 
         var scanner = new Obd2Scanner(loggingBus);

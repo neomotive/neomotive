@@ -33,5 +33,6 @@ public partial class CanView : UserControl
             DispatcherPriority.Background);
     }
 
-    private void OnClearCanLog(object? sender, RoutedEventArgs e) => Vm?.ClearCanLog();
+    private void OnResetCanErrors(object? sender, RoutedEventArgs e) => Vm?.ResetCanErrors();
+    private void OnClearCanLog(object? sender, RoutedEventArgs e)    => Vm?.ClearCanLog();
 }

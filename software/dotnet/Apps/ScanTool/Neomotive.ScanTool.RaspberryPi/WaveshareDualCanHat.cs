@@ -19,6 +19,8 @@ public class WaveshareDualCanHat
     private Lazy<ICanBus> _can0;
     private Lazy<ICanBus> _can1;
 
+    // Meadow PinNN == PHYSICAL header pin (Pin24 -> GPIO8/CE0, Pin16 -> GPIO23).
+    //
     // INT0 -> pin16
     // MOSI -> pin19
     // MISO -> pin21
@@ -26,6 +28,12 @@ public class WaveshareDualCanHat
     // SCK -> pin23
     // CS0 -> pin24
     // CS1 -> pin26
+    //
+    // Keep this pin mapping IDENTICAL to
+    // ModuleSimulator/Neomotive.ModuleSimulator.RaspberryPi/WaveshareDualCanHat.cs —
+    // that pairing is proven on this HAT. Waveshare's published pinout documents
+    // CAN0's INT as GPIO25 (pin22), which contradicts this, so it is tempting to
+    // "fix"; don't, without hardware evidence. The two files should stay in sync.
 
     public ICanBus CAN0 => _can0.Value;
     public ICanBus CAN1 => _can1.Value;

@@ -20,7 +20,7 @@
                     <Button Content="Monitors"  Classes="tab" Classes.active="{Binding IsEmissionsView}"  Click="OnShowEmissions" />
                     <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
                     <Button Content="Live Data"  Classes="tab" Classes.active="{Binding IsLiveDataView}"  Click="OnShowLiveData" />
-                    <Button Content="CAN Log"    Classes="tab" Classes.active="{Binding IsCanLogView}"     Click="OnShowCanLog" />
+                    <Button Content="CAN"        Classes="tab" Classes.active="{Binding IsCanLogView}"     Click="OnShowCanLog" />
                     <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
 

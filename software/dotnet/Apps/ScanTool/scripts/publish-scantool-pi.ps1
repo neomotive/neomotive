@@ -106,23 +106,35 @@ try {
     & $scp $tarball "${TargetHost}:/tmp/scantool-deploy.tgz"
     if ($LASTEXITCODE -ne 0) { throw "scp failed" }
 
+    # STOP the service before extracting — do not "restart" afterwards.
+    # app.service has Restart=always, so a crash-looping app gets re-exec'd every
+    # 2s. Unpacking a ~150MB single-file binary onto SD takes longer than that,
+    # and writing an image that is concurrently being exec'd races with ETXTBSY:
+    # the result is a truncated binary and ".NET: failure processing application
+    # bundle / arithmetic overflow while reading bundle" on every restart.
+    #
     # Extracted over the top rather than wiped: /data/app also holds runtime
     # state (data/, config/) that a --delete-style sync would destroy.
     #
-    # chmod runs here because NTFS carried no mode bits. `run` then chmods the
-    # scantool binary itself. Only the service restart needs sudo, and -t gives
-    # it the tty it needs to prompt.
+    # chmod runs here because NTFS carried no mode bits; `run` then chmods the
+    # scantool binary itself. sudo gets its tty from ssh -t, and caches the
+    # credential across both calls in this one session.
+    $expected = (Get-Item "$OutDir\scantool").Length
     $remote = @(
+        "sudo systemctl stop app.service",
         "mkdir -p $RemoteDir",
         "tar xzf /tmp/scantool-deploy.tgz -C $RemoteDir",
         "rm -f /tmp/scantool-deploy.tgz",
         "chmod +x $RemoteDir/run",
-        "sudo systemctl restart app.service"
+        # Fail loudly here rather than as a boot loop the operator has to decode.
+        "actual=`$(stat -c%s $RemoteDir/scantool)",
+        "if [ `"`$actual`" != `"$expected`" ]; then echo `"TRUNCATED: `$actual != $expected`"; exit 1; fi",
+        "sudo systemctl start app.service"
     ) -join " && "
 
-    Write-Host "==> Installing + restarting app.service (sudo password required)..."
+    Write-Host "==> Installing + starting app.service (sudo password required)..."
     & $ssh -t $TargetHost $remote
-    if ($LASTEXITCODE -ne 0) { throw "Remote install failed" }
+    if ($LASTEXITCODE -ne 0) { throw "Remote install failed (see output above)" }
 }
 finally {
     Remove-Item $tarball -Force -ErrorAction SilentlyContinue
