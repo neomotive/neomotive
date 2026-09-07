@@ -422,13 +422,28 @@ crank in about four samples. Capture needs its own high-rate path.
   loop. Core suite 109/109 green.
 
 **Remaining:**
-- [ ] **T11** `CaptureView` + `CaptureReviewPane` in `UIShared` — arm/trigger config, and a
-  strip-chart review with cursor readout, jump-to-trigger and zoom. New tab in `ScanToolView`.
-  Pi gets the same panes constrained to 800x480; desktop adds multi-capture overlay (a good
-  crank against a bad one is the most diagnostic view available), derived channels (dP/dt,
-  commanded-actual) and PNG export.
-- [ ] **T12** Wire captures to the `data/` directory, which `App.axaml.cs` already creates but
-  nothing writes to. On the Pi only `/data` is writable.
+- [x] **T11** Capture UI — `CaptureViewModel` + `CapturePidItem` + `CaptureView` +
+  `CaptureReviewPane`, on a new "Capture" tab in `ScanToolView`. Kept out of
+  `MainWindowViewModel` (already ~1100 lines) and exposed as `CaptureVm`, mirroring the
+  simulator's `InputsVm` pattern.
+  - **Diesel hard-start preset** button configures the whole thing in one press: the five
+    signals worth watching, trigger on RPM > 150 with 200 ms dwell, 5 s pre-trigger, stall stop.
+  - Review pane draws one lane per signal on a shared trigger-relative axis, with cursor
+    readout, trigger marker, zoom, pan and jump-to-trigger.
+  - **Lanes autoscale to the data range, not the PID's declared range.** Rail pressure declares
+    0-655,350 kPa so it can express any common-rail system; drawn against that, a real
+    35,000 kPa trace is a flat line on the bottom and the rise rate — the entire point of the
+    capture — is invisible.
+  - `ShowCapture()` calls `StopPolling()` first: the 2 Hz live-data loop and the capture loop
+    must not contend for the bus.
+  - Manual trigger stays live alongside the threshold via `AnyTrigger`, so the operator can
+    always force a start.
+- [x] **T12** Captures write to the `data/` directory both heads already create.
+  `MainWindowViewModel.DataDirectory` is set from each `App.axaml.cs` object initializer
+  (matching the existing `AdapterHint`/`CanChannelName` idiom) rather than a constructor
+  parameter, which avoids disturbing the UDS work's `udsScanner` argument. On the Pi, `baseDir`
+  is `/data/app`, so captures land in the only writable location on the device.
+  VIN is stamped into each capture's sidecar as it is read.
 - [ ] **T13** Tune detection: `ReadCalibrationIdAsync` / `ReadCvnAsync` (`VehicleInfoPid` already
   defines 0x04 and 0x06 but `IObd2Scanner` exposes no method), supported-PID bitmap reads, and a
   UI that distinguishes "not supported" from "not complete" in readiness. Touches
@@ -467,6 +482,13 @@ crank in about four samples. Capture needs its own high-rate path.
 **Still requires hardware:** running a real ScanTool capture against the simulator over CAN
 (PCAN on desktop, MCP2515 on Pi) to confirm the achieved sample rate clears ~10 Hz for five
 signals. The fixture is ready; the bench run is not automated.
+
+**Gotcha:** a running `Neomotive.ScanTool.Desktop` (or Visual Studio) locks the output DLLs and
+the Desktop project fails with MSB3021/MSB3027 copy errors. The XAML and C# have already compiled
+at that point — close the app and rebuild.
+
+**Gotcha:** setting `DataContext` on a view also rebinds its `IsVisible`, so the capture tab is
+wrapped in a `<Panel IsVisible="...">` that still sees `MainWindowViewModel`.
 
 **Gotcha:** concurrent `dotnet build` runs against these projects produce spurious
 `NuGet.targets(782,5): Value cannot be null. (Parameter 'path1')` restore errors on unrelated

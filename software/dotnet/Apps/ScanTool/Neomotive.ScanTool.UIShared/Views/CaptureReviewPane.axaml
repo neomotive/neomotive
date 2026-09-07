@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.CaptureReviewPane"
+             x:DataType="local:CaptureViewModel">
+
+    <Grid RowDefinitions="Auto, *, Auto">
+
+        <!-- Cursor readout -->
+        <Border Grid.Row="0" Background="#141820" Padding="8,4"
+                BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto, *">
+                <TextBlock Grid.Column="0" Name="CursorTime" Classes="xs" Text="—"
+                           MinWidth="90" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Name="CursorValues" Classes="xs dim"
+                           TextWrapping="NoWrap" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <!-- Lanes are built in code: one per captured signal -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Name="LanesHost" Spacing="0" />
+        </ScrollViewer>
+
+        <!-- View controls -->
+        <Border Grid.Row="2" Background="#141820" Padding="6,4"
+                BorderBrush="#1E2530" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Content="Fit"     Click="OnFit" />
+                <Button Content="− Zoom"  Click="OnZoomOut" />
+                <Button Content="+ Zoom"  Click="OnZoomIn" />
+                <Button Content="◀"       Click="OnPanLeft" />
+                <Button Content="▶"       Click="OnPanRight" />
+                <Button Content="Trigger" Click="OnJumpToTrigger" />
+                <TextBlock Name="RangeLabel" Classes="xs dim" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+    </Grid>
+</UserControl>

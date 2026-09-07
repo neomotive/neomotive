@@ -22,6 +22,7 @@
                     <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
                     <Button Content="UDS"        Classes="tab" Classes.active="{Binding IsUdsView}"        Click="OnShowUds" />
                     <Button Content="Live Data"  Classes="tab" Classes.active="{Binding IsLiveDataView}"  Click="OnShowLiveData" />
+                    <Button Content="Capture"    Classes="tab" Classes.active="{Binding IsCaptureView}"    Click="OnShowCapture" />
                     <Button Content="CAN"        Classes="tab" Classes.active="{Binding IsCanLogView}"     Click="OnShowCanLog" />
                     <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
@@ -54,6 +55,11 @@
             <views:UdsView        IsVisible="{Binding IsUdsView}" />
             <canviews:CanView     IsVisible="{Binding IsCanLogView}" />
             <views:LiveDataView   IsVisible="{Binding IsLiveDataView}" />
+            <!-- Wrapped: CaptureView swaps its own DataContext, so visibility has to be bound on
+                 a container that still sees MainWindowViewModel. -->
+            <Panel IsVisible="{Binding IsCaptureView}">
+                <views:CaptureView DataContext="{Binding CaptureVm}" />
+            </Panel>
             <views:UpdatesView    IsVisible="{Binding IsUpdatesView}" />
         </Grid>
 

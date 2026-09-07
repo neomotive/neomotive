@@ -114,6 +114,9 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         // new payload into /data/app (see scripts/pi/README.md), not A/B slots.
         var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder)
         {
+            // baseDir is /data/app on the appliance, so this lands captures inside the only
+            // writable location on the device.
+            DataDirectory = Path.Combine(baseDir, "data"),
             AdapterHint = adapterHint,
             CanChannelName = canChannelName
         };

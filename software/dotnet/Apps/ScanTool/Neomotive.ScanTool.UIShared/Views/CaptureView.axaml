@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
+             x:Class="Neomotive.ScanTool.UI.Views.CaptureView"
+             x:DataType="local:CaptureViewModel">
+
+    <Grid ColumnDefinitions="260, *">
+
+        <!-- Left: signals and trigger setup -->
+        <Border Grid.Column="0" Background="#0E1117"
+                BorderBrush="#1E2530" BorderThickness="0,0,1,0">
+            <ScrollViewer Padding="8,6">
+                <StackPanel Spacing="6">
+
+                    <Button Content="Diesel hard-start preset"
+                            HorizontalAlignment="Stretch"
+                            Click="OnApplyPreset"
+                            ToolTip.Tip="Selects rail pressure, RPM, module voltage, coolant and MAP; triggers on cranking; stops on stall." />
+
+                    <TextBlock Classes="label" Text="Signals" Margin="0,6,0,0" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="All"  Click="OnSelectAll" />
+                        <Button Content="None" Click="OnSelectNone" />
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding AvailablePids}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:CapturePidItem">
+                                <Button Classes="pidrow" HorizontalAlignment="Stretch"
+                                        Click="OnTogglePid" Tag="{Binding}">
+                                    <Grid ColumnDefinitions="18, *, Auto">
+                                        <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" />
+                                        <TextBlock Grid.Column="2" Classes="xs dim" Text="{Binding Unit}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Classes="label" Text="Trigger" Margin="0,8,0,0" />
+                    <CheckBox Content="On threshold" IsChecked="{Binding UseThresholdTrigger}" />
+                    <CheckBox Content="On first ECU response" IsChecked="{Binding UseBusWakeTrigger}"
+                              ToolTip.Tip="Arm before key-on; recording starts the moment the ECU answers." />
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
+                        <TextBox Grid.Column="0" Watermark="signal" Text="{Binding TriggerSignalKey}" />
+                        <TextBox Grid.Column="1" Watermark="value"  Text="{Binding TriggerValue}" />
+                    </Grid>
+                    <CheckBox Content="Above (uncheck for below)" IsChecked="{Binding TriggerAbove}" />
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
+                        <TextBox Grid.Column="0" Watermark="dwell ms"    Text="{Binding TriggerDwellMs}" />
+                        <TextBox Grid.Column="1" Watermark="pre-trig s"  Text="{Binding PreTriggerSeconds}" />
+                    </Grid>
+
+                    <TextBlock Classes="label" Text="Stop" Margin="0,8,0,0" />
+                    <CheckBox Content="Stop on stall" IsChecked="{Binding StallStopEnabled}" />
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
+                        <TextBox Grid.Column="0" Watermark="floor"     Text="{Binding StallFloor}" />
+                        <TextBox Grid.Column="1" Watermark="stall ms"  Text="{Binding StallDurationMs}" />
+                    </Grid>
+                    <TextBox Watermark="max seconds" Text="{Binding MaxDurationSeconds}" />
+                    <TextBox Watermark="capture name" Text="{Binding CaptureName}" />
+
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Right: run controls, status, review -->
+        <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *, Auto">
+
+            <Border Grid.Row="0" Background="#141820" Padding="8,6"
+                    BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Arm"     Click="OnArm"     IsEnabled="{Binding CanArm}" />
+                    <Button Content="Trigger" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}" />
+                    <Button Content="Stop"    Click="OnStop"    IsEnabled="{Binding IsArmed}" />
+                    <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding RateText}" />
+                    <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding SampleCount, StringFormat='{}{0} samples'}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="1" Padding="8,4">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="value" Text="{Binding Status}" TextWrapping="Wrap" />
+                    <TextBlock Classes="xs dim" Text="{Binding TriggerSummary, StringFormat='Trigger: {0}'}" />
+                </StackPanel>
+            </Border>
+
+            <views:CaptureReviewPane Grid.Row="2" DataContext="{Binding}" />
+
+            <Border Grid.Row="3" Background="#141820" Padding="8,6"
+                    BorderBrush="#1E2530" BorderThickness="0,1,0,0">
+                <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                    <TextBlock Grid.Column="0" Classes="xs dim" VerticalAlignment="Center"
+                               Margin="0,0,6,0" Text="Saved" />
+                    <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding Recordings}"
+                              SelectedItem="{Binding SelectedRecording}" />
+                    <Button Grid.Column="2" Content="Refresh" Margin="6,0,0,0" Click="OnRefresh" />
+                    <Button Grid.Column="3" Content="Export wide CSV" Margin="6,0,0,0"
+                            Click="OnExport" IsEnabled="{Binding HasLoadedRecording}" />
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Grid>
+</UserControl>

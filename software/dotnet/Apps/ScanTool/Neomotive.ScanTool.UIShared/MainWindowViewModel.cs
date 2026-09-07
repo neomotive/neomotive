@@ -17,7 +17,7 @@ namespace Neomotive.ScanTool.UI;
 
 public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Uds, CanLog, LiveData, Updates }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Uds, CanLog, LiveData, Capture, Updates }
     private enum LiveSubView { Table, Gauges, Waveform }
 
     private ScanView _view = ScanView.Connection;
@@ -36,6 +36,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     {
         _scanner = scanner;
         _loggingBus = loggingBus;
+        CaptureVm = new CaptureViewModel(scanner);
         _vinDecoder = vinDecoder;
         _updateService = updateService;
         _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus) : null);
@@ -216,6 +217,20 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsUdsView => _view == ScanView.Uds;
     public bool IsCanLogView => _view == ScanView.CanLog;
     public bool IsLiveDataView => _view == ScanView.LiveData;
+    public bool IsCaptureView => _view == ScanView.Capture;
+
+    /// <summary>Owns event capture; see <see cref="CaptureViewModel"/>.</summary>
+    public CaptureViewModel CaptureVm { get; }
+
+    /// <summary>
+    /// Where captures are written. Set by the host app at startup — the desktop and Pi heads
+    /// resolve different base directories, and on the Pi appliance only /data is writable.
+    /// </summary>
+    public string DataDirectory
+    {
+        get => CaptureVm.DataDirectory;
+        set => CaptureVm.DataDirectory = value;
+    }
     public bool IsUpdatesView => _view == ScanView.Updates;
 
     public void ShowConnection() { StopPolling(); _view = ScanView.Connection; NotifyViewChanged(); }
@@ -225,6 +240,8 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public void ShowUds() { StopPolling(); _view = ScanView.Uds; NotifyViewChanged(); }
     public void ShowCanLog() { StopPolling(); _view = ScanView.CanLog; NotifyViewChanged(); }
     public void ShowLiveData() { _view = ScanView.LiveData; NotifyViewChanged(); }
+    // Capture runs its own high-rate poll loop, so the 2 Hz live-data loop must be off first.
+    public void ShowCapture() { StopPolling(); _view = ScanView.Capture; CaptureVm.RefreshRecordings(); NotifyViewChanged(); }
     public void ShowUpdates() { StopPolling(); _view = ScanView.Updates; NotifyViewChanged(); }
 
     private void NotifyViewChanged()
@@ -236,6 +253,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         OnPropertyChanged(nameof(IsUdsView));
         OnPropertyChanged(nameof(IsCanLogView));
         OnPropertyChanged(nameof(IsLiveDataView));
+        OnPropertyChanged(nameof(IsCaptureView));
         OnPropertyChanged(nameof(IsUpdatesView));
     }
 
@@ -735,7 +753,13 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public string? Vin
     {
         get => _vin;
-        private set { _vin = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayVin)); }
+        private set
+        {
+            _vin = value;
+            CaptureVm.VehicleVin = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DisplayVin));
+        }
     }
     public string DisplayVin => _vin ?? "—";
 

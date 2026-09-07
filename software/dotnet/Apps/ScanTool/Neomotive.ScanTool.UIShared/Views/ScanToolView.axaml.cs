@@ -25,5 +25,6 @@ public partial class ScanToolView : UserControl
     private void OnShowUds(object? sender, RoutedEventArgs e)        => Vm.ShowUds();
     private void OnShowCanLog(object? sender, RoutedEventArgs e)      => Vm.ShowCanLog();
     private void OnShowLiveData(object? sender, RoutedEventArgs e)   => Vm.ShowLiveData();
+    private void OnShowCapture(object? sender, RoutedEventArgs e)    => Vm.ShowCapture();
     private void OnShowUpdates(object? sender, RoutedEventArgs e)    => Vm.ShowUpdates();
 }
