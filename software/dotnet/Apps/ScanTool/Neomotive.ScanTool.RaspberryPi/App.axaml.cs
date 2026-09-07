@@ -117,6 +117,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
             // baseDir is /data/app on the appliance, so this lands captures inside the only
             // writable location on the device.
             DataDirectory = Path.Combine(baseDir, "data"),
+            ConfigDirectory = Path.Combine(baseDir, "config"),
             AdapterHint = adapterHint,
             CanChannelName = canChannelName
         };

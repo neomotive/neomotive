@@ -15,7 +15,7 @@ public sealed class CapturePollLoop
 {
     private readonly IObd2Scanner _scanner;
     private readonly CaptureSession _session;
-    private readonly IReadOnlyList<CapturePidBinding> _bindings;
+    private readonly IReadOnlyList<CaptureChannel> _channels;
     private readonly CapturePollOptions _options;
     private readonly Stopwatch _clock = new();
 
@@ -25,17 +25,17 @@ public sealed class CapturePollLoop
     public CapturePollLoop(
         IObd2Scanner scanner,
         CaptureSession session,
-        IReadOnlyList<CapturePidBinding> bindings,
+        IReadOnlyList<CaptureChannel> channels,
         CapturePollOptions? options = null)
     {
         _scanner = scanner;
         _session = session;
-        _bindings = bindings;
+        _channels = channels;
         _options = options ?? new CapturePollOptions();
 
-        if (bindings.Count == 0)
+        if (channels.Count == 0)
         {
-            throw new ArgumentException("Nothing to poll.", nameof(bindings));
+            throw new ArgumentException("Nothing to poll.", nameof(channels));
         }
     }
 
@@ -45,7 +45,7 @@ public sealed class CapturePollLoop
         get
         {
             var seconds = _clock.Elapsed.TotalSeconds;
-            return seconds <= 0 ? 0 : _sampleCount / seconds / _bindings.Count;
+            return seconds <= 0 ? 0 : _sampleCount / seconds / _channels.Count;
         }
     }
 
@@ -67,23 +67,23 @@ public sealed class CapturePollLoop
 
         while (!ct.IsCancellationRequested && _session.State != CaptureState.Stopped)
         {
-            foreach (var binding in _bindings)
+            foreach (var channel in _channels)
             {
                 if (ct.IsCancellationRequested || _session.State == CaptureState.Stopped)
                 {
                     break;
                 }
 
-                await PollOnceAsync(binding, ct);
+                await PollOnceAsync(channel, ct);
             }
         }
 
         _clock.Stop();
     }
 
-    private async Task PollOnceAsync(CapturePidBinding binding, CancellationToken ct)
+    private async Task PollOnceAsync(CaptureChannel channel, CancellationToken ct)
     {
-        var value = await ReadWithDeadlineAsync(binding, ct);
+        var value = await ReadWithDeadlineAsync(channel, ct);
 
         // Stamp on arrival, not on dispatch: round-robin polling means each signal has its own
         // instant, and preserving that is the point of the long-format capture.
@@ -109,10 +109,10 @@ public sealed class CapturePollLoop
         _consecutiveFailures = 0;
         _sampleCount++;
 
-        _session.Ingest(new CaptureSample(binding.Signal.Index, timestampMs, value.Value));
+        _session.Ingest(new CaptureSample(channel.Signal.Index, timestampMs, value.Value));
     }
 
-    private async Task<double?> ReadWithDeadlineAsync(CapturePidBinding binding, CancellationToken ct)
+    private async Task<double?> ReadWithDeadlineAsync(CaptureChannel channel, CancellationToken ct)
     {
         // The scanner's internal timeout is fixed at 3 s, so the deadline is imposed here instead.
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -120,8 +120,7 @@ public sealed class CapturePollLoop
 
         try
         {
-            var result = await _scanner.ReadPidAsync(binding.Pid, deadline.Token);
-            return result?.Value;
+            return await channel.Source.ReadAsync(deadline.Token);
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
@@ -166,7 +165,7 @@ public sealed class CapturePollLoop
         {
             Name = name,
             StartedUtc = _session.StartedUtc ?? DateTime.UtcNow,
-            Signals = _bindings.Signals(),
+            Signals = _channels.Signals(),
             TriggerDescription = triggerDescription,
             TriggerTimestampMs = _session.TriggerTimestampMs,
             AchievedSampleRateHz = AchievedSampleRateHz,

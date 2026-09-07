@@ -97,6 +97,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder, updateService)
         {
             DataDirectory = Path.Combine(baseDir, "data"),
+            ConfigDirectory = Path.Combine(baseDir, "config"),
             AdapterHint = adapterHint,
             CanChannelName = canChannelName
         };

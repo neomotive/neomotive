@@ -186,10 +186,20 @@ bus-wake triggers, stall auto-stop, and long-format CSV + JSON sidecar storage. 
 polls only the armed signals with no inter-sweep delay, reaching roughly 10 Hz against ~2 Hz for
 the live-data loop — the difference between four samples across a crank and forty.
 
-3. ~~CSV/JSON recording with start/stop controls~~ — engine and storage done; UI pending (T11/T12)
-4. Playback of recorded sessions (offline review) — pending (T11)
-5. Tune detection via Mode 09 CALID/CVN and supported-PID bitmaps — pending (T13)
-6. Mode 22 commanded rail pressure, now that UDS `ReadDataByIdentifier` has landed — pending (T14)
+3. ~~CSV/JSON recording with start/stop controls~~ — done (T7/T11/T12)
+4. ~~Playback of recorded sessions (offline review)~~ — done (T11)
+5. ~~Tune detection via Mode 09 CALID/CVN and supported-PID bitmaps~~ — done (T13)
+6. ~~Mode 22 channels via UDS `ReadDataByIdentifier`~~ — done (T14); the shipped DID template is
+   marked UNVERIFIED and must be confirmed against the actual ECU
+
+**Phase 3 is code complete.** 144 Core tests plus 24 simulator tests green; both solutions build.
+What remains is bench and vehicle verification, which needs hardware:
+
+- Confirm the capture loop clears ~10 Hz for five signals against ModuleSimulator over real CAN
+- Run each simulator start profile end to end and confirm triggers, pre-trigger retention and
+  stall auto-stop behave on the wire as they do in tests
+- Confirm captures land in `/data` on the Pi and survive an update
+- Verify the 260 px capture sidebar is usable on the Pi's 800×480 panel
 
 ### Phase 4 — UDS Support
 

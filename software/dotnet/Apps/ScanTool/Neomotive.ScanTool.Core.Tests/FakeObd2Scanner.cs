@@ -36,6 +36,22 @@ internal sealed class FakeObd2Scanner : IObd2Scanner
         return Task.FromResult<PidValue?>(new PidValue(descriptor, value.Value, DateTime.UtcNow));
     }
 
+    /// <summary>Scripted vehicle fingerprint, for tune-check tests.</summary>
+    public string? CalibrationId { get; set; }
+
+    public string? Cvn { get; set; }
+
+    public IReadOnlyList<Pid> SupportedPids { get; set; } = Array.Empty<Pid>();
+
+    public Task<string?> ReadCalibrationIdAsync(CancellationToken ct = default)
+        => Task.FromResult(CalibrationId);
+
+    public Task<string?> ReadCvnAsync(CancellationToken ct = default)
+        => Task.FromResult(Cvn);
+
+    public Task<IReadOnlyList<Pid>> ReadSupportedPidsAsync(CancellationToken ct = default)
+        => Task.FromResult(SupportedPids);
+
     public Task<string?> ReadVinAsync(CancellationToken ct = default)
         => throw new NotSupportedException();
 

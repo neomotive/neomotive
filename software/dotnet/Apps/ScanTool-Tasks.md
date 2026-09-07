@@ -444,13 +444,36 @@ crank in about four samples. Capture needs its own high-rate path.
   parameter, which avoids disturbing the UDS work's `udsScanner` argument. On the Pi, `baseDir`
   is `/data/app`, so captures land in the only writable location on the device.
   VIN is stamped into each capture's sidecar as it is read.
-- [ ] **T13** Tune detection: `ReadCalibrationIdAsync` / `ReadCvnAsync` (`VehicleInfoPid` already
-  defines 0x04 and 0x06 but `IObd2Scanner` exposes no method), supported-PID bitmap reads, and a
-  UI that distinguishes "not supported" from "not complete" in readiness. Touches
-  `IObd2Scanner`/`Obd2Scanner` — coordinate with the UDS work.
-- [ ] **T14** Mode 22 channels for commanded rail pressure and FCA/MPROP duty. The UDS work has
-  already landed `ReadDataByIdentifier` in `Core/Uds`, so this is now mostly a config-driven
-  signal-definition file rather than new protocol.
+- [x] **T13** Tune detection — `Obd2Protocol.ParseCalibrationId` / `ParseCvn` /
+  `ParseSupportedPids` / `SupportsNextPidRange`, exposed as `ReadCalibrationIdAsync`,
+  `ReadCvnAsync` and `ReadSupportedPidsAsync` on `IObd2Scanner`. Analysis lives in
+  `TuneAnalysis.cs` (`TuneFingerprint` / `TuneAnalyzer` / `TuneAssessment`), pure and testable.
+  UI is a "Check tune" section on the Vehicle tab; it works with the engine off, which is the
+  point on a truck that will not stay running.
+  - The supported-PID walk stops at the first range whose "next range" bit is clear rather than
+    querying all eight, so unsupported ranges do not each cost a 3 s timeout.
+  - `ReadinessMonitor` already distinguished `IsNotSupported` from `IsIncomplete`; the analyzer
+    reports them separately because that distinction is the actual tell.
+  - **Aftertreatment PIDs are matched by name family** (Dpf/DieselParticulate/Scr/Nox/
+    ParticulateMatter) rather than a hand-listed set, so the J1979 enum stays the source of truth.
+    **EGR is deliberately excluded** — petrol engines have it too, so its presence proves nothing
+    about a DPF/SCR delete.
+  - The analyzer reports *evidence, not a verdict*. Without a known-good baseline a CALID and CVN
+    cannot prove a reflash; what the tool can settle alone is whether the calibration still
+    expects hardware that has been removed.
+- [x] **T14** Mode $22 channels — `Mode22SignalDefinition` (DID, byte offset/length, signedness,
+  scale, offset, tx/rx) plus `Mode22SignalFile` loading `config/mode22-signals.json`. Required a
+  **channel abstraction**: `ICaptureChannelSource` with `PidChannelSource` and
+  `Mode22ChannelSource`, so Mode $01 and Mode $22 signals are captured identically and land on
+  one timeline — which is what makes commanded-vs-actual rail pressure readable.
+  `CapturePidBinding` was replaced by `CaptureChannel` + `CaptureChannelSetBuilder` (the builder
+  keeps signal indices dense, which the allocation-free ring buffer depends on).
+  - No J1979 library change was needed: the UDS work's `ReadDidAsync` supplies the transport.
+  - **The shipped template DIDs are placeholders marked UNVERIFIED.** Mode $22 identifiers are
+    manufacturer-specific and unpublished; they must be confirmed against the actual ECU before
+    any reading is trusted. Nothing was invented for the Titan.
+  - Consequence worth remembering: a channel owns its scanner, so channels must be built from
+    the same scanner instance the poll loop runs against.
 - [x] **T15** `ModuleSimulator` start-attempt scenarios — see Group U.
 
 ## Group U — Simulator start-attempt scenarios (bench fixture for capture)
@@ -482,6 +505,9 @@ crank in about four samples. Capture needs its own high-rate path.
 **Still requires hardware:** running a real ScanTool capture against the simulator over CAN
 (PCAN on desktop, MCP2515 on Pi) to confirm the achieved sample rate clears ~10 Hz for five
 signals. The fixture is ready; the bench run is not automated.
+
+**Gotcha:** a `TuneAssessment` property whose type is also named `TuneAssessment` compiles, but
+avoid copying that pattern.
 
 **Gotcha:** a running `Neomotive.ScanTool.Desktop` (or Visual Studio) locks the output DLLs and
 the Desktop project fails with MSB3021/MSB3027 copy errors. The XAML and C# have already compiled

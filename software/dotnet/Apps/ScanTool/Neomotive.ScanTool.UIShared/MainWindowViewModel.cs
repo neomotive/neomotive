@@ -36,7 +36,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     {
         _scanner = scanner;
         _loggingBus = loggingBus;
-        CaptureVm = new CaptureViewModel(scanner);
+        CaptureVm = new CaptureViewModel(scanner, _udsScanner);
         _vinDecoder = vinDecoder;
         _updateService = updateService;
         _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus) : null);
@@ -231,6 +231,98 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         get => CaptureVm.DataDirectory;
         set => CaptureVm.DataDirectory = value;
     }
+
+    /// <summary>Config directory; holds the user-defined Mode $22 signal definitions.</summary>
+    public string ConfigDirectory
+    {
+        get => CaptureVm.ConfigDirectory;
+        set => CaptureVm.ConfigDirectory = value;
+    }
+
+    // ── Calibration / tune check ─────────────────────────────────────────────
+
+    private TuneAssessment? _tuneAssessment;
+    private bool _isCheckingTune;
+    private string _tuneStatus = "Not checked.";
+
+    public string DisplayCalibrationId => CaptureVm.VehicleCalibrationId ?? "—";
+
+    public string DisplayCvn => CaptureVm.VehicleCvn ?? "—";
+
+    public bool IsCheckingTune
+    {
+        get => _isCheckingTune;
+        private set { _isCheckingTune = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanCheckTune)); }
+    }
+
+    public bool CanCheckTune => !_isCheckingTune && IsConnected;
+
+    public string TuneStatus
+    {
+        get => _tuneStatus;
+        private set { _tuneStatus = value; OnPropertyChanged(); }
+    }
+
+    public TuneAssessment? TuneAssessment
+    {
+        get => _tuneAssessment;
+        private set
+        {
+            _tuneAssessment = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasTuneAssessment));
+            OnPropertyChanged(nameof(TuneFindings));
+            OnPropertyChanged(nameof(TuneSummary));
+        }
+    }
+
+    public bool HasTuneAssessment => _tuneAssessment is not null;
+
+    public IReadOnlyList<TuneFinding> TuneFindings => _tuneAssessment?.Findings ?? [];
+
+    public string TuneSummary => _tuneAssessment?.Summary ?? string.Empty;
+
+    /// <summary>
+    /// Reads the vehicle fingerprint and analyses it. Works with the engine off, which is the
+    /// point: it answers the calibration question on a vehicle that will not stay running.
+    /// </summary>
+    public async Task CheckTuneAsync()
+    {
+        if (IsCheckingTune) return;
+
+        IsCheckingTune = true;
+        TuneStatus = "Reading calibration ID, CVN and supported PIDs…";
+
+        try
+        {
+            var ct = CancellationToken.None;
+
+            var calId = await Task.Run(() => _scanner.ReadCalibrationIdAsync(ct), ct);
+            var cvn = await Task.Run(() => _scanner.ReadCvnAsync(ct), ct);
+            var supported = await Task.Run(() => _scanner.ReadSupportedPidsAsync(ct), ct);
+            var monitors = await Task.Run(() => _scanner.ReadReadinessAsync(ct), ct);
+            var ecuName = await Task.Run(() => _scanner.ReadEcuNameAsync(ct), ct);
+
+            CaptureVm.VehicleCalibrationId = calId;
+            CaptureVm.VehicleCvn = cvn;
+
+            var fingerprint = new TuneFingerprint(Vin, ecuName, calId, cvn, supported, monitors);
+
+            TuneAssessment = TuneAnalyzer.Analyze(fingerprint);
+            TuneStatus = $"Checked {DateTime.Now:HH:mm:ss} — {supported.Count} PIDs reported.";
+
+            OnPropertyChanged(nameof(DisplayCalibrationId));
+            OnPropertyChanged(nameof(DisplayCvn));
+        }
+        catch (Exception ex)
+        {
+            TuneStatus = $"Tune check failed: {ex.Message}";
+        }
+        finally
+        {
+            IsCheckingTune = false;
+        }
+    }
     public bool IsUpdatesView => _view == ScanView.Updates;
 
     public void ShowConnection() { StopPolling(); _view = ScanView.Connection; NotifyViewChanged(); }
@@ -391,7 +483,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsConnected
     {
         get => _isConnected;
-        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); OnPropertyChanged(nameof(CanStartPolling)); }
+        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); OnPropertyChanged(nameof(CanStartPolling)); OnPropertyChanged(nameof(CanCheckTune)); }
     }
 
     public bool IsNotConnected => !_isConnected;

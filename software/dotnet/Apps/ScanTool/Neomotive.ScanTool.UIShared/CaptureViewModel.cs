@@ -39,6 +39,7 @@ public class CaptureViewModel : INotifyPropertyChanged
     ];
 
     private readonly IObd2Scanner _scanner;
+    private readonly IUdsScanner? _udsScanner;
 
     private CancellationTokenSource? _cts;
     private CaptureSession? _session;
@@ -46,6 +47,7 @@ public class CaptureViewModel : INotifyPropertyChanged
     private DispatcherTimer? _statusTimer;
 
     private string _dataDirectory = string.Empty;
+    private string _configDirectory = string.Empty;
     private string _status = "Idle";
     private string _captureName = string.Empty;
     private bool _isArmed;
@@ -72,9 +74,10 @@ public class CaptureViewModel : INotifyPropertyChanged
     private string? _selectedRecording;
     private CaptureRecording? _loadedRecording;
 
-    public CaptureViewModel(IObd2Scanner scanner)
+    public CaptureViewModel(IObd2Scanner scanner, IUdsScanner? udsScanner = null)
     {
         _scanner = scanner;
+        _udsScanner = udsScanner;
 
         AvailablePids = PidRegistry.CommonPids
             .Select(d => new CapturePidItem(d))
@@ -84,6 +87,55 @@ public class CaptureViewModel : INotifyPropertyChanged
     }
 
     public IReadOnlyList<CapturePidItem> AvailablePids { get; }
+
+    /// <summary>User-defined Mode $22 channels, loaded from the config directory.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<Mode22SignalItem> Mode22Signals { get; } = new();
+
+    public bool HasMode22Signals => Mode22Signals.Count > 0;
+
+    /// <summary>
+    /// Where <c>mode22-signals.json</c> lives. Setting it loads the definitions; a template is
+    /// written on first run so the format is discoverable on the device.
+    /// </summary>
+    public string ConfigDirectory
+    {
+        get => _configDirectory;
+        set
+        {
+            _configDirectory = value;
+            OnPropertyChanged();
+            LoadMode22Signals();
+        }
+    }
+
+    private void LoadMode22Signals()
+    {
+        Mode22Signals.Clear();
+
+        if (string.IsNullOrWhiteSpace(_configDirectory))
+        {
+            OnPropertyChanged(nameof(HasMode22Signals));
+            return;
+        }
+
+        var path = System.IO.Path.Combine(_configDirectory, Mode22SignalFile.DefaultFileName);
+
+        try
+        {
+            Mode22SignalFile.WriteTemplateIfMissing(path);
+        }
+        catch (Exception)
+        {
+            // Read-only config directory; the definitions below simply stay empty.
+        }
+
+        foreach (var definition in Mode22SignalFile.Load(path))
+        {
+            Mode22Signals.Add(new Mode22SignalItem(definition));
+        }
+
+        OnPropertyChanged(nameof(HasMode22Signals));
+    }
 
     /// <summary>Where captures are written. Set by the host app at startup.</summary>
     public string DataDirectory
@@ -379,11 +431,31 @@ public class CaptureViewModel : INotifyPropertyChanged
             return;
         }
 
-        IReadOnlyList<CapturePidBinding> bindings;
+        IReadOnlyList<CaptureChannel> channels;
 
         try
         {
-            bindings = CaptureSignalSet.FromPids(selected);
+            var builder = new CaptureChannelSetBuilder();
+
+            foreach (var pid in selected)
+            {
+                builder.AddPid(_scanner, pid);
+            }
+
+            // Mode $22 channels ride alongside the standard PIDs in the same sweep, so commanded
+            // and actual rail pressure land on one timeline.
+            foreach (var definition in Mode22Signals.Where(d => d.IsSelected))
+            {
+                if (_udsScanner is null)
+                {
+                    Status = "Mode $22 channels selected but no UDS scanner is available.";
+                    return;
+                }
+
+                builder.AddMode22(_udsScanner, definition.Definition);
+            }
+
+            channels = builder.Build();
         }
         catch (InvalidOperationException ex)
         {
@@ -408,7 +480,7 @@ public class CaptureViewModel : INotifyPropertyChanged
             : null;
 
         var session = new CaptureSession(new CaptureSessionOptions(
-            bindings.Signals(),
+            channels.Signals(),
             trigger,
             PreTriggerSeconds,
             // Rough sizing hint for the pre-trigger ring; the real rate is measured as we go.
@@ -420,8 +492,8 @@ public class CaptureViewModel : INotifyPropertyChanged
         // here rather than as a silent capture that never fires.
         try
         {
-            trigger.Bind(bindings.Signals());
-            stall?.Bind(bindings.Signals());
+            trigger.Bind(channels.Signals());
+            stall?.Bind(channels.Signals());
         }
         catch (InvalidOperationException ex)
         {
@@ -431,7 +503,7 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         _session = session;
         _cts = new CancellationTokenSource();
-        _loop = new CapturePollLoop(_scanner, session, bindings);
+        _loop = new CapturePollLoop(_scanner, session, channels);
 
         IsArmed = true;
         SampleCount = 0;
@@ -441,7 +513,7 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         StartStatusTimer();
 
-        _ = Task.Run(() => RunCaptureAsync(session, bindings, _loop, _cts.Token));
+        _ = Task.Run(() => RunCaptureAsync(session, channels, _loop, _cts.Token));
     }
 
     /// <summary>Ends the capture. Whatever was recorded up to this point is kept.</summary>
@@ -488,7 +560,7 @@ public class CaptureViewModel : INotifyPropertyChanged
 
     private async Task RunCaptureAsync(
         CaptureSession session,
-        IReadOnlyList<CapturePidBinding> bindings,
+        IReadOnlyList<CaptureChannel> channels,
         CapturePollLoop loop,
         CancellationToken ct)
     {
@@ -497,7 +569,7 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         try
         {
-            writer = new CaptureWriter(DataDirectory, stem, bindings.Signals());
+            writer = new CaptureWriter(DataDirectory, stem, channels.Signals());
 
             // Written straight through on the poll thread so an interrupted capture — a flat
             // battery, a yanked connector — still leaves usable data on disk.

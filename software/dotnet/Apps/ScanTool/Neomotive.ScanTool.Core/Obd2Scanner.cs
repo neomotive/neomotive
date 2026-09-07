@@ -59,6 +59,49 @@ public class Obd2Scanner : IObd2Scanner
         return data != null ? Obd2Protocol.ParseEcuName(data) : null;
     }
 
+    public async Task<string?> ReadCalibrationIdAsync(CancellationToken ct = default)
+    {
+        var data = await SendAndReceive(
+            [(byte)Service.VehicleInfo, (byte)VehicleInfoPid.CalibrationId],
+            ResponseServiceId(Service.VehicleInfo), ct);
+        return data != null ? Obd2Protocol.ParseCalibrationId(data) : null;
+    }
+
+    public async Task<string?> ReadCvnAsync(CancellationToken ct = default)
+    {
+        var data = await SendAndReceive(
+            [(byte)Service.VehicleInfo, (byte)VehicleInfoPid.Cvn],
+            ResponseServiceId(Service.VehicleInfo), ct);
+        return data != null ? Obd2Protocol.ParseCvn(data) : null;
+    }
+
+    public async Task<IReadOnlyList<Pid>> ReadSupportedPidsAsync(CancellationToken ct = default)
+    {
+        var supported = new List<Pid>();
+
+        // Each bitmap covers $20 PIDs and its final bit says whether the next range exists.
+        // Walking rather than querying all eight ranges avoids waiting out a timeout per
+        // unsupported range, which on a 3 s response timeout would take half a minute.
+        byte[] rangeBases = [0x00, 0x20, 0x40, 0x60, 0x80, 0xA0, 0xC0, 0xE0];
+
+        foreach (var rangeBase in rangeBases)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            var data = await SendAndReceive(
+                [(byte)Service.Current, rangeBase],
+                ResponseServiceId(Service.Current), ct);
+
+            if (data == null) break;
+
+            supported.AddRange(Obd2Protocol.ParseSupportedPids(data));
+
+            if (!Obd2Protocol.SupportsNextPidRange(data)) break;
+        }
+
+        return supported;
+    }
+
     public async Task<IReadOnlyList<ReadinessMonitor>> ReadReadinessAsync(CancellationToken ct = default)
     {
         var data = await SendAndReceive(

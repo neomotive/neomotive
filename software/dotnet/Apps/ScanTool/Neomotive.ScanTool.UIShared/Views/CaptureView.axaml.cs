@@ -23,6 +23,14 @@ public partial class CaptureView : UserControl
         }
     }
 
+    private void OnToggleMode22(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: Mode22SignalItem item })
+        {
+            item.IsSelected = !item.IsSelected;
+        }
+    }
+
     private void OnArm(object? sender, RoutedEventArgs e) => Vm.Arm();
 
     private void OnTrigger(object? sender, RoutedEventArgs e) => Vm.TriggerNow();

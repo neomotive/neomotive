@@ -39,6 +39,27 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
+                    <!-- User-defined Mode $22 channels. Commanded rail pressure lives here;
+                         the identifiers are manufacturer-specific, so they come from
+                         config/mode22-signals.json rather than being built in. -->
+                    <TextBlock Classes="label" Text="Mode $22" Margin="0,8,0,0"
+                               IsVisible="{Binding HasMode22Signals}" />
+                    <ItemsControl ItemsSource="{Binding Mode22Signals}" IsVisible="{Binding HasMode22Signals}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:Mode22SignalItem">
+                                <Button Classes="pidrow" HorizontalAlignment="Stretch"
+                                        Click="OnToggleMode22" Tag="{Binding}"
+                                        ToolTip.Tip="{Binding Detail}">
+                                    <Grid ColumnDefinitions="18, *, Auto">
+                                        <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" />
+                                        <TextBlock Grid.Column="2" Classes="xs dim" Text="{Binding Unit}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
                     <TextBlock Classes="label" Text="Trigger" Margin="0,8,0,0" />
                     <CheckBox Content="On threshold" IsChecked="{Binding UseThresholdTrigger}" />
                     <CheckBox Content="On first ECU response" IsChecked="{Binding UseBusWakeTrigger}"

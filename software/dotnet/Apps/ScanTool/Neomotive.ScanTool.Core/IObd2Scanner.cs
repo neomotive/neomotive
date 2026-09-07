@@ -19,4 +19,16 @@ public interface IObd2Scanner
     Task<IReadOnlyList<ModuleDtcGroup>> ReadDtcsByModuleAsync(CancellationToken ct = default);
     Task ClearModuleDtcsAsync(ushort moduleResponseAddress, CancellationToken ct = default);
     Task<PidValue?> ReadPidAsync(Pid pid, CancellationToken ct = default);
+
+    /// <summary>Mode $09 PID $04 — the ECU's calibration ID string.</summary>
+    Task<string?> ReadCalibrationIdAsync(CancellationToken ct = default);
+
+    /// <summary>Mode $09 PID $06 — the calibration verification number.</summary>
+    Task<string?> ReadCvnAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Walks the Mode $01 supported-PID bitmaps ($00, $20, $40, ...) and returns every PID the
+    /// ECU claims to support.
+    /// </summary>
+    Task<IReadOnlyList<Pid>> ReadSupportedPidsAsync(CancellationToken ct = default);
 }

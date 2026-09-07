@@ -36,6 +36,47 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- Calibration fingerprint / tune check -->
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBlock Grid.Column="0" Classes="label" Text="CALIBRATION" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Content="Check tune"
+                            Click="OnCheckTune" IsEnabled="{Binding CanCheckTune}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Classes="label" Text="CAL ID" />
+                        <TextBlock Classes="value" Text="{Binding DisplayCalibrationId}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Classes="label" Text="CVN" />
+                        <TextBlock Classes="value" Text="{Binding DisplayCvn}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Classes="xs dim" Text="{Binding TuneStatus}" TextWrapping="Wrap" />
+
+                <Border IsVisible="{Binding HasTuneAssessment}"
+                        Background="#141820" BorderBrush="#2E3440" BorderThickness="1"
+                        CornerRadius="4" Padding="10">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="value" Text="{Binding TuneSummary}" TextWrapping="Wrap" />
+
+                        <ItemsControl ItemsSource="{Binding TuneFindings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="core:TuneFinding">
+                                    <StackPanel Spacing="2" Margin="0,0,0,8">
+                                        <TextBlock Classes="value" Text="{Binding Title}" TextWrapping="Wrap" />
+                                        <TextBlock Classes="xs dim" Text="{Binding Detail}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
             <!-- Simulator indicator -->
             <Border Background="#0D1F0D" BorderBrush="#335033" BorderThickness="1" CornerRadius="4"
                     Padding="8,5" HorizontalAlignment="Left" IsVisible="{Binding IsSimulated}">
