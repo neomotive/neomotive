@@ -66,8 +66,8 @@ public sealed class CaptureSession
         {
             _options.Trigger.Bind(_options.Signals);
             _options.Trigger.Reset();
-            _options.StallDetector?.Bind(_options.Signals);
-            _options.StallDetector?.Reset();
+            _options.ActivityStopCondition?.Bind(_options.Signals);
+            _options.ActivityStopCondition?.Reset();
 
             _preTrigger.Clear();
             _recorded.Clear();
@@ -178,9 +178,9 @@ public sealed class CaptureSession
 
     private void EvaluateStopConditions(CaptureSample sample)
     {
-        if (_options.StallDetector?.Evaluate(sample) == true)
+        if (_options.ActivityStopCondition?.Evaluate(sample) == true)
         {
-            Stop(sample.TimestampMs, CaptureEventKind.Stalled);
+            Stop(sample.TimestampMs, CaptureEventKind.StopConditionMet);
             return;
         }
 

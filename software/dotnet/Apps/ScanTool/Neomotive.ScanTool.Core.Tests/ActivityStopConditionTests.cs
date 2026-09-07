@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Neomotive.ScanTool.Core.Tests;
 
-public class StallDetectorTests
+public class ActivityStopConditionTests
 {
     private static readonly IReadOnlyList<CaptureSignal> Signals = new[]
     {
@@ -11,9 +11,9 @@ public class StallDetectorTests
         new CaptureSignal(1, "rail", "Rail Pressure", "kPa", 0, 200000),
     };
 
-    private static StallDetector Bound(double floor = 50, int durationMs = 1000)
+    private static ActivityStopCondition Bound(double floor = 50, int durationMs = 1000)
     {
-        var detector = new StallDetector("rpm", floor, durationMs);
+        var detector = new ActivityStopCondition("rpm", floor, durationMs);
         detector.Bind(Signals);
         return detector;
     }
@@ -22,7 +22,7 @@ public class StallDetectorTests
     public void Unknown_signal_key_is_rejected_at_bind_time()
     {
         Assert.Throws<InvalidOperationException>(
-            () => new StallDetector("nope", 50, 1000).Bind(Signals));
+            () => new ActivityStopCondition("nope", 50, 1000).Bind(Signals));
     }
 
     [Fact]

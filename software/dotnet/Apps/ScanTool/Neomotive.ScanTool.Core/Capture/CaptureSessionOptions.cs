@@ -11,4 +11,4 @@ public record CaptureSessionOptions(
     double PreTriggerSeconds = 5,
     double ExpectedSampleRateHz = 20,
     double? MaxDurationSeconds = 120,
-    StallDetector? StallDetector = null);
+    ActivityStopCondition? ActivityStopCondition = null);

@@ -13,10 +13,22 @@
             <ScrollViewer Padding="8,6">
                 <StackPanel Spacing="6">
 
-                    <Button Content="Diesel hard-start preset"
-                            HorizontalAlignment="Stretch"
-                            Click="OnApplyPreset"
-                            ToolTip.Tip="Selects rail pressure, RPM, module voltage, coolant and MAP; triggers on cranking; stops on stall." />
+                    <!-- Profile picker: category then profile. Profiles are data, loaded from
+                         config/diagnostic-profiles.json, so any scenario can be added without a
+                         rebuild. Applying one only fills in the settings below — everything stays
+                         editable. -->
+                    <TextBlock Classes="label" Text="Diagnostic profile" />
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory}" />
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding ProfilesInCategory}"
+                              SelectedItem="{Binding SelectedProfile}" />
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                               IsVisible="{Binding HasSelectedProfile}"
+                               Text="{Binding SelectedProfileDescription}" />
+                    <Button Content="Apply profile" HorizontalAlignment="Stretch"
+                            Click="OnApplyProfile" IsEnabled="{Binding HasSelectedProfile}" />
 
                     <TextBlock Classes="label" Text="Signals" Margin="0,6,0,0" />
                     <StackPanel Orientation="Horizontal" Spacing="6">

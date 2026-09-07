@@ -34,9 +34,15 @@ public record TuneAssessment(
     string Summary);
 
 /// <summary>
-/// Reads a vehicle fingerprint for signs that the emissions calibration does not match the
-/// hardware actually fitted.
+/// One specific analysis: reads a vehicle fingerprint for signs that the emissions calibration
+/// does not match the hardware actually fitted.
 /// </summary>
+/// <remarks>
+/// This is a single, narrowly scoped check, not the tool's general diagnostic mechanism — capture
+/// profiles cover that. It exists because "does the calibration match the hardware" is a question
+/// that can be answered from a one-shot read with the engine off, which is exactly when a vehicle
+/// that will not run has nothing else to offer.
+/// </remarks>
 /// <remarks>
 /// This reports <em>evidence</em>, not a verdict. Without a known-good baseline for this vehicle,
 /// a calibration ID and CVN cannot by themselves prove a reflash — they are only decisive when
@@ -212,7 +218,7 @@ public static class TuneAnalyzer
         {
             return "The calibration still expects diesel aftertreatment hardware. If that hardware "
                  + "has been removed, this is the strongest available evidence that no delete tune "
-                 + "was applied — and a credible root cause for a hard start that dies.";
+                 + "was applied, and a credible cause of no-start, stalling or derate complaints.";
         }
 
         if (unsupported.Count > 0)

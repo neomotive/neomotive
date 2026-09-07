@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core;
 using Neomotive.ScanTool.Core.Capture;
+using Neomotive.ScanTool.Core.Diagnostics;
 
 namespace Neomotive.ScanTool.UI;
 
@@ -24,20 +25,6 @@ namespace Neomotive.ScanTool.UI;
 /// </remarks>
 public class CaptureViewModel : INotifyPropertyChanged
 {
-    /// <summary>
-    /// The signals worth recording on a hard-starting common-rail diesel, in reading order:
-    /// module voltage first (the electrical fault that mimics a fuel fault), then cranking speed,
-    /// then rail pressure, then the context needed to interpret them.
-    /// </summary>
-    private static readonly Pid[] DieselHardStartPids =
-    [
-        Pid.ControlModuleVoltage,
-        Pid.EngineRpm,
-        Pid.FuelRailGaugePressure,
-        Pid.EngineCoolantTemperature,
-        Pid.IntakeManifoldPressure,
-    ];
-
     private readonly IObd2Scanner _scanner;
     private readonly IUdsScanner? _udsScanner;
 
@@ -48,6 +35,9 @@ public class CaptureViewModel : INotifyPropertyChanged
 
     private string _dataDirectory = string.Empty;
     private string _configDirectory = string.Empty;
+    private IReadOnlyList<DiagnosticProfile> _profiles = Array.Empty<DiagnosticProfile>();
+    private string? _selectedCategory;
+    private DiagnosticProfile? _selectedProfile;
     private string _status = "Idle";
     private string _captureName = string.Empty;
     private bool _isArmed;
@@ -83,10 +73,101 @@ public class CaptureViewModel : INotifyPropertyChanged
             .Select(d => new CapturePidItem(d))
             .ToList();
 
-        ApplyDieselHardStartPreset();
+        // Profiles load once ConfigDirectory is set; until then offer the built-in library.
+        _profiles = DiagnosticProfileLibrary.BuiltIn;
     }
 
     public IReadOnlyList<CapturePidItem> AvailablePids { get; }
+
+    // ── Diagnostic profiles ──────────────────────────────────────────────────
+
+    /// <summary>Every profile in the library, built-in plus anything the user has added.</summary>
+    public IReadOnlyList<DiagnosticProfile> Profiles
+    {
+        get => _profiles;
+        private set
+        {
+            _profiles = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Categories));
+            OnPropertyChanged(nameof(ProfilesInCategory));
+        }
+    }
+
+    /// <summary>Category names, for the first level of the profile picker.</summary>
+    public IReadOnlyList<string> Categories
+        => _profiles.Select(p => p.Category).Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(c => c, StringComparer.OrdinalIgnoreCase).ToArray();
+
+    public string? SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            _selectedCategory = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ProfilesInCategory));
+        }
+    }
+
+    /// <summary>Profiles in the selected category, for the second level of the picker.</summary>
+    public IReadOnlyList<DiagnosticProfile> ProfilesInCategory
+        => string.IsNullOrEmpty(_selectedCategory)
+            ? _profiles
+            : _profiles.Where(p => string.Equals(p.Category, _selectedCategory, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+    public DiagnosticProfile? SelectedProfile
+    {
+        get => _selectedProfile;
+        set
+        {
+            _selectedProfile = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedProfileDescription));
+            OnPropertyChanged(nameof(HasSelectedProfile));
+        }
+    }
+
+    public bool HasSelectedProfile => _selectedProfile is not null;
+
+    public string SelectedProfileDescription => _selectedProfile?.Description ?? string.Empty;
+
+    /// <summary>Applies the profile currently chosen in the picker.</summary>
+    public void ApplySelectedProfile()
+    {
+        if (_selectedProfile is not null)
+        {
+            ApplyProfile(_selectedProfile);
+        }
+    }
+
+    private void LoadProfiles()
+    {
+        if (string.IsNullOrWhiteSpace(_configDirectory))
+        {
+            Profiles = DiagnosticProfileLibrary.BuiltIn;
+            return;
+        }
+
+        var path = System.IO.Path.Combine(_configDirectory, DiagnosticProfileFile.DefaultFileName);
+
+        try
+        {
+            DiagnosticProfileFile.WriteDefaultsIfMissing(path);
+        }
+        catch (Exception)
+        {
+            // Read-only config directory; the built-in library still loads below.
+        }
+
+        // Merge rather than overwrite, so profiles added by a later version appear without
+        // discarding anything the user has written or edited.
+        Profiles = DiagnosticProfileFile.MergeNewDefaults(path, DiagnosticProfileFile.Load(path));
+
+        SelectedCategory ??= Categories.FirstOrDefault();
+        SelectedProfile ??= ProfilesInCategory.FirstOrDefault();
+    }
 
     /// <summary>User-defined Mode $22 channels, loaded from the config directory.</summary>
     public System.Collections.ObjectModel.ObservableCollection<Mode22SignalItem> Mode22Signals { get; } = new();
@@ -105,6 +186,7 @@ public class CaptureViewModel : INotifyPropertyChanged
             _configDirectory = value;
             OnPropertyChanged();
             LoadMode22Signals();
+            LoadProfiles();
         }
     }
 
@@ -348,7 +430,7 @@ public class CaptureViewModel : INotifyPropertyChanged
                 return string.Empty;
             }
 
-            var stall = r.Metadata.Events.Any(e => e.Kind == CaptureEventKind.Stalled)
+            var stall = r.Metadata.Events.Any(e => e.Kind == CaptureEventKind.StopConditionMet)
                 ? " · stalled"
                 : string.Empty;
 
@@ -363,34 +445,64 @@ public class CaptureViewModel : INotifyPropertyChanged
     // ── Actions ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Configures everything for the hard-start diagnostic in one step: the five signals worth
-    /// watching, a trigger on cranking speed with enough dwell to reject the starter-engagement
-    /// spike, a pre-trigger window long enough to include key-on prime, and a stall stop.
+    /// Applies a profile: selects its signals and fills in the trigger, window and stop settings.
     /// </summary>
-    public void ApplyDieselHardStartPreset()
+    /// <remarks>
+    /// A profile is a starting point, not a lock. Everything it sets remains editable, because no
+    /// fixed library can anticipate every diagnostic.
+    /// </remarks>
+    public void ApplyProfile(DiagnosticProfile profile)
     {
+        var wanted = profile.Signals.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var matched = 0;
+
         foreach (var item in AvailablePids)
         {
-            item.IsSelected = DieselHardStartPids.Contains(item.Descriptor.Id);
+            item.IsSelected = wanted.Contains(item.Key);
+            if (item.IsSelected) matched++;
         }
 
-        UseBusWakeTrigger = false;
-        UseThresholdTrigger = true;
-        TriggerSignalKey = nameof(Pid.EngineRpm);
-        TriggerAbove = true;
-        TriggerValue = 150;
-        TriggerDwellMs = 200;
+        foreach (var item in Mode22Signals)
+        {
+            item.IsSelected = wanted.Contains(item.Definition.Key);
+            if (item.IsSelected) matched++;
+        }
 
-        PreTriggerSeconds = 5;
-        MaxDurationSeconds = 120;
+        UseBusWakeTrigger = profile.Trigger.Mode == ProfileTriggerMode.BusWake;
+        UseThresholdTrigger = profile.Trigger.Mode == ProfileTriggerMode.Threshold;
 
-        StallStopEnabled = true;
-        StallSignalKey = nameof(Pid.EngineRpm);
-        StallFloor = 50;
-        StallDurationMs = 5000;
+        if (profile.Trigger.Mode == ProfileTriggerMode.Threshold)
+        {
+            TriggerSignalKey = profile.Trigger.Signal ?? string.Empty;
+            TriggerAbove = profile.Trigger.Above;
+            TriggerValue = profile.Trigger.Value;
+            TriggerDwellMs = profile.Trigger.DwellMs;
+        }
 
-        CaptureName = "hard-start";
-        Status = "Preset applied — diesel hard start";
+        PreTriggerSeconds = profile.PreTriggerSeconds;
+        MaxDurationSeconds = profile.MaxDurationSeconds;
+
+        StallStopEnabled = profile.Stop.Enabled;
+
+        if (profile.Stop.Enabled)
+        {
+            StallSignalKey = profile.Stop.Signal ?? string.Empty;
+            StallFloor = profile.Stop.Floor;
+            StallDurationMs = profile.Stop.DurationMs;
+        }
+
+        CaptureName = profile.CaptureName ?? profile.Key;
+        SelectedProfile = profile;
+
+        // A profile can name signals this vehicle does not report, or Mode $22 channels that are
+        // not configured here. Those are skipped rather than treated as an error, so say what was
+        // actually selected instead of silently under-capturing.
+        var missing = profile.Signals.Count - matched;
+
+        Status = missing > 0
+            ? $"Applied '{profile.Name}' — {matched} of {profile.Signals.Count} signals available "
+              + $"({missing} not found on this vehicle)."
+            : $"Applied '{profile.Name}' — {matched} signals selected.";
     }
 
     public void SelectAll()
@@ -476,7 +588,7 @@ public class CaptureViewModel : INotifyPropertyChanged
         }
 
         var stall = StallStopEnabled
-            ? new StallDetector(StallSignalKey, StallFloor, StallDurationMs)
+            ? new ActivityStopCondition(StallSignalKey, StallFloor, StallDurationMs)
             : null;
 
         var session = new CaptureSession(new CaptureSessionOptions(

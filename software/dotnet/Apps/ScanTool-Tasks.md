@@ -519,3 +519,46 @@ wrapped in a `<Panel IsVisible="...">` that still sees `MainWindowViewModel`.
 **Gotcha:** concurrent `dotnet build` runs against these projects produce spurious
 `NuGet.targets(782,5): Value cannot be null. (Parameter 'path1')` restore errors on unrelated
 projects. Build with `-m:1` when another agent or IDE may be building the same tree.
+
+## Group V — Generalising the capture feature (2026-09-07)
+
+Correction to Group T's framing: the diesel hard-start case was only the first example. The tool
+has to diagnose **any** problem, so canned setups are acceptable only as selectable data, never as
+built-in behaviour.
+
+- [x] **V1** `DiagnosticProfile` (`Core/Diagnostics/`) — a named, categorised capture setup:
+  signals, trigger (manual / threshold / bus-wake), pre-trigger window, max duration and stop
+  condition. Profiles are **data, not code**, loaded from `config/diagnostic-profiles.json`.
+- [x] **V2** `DiagnosticProfileLibrary` — 14 built-in profiles across General, Starting &
+  Charging, Fuel & Air, Drivability, Emissions, Transmission and Thermal. Chosen to cover
+  diagnostic *shapes* rather than to be complete: a one-shot event (cranking), something caught
+  while driving (misfire, shift quality), and a slow drift (overheating). The old diesel preset is
+  now just one entry, `hard-start-common-rail`.
+- [x] **V3** `DiagnosticProfileFile` — load/save, defaults written on first run so the format is
+  discoverable and shipped profiles can be edited. `MergeNewDefaults` adds profiles from a later
+  version **without discarding user edits or user-authored profiles**. A corrupt or unreadable
+  file falls back to the built-in library: a bad edit must never leave an empty picker.
+- [x] **V4** UI is a category dropdown then a profile dropdown, with the profile's description
+  shown before applying. Applying only *fills in* the settings — every field stays editable,
+  because no library can anticipate every job.
+- [x] **V5** `StallDetector` renamed `ActivityStopCondition` and its language generalised. The
+  behaviour was always generic ("signal was active, then went quiet"); the name tied it to engine
+  stall. Applies equally to road speed returning to zero, a pump cycling off, or current draw
+  ending. `CaptureEventKind.Stalled` became `StopConditionMet`.
+- [x] **V6** `PidRegistry` widened with bank-2 trims, EGR command/error, catalyst temperatures,
+  absolute load, relative/commanded throttle, ambient air, injection timing and fuel rate — the
+  registry is the menu every profile draws from, so profiles were only as good as it was.
+- [x] **V7** `TuneAnalyzer` re-scoped in docs as *one specific analysis*, not the tool's general
+  mechanism, and its summary no longer assumes a hard-start complaint.
+- [x] **V8** 16 profile tests. Beyond round-tripping, they assert the library keeps spanning
+  several categories, that every built-in signal exists in `PidRegistry`, and that trigger and
+  stop conditions reference signals the profile actually captures — a profile whose trigger names
+  an uncaptured signal would arm and never fire.
+
+**Gotcha:** `DiagnosticProfile` is a record with an `IReadOnlyList` member, so record equality
+falls back to reference equality for `Signals` — never assert `Assert.Equal(profile, loaded)`
+across a round trip.
+
+**Design rule going forward:** anything scenario-specific belongs in a profile or config file, not
+in `CaptureViewModel`. The capture engine, poll loop, storage and review pane are domain-agnostic
+and must stay that way.

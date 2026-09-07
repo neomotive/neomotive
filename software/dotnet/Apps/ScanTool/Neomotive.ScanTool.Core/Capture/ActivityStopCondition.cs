@@ -1,21 +1,27 @@
 namespace Neomotive.ScanTool.Core.Capture;
 
 /// <summary>
-/// Detects the engine catching and then dying: the watched signal must first rise above the floor
-/// (proving it ran at all), then stay below it continuously for <see cref="DurationMs"/>.
+/// Ends a capture once the watched signal has been active and then goes quiet: the signal must
+/// first rise above <see cref="Floor"/>, then stay below it continuously for
+/// <see cref="DurationMs"/>.
 /// </summary>
 /// <remarks>
-/// The "must rise first" rule matters. A capture triggered while cranking starts with RPM below
-/// any sensible floor, so a naive below-threshold test would declare a stall immediately and
+/// Deliberately generic. An engine catching and then dying is one use; so is road speed returning
+/// to zero at the end of a road test, a pump cycling off, or current draw ending. The signal and
+/// thresholds come from the diagnostic profile.
+/// <para>
+/// The "must rise first" rule matters. A capture triggered before the signal has done anything
+/// starts below any sensible floor, so a naive below-threshold test would fire immediately and
 /// truncate the recording before the interesting part.
+/// </para>
 /// </remarks>
-public sealed class StallDetector
+public sealed class ActivityStopCondition
 {
     private int _signalIndex = -1;
     private bool _hasRisen;
     private long _belowSinceMs = -1;
 
-    public StallDetector(string signalKey, double floor, int durationMs)
+    public ActivityStopCondition(string signalKey, double floor, int durationMs)
     {
         SignalKey = signalKey;
         Floor = floor;
@@ -40,7 +46,7 @@ public sealed class StallDetector
         }
 
         throw new InvalidOperationException(
-            $"Stall detector references signal '{SignalKey}', which is not part of the capture.");
+            $"Stop condition references signal '{SignalKey}', which is not part of the capture.");
     }
 
     public bool Evaluate(CaptureSample sample)

@@ -32,5 +32,21 @@ public static class PidRegistry
         new(Pid.FuelRailPressureRelativeToManifold, "Rail Press Rel", "kPa", 0.079,     0,    2, 0,    5177.3),
         new(Pid.ControlModuleVoltage,        "Module Voltage",     "V",    0.001,       0,    2, 0,    65.535),
         new(Pid.EngineOilTemperature,        "Oil Temp",           "°C",   1,           -40,  1, -40,  210),
+
+        // Bank 2 trims, EGR, catalyst and load/throttle channels. These exist so the built-in
+        // diagnostic profiles (fuel trim, misfire, catalyst efficiency, EGR operation) have real
+        // signals to select; the registry is the menu every profile draws from.
+        new(Pid.ShortTermFuelTrimBank2,      "Short FT B2",        "%",    100.0 / 128, -100, 1, -100, 99.2),
+        new(Pid.LongTermFuelTrimBank2,       "Long FT B2",         "%",    100.0 / 128, -100, 1, -100, 99.2),
+        new(Pid.CommandedEgr,                "Commanded EGR",      "%",    100.0 / 255, 0,    1, 0,    100),
+        new(Pid.EgrError,                    "EGR Error",          "%",    100.0 / 128, -100, 1, -100, 99.2),
+        new(Pid.CatalystTemperatureBank1Sensor1, "Cat Temp B1S1",  "°C",   0.1,         -40,  2, -40,  6513.5),
+        new(Pid.CatalystTemperatureBank1Sensor2, "Cat Temp B1S2",  "°C",   0.1,         -40,  2, -40,  6513.5),
+        new(Pid.AbsoluteLoadValue,           "Absolute Load",      "%",    100.0 / 255, 0,    2, 0,    25700),
+        new(Pid.RelativeThrottlePosition,    "Rel Throttle Pos",   "%",    100.0 / 255, 0,    1, 0,    100),
+        new(Pid.CommandedThrottleActuator,   "Cmd Throttle Act",   "%",    100.0 / 255, 0,    1, 0,    100),
+        new(Pid.AmbientAirTemperature,       "Ambient Air Temp",   "°C",   1,           -40,  1, -40,  215),
+        new(Pid.FuelInjectionTiming,         "Injection Timing",   "°",    1.0 / 128,   -210, 2, -210, 301.99),
+        new(Pid.EngineFuelRate,              "Fuel Rate",          "L/h",  0.05,        0,    2, 0,    3212.75),
     ];
 }

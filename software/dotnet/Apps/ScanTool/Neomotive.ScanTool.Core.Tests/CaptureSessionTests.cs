@@ -18,7 +18,7 @@ public class CaptureSessionTests
         CaptureTrigger? trigger = null,
         double preTriggerSeconds = 2,
         double? maxDurationSeconds = 120,
-        StallDetector? stall = null)
+        ActivityStopCondition? stall = null)
         => new(new CaptureSessionOptions(
             Signals,
             trigger ?? new ThresholdTrigger("rpm", ThresholdComparison.Above, 150),
@@ -133,7 +133,7 @@ public class CaptureSessionTests
     {
         var session = NewSession(
             trigger: new ThresholdTrigger("rpm", ThresholdComparison.Above, 150),
-            stall: new StallDetector("rpm", 50, 1000));
+            stall: new ActivityStopCondition("rpm", 50, 1000));
 
         session.Arm();
         session.Ingest(new CaptureSample(Rpm, 0, 200));      // trigger: cranking
@@ -144,7 +144,7 @@ public class CaptureSessionTests
         session.Ingest(new CaptureSample(Rpm, 2500, 0));     // stall duration reached
 
         Assert.Equal(CaptureState.Stopped, session.State);
-        Assert.Contains(session.Events, e => e.Kind == CaptureEventKind.Stalled);
+        Assert.Contains(session.Events, e => e.Kind == CaptureEventKind.StopConditionMet);
     }
 
     [Fact]

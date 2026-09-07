@@ -9,7 +9,7 @@ public partial class CaptureView : UserControl
 
     public CaptureView() => InitializeComponent();
 
-    private void OnApplyPreset(object? sender, RoutedEventArgs e) => Vm.ApplyDieselHardStartPreset();
+    private void OnApplyProfile(object? sender, RoutedEventArgs e) => Vm.ApplySelectedProfile();
 
     private void OnSelectAll(object? sender, RoutedEventArgs e) => Vm.SelectAll();
 

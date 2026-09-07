@@ -6,7 +6,7 @@ public enum CaptureEventKind
     Triggered,
     BusLost,
     BusRestored,
-    Stalled,
+    StopConditionMet,
     DurationReached,
     Stopped,
 }
