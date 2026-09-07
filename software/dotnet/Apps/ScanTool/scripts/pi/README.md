@@ -184,12 +184,32 @@ everything .NET and Mesa want to write into the app directory:
 - `XDG_RUNTIME_DIR=/data/app/.runtime`
 - `DOTNET_EnableWriteXorExecute=0` (standard Pi/arm64 workaround)
 
-Overrides, if the panel is not on the default connector:
+### Device-local settings
 
-```sh
-export SCANTOOL_DRM_CARD=/dev/dri/card1
-export SCANTOOL_DRM_SCALING=1.0
+**Do not edit `/data/app/run` on the device.** It is part of the payload, so every
+deploy overwrites it and your change is silently reverted — you would think you
+were testing a new setting while running the old one.
+
+Put overrides in **`/data/app/local.env`**, which `run` sources if present. It is
+not in the payload, and the deploy extracts over the top without deleting, so it
+survives upgrades:
+
+```bash
+ssh pi@pi-appliance.local 'cat >> /data/app/local.env' <<'EOF'
+export SCANTOOL_CAN_CHANNEL=1
+EOF
+ssh -t pi@pi-appliance.local 'sudo systemctl restart app.service'
 ```
+
+| Variable | Purpose |
+|---|---|
+| `SCANTOOL_CAN_CHANNEL` | CAN HAT channel: `0` (default) or `1` |
+| `SCANTOOL_DRM_CARD` | e.g. `/dev/dri/card1` if the panel is not on the default connector |
+| `SCANTOOL_DRM_SCALING` | e.g. `1.0` |
+| `SCANTOOL_UDP_LOG` | `1` to also ship Meadow logs off-box over UDP |
+
+The active channel is shown in the CAN tab header, so you can confirm which one
+is live rather than inferring it.
 
 ## Logs
 
