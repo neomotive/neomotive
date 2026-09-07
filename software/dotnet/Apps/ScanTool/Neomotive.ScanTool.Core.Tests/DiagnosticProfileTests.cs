@@ -10,6 +10,35 @@ namespace Neomotive.ScanTool.Core.Tests;
 public class DiagnosticProfileLibraryTests
 {
     [Fact]
+    public void Every_profile_names_signals_the_table_defines()
+    {
+        // A profile whose keys drift out of the signal table silently selects nothing, which
+        // looks in the UI exactly like a profile that does nothing at all.
+        var table = new SignalTable(SignalLibrary.BuiltIn);
+
+        foreach (var profile in DiagnosticProfileLibrary.BuiltIn)
+        {
+            Assert.NotEmpty(profile.Signals);
+
+            var unknown = profile.Signals.Where(k => table.Find(k) is null).ToArray();
+
+            Assert.True(unknown.Length == 0, $"{profile.Key}: unknown signals {string.Join(", ", unknown)}");
+        }
+    }
+
+    [Fact]
+    public void Threshold_profiles_record_the_signal_they_trigger_on()
+    {
+        // The capture loop polls only the selected signals, so a trigger on a signal the profile
+        // does not record can never fire.
+        foreach (var profile in DiagnosticProfileLibrary.BuiltIn
+                     .Where(p => p.Trigger.Mode == ProfileTriggerMode.Threshold))
+        {
+            Assert.Contains(profile.Trigger.Signal, profile.Signals);
+        }
+    }
+
+    [Fact]
     public void Profile_keys_are_unique()
     {
         var keys = DiagnosticProfileLibrary.BuiltIn.Select(p => p.Key).ToArray();

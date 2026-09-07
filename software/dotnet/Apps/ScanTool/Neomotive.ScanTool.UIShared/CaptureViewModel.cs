@@ -53,6 +53,7 @@ public class CaptureViewModel : INotifyPropertyChanged
     private int _triggerDwellMs = 200;
 
     private bool _useBusWakeTrigger;
+    private bool _applyingProfile;
     private double _preTriggerSeconds = 5;
     private double _maxDurationSeconds = 120;
 
@@ -158,6 +159,34 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         PreTriggerSeconds = preTrigger;
         MaxDurationSeconds = maxDuration;
+
+        EnsureTriggerSignalSelected();
+    }
+
+    /// <summary>
+    /// Adds the threshold trigger's own signal to the recorded set if it is missing.
+    /// </summary>
+    /// <remarks>
+    /// The capture loop only polls selected signals, so a trigger on an unselected signal would
+    /// never see a value and could never fire — and even if it could, a capture that does not
+    /// contain the signal it triggered on cannot be interpreted afterwards.
+    /// </remarks>
+    private void EnsureTriggerSignalSelected()
+    {
+        if (!UseThresholdTrigger || string.IsNullOrWhiteSpace(TriggerSignalKey))
+        {
+            return;
+        }
+
+        if (Table.Find(TriggerSignalKey) is null
+            || SelectedKeys.Contains(TriggerSignalKey, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        SelectedKeys = SelectedKeys.Append(TriggerSignalKey).ToArray();
+        OnPropertyChanged(nameof(SelectedKeys));
+        OnPropertyChanged(nameof(SelectedSummary));
     }
 
     // ── Diagnostic profiles ──────────────────────────────────────────────────
@@ -207,6 +236,14 @@ public class CaptureViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectedProfileDescription));
             OnPropertyChanged(nameof(HasSelectedProfile));
+
+            // Choosing a profile applies it. Requiring a separate Apply press made the profile
+            // look inert — the description changed while the signals and trigger did not, so the
+            // trigger on screen belonged to no profile at all.
+            if (value is not null && !_applyingProfile)
+            {
+                ApplyProfile(value);
+            }
         }
     }
 
@@ -514,6 +551,20 @@ public class CaptureViewModel : INotifyPropertyChanged
     /// </remarks>
     public void ApplyProfile(DiagnosticProfile profile)
     {
+        _applyingProfile = true;
+
+        try
+        {
+            ApplyProfileCore(profile);
+        }
+        finally
+        {
+            _applyingProfile = false;
+        }
+    }
+
+    private void ApplyProfileCore(DiagnosticProfile profile)
+    {
         // Keys the table does not define are dropped rather than treated as an error: a profile
         // may name a Mode $22 channel this vehicle has not had configured.
         var resolved = profile.Signals.Where(k => Table.Find(k) is not null).ToArray();
@@ -548,6 +599,8 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         CaptureName = profile.CaptureName ?? profile.Key;
         SelectedProfile = profile;
+
+        EnsureTriggerSignalSelected();
 
         // A profile can name signals this vehicle does not report, or Mode $22 channels that are
         // not configured here. Those are skipped rather than treated as an error, so say what was

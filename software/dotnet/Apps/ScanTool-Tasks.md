@@ -611,3 +611,34 @@ DRM lifetime with no window manager, so a real dialog has nowhere to go.
 
 **Bug found and fixed:** `CaptureVm` was being constructed before `_udsScanner` was assigned, so it
 always received null and Mode $22 channels could never have worked.
+
+## Group X — Tab bar and profile-application fixes (2026-09-07)
+
+- [x] **X1** Connection tab replaced with a drawn CAN-link icon whose colour carries the
+  connection state (green / amber / dim). The separate "No vehicle" indicator on the right was
+  removed as redundant, reclaiming ~210 px of tab bar. `StatusText` moved to the tooltip.
+- [x] **X2** Icon uses a `StreamGeometry`, not a font glyph — the Pi runs DRM/KMS with a minimal
+  font set, where an emoji or symbol character can render as tofu.
+- [x] **X3** Selecting a diagnostic profile now applies it. Previously only the description
+  changed until "Apply" was pressed, so the profile looked inert: no signals were selected while
+  a trigger from the *defaults* (`EngineRpm above 150 for 200 ms`) stayed on screen, appearing to
+  belong to the profile. `ApplyProfile` guards re-entry with `_applyingProfile` since it assigns
+  `SelectedProfile` itself. The button became "Reset" (re-apply, discarding hand edits).
+- [x] **X4** `EnsureTriggerSignalSelected()` adds a threshold trigger's own signal to the recorded
+  set. The capture loop polls only selected signals, so a trigger on an unselected signal could
+  never fire — and a capture missing the signal it triggered on cannot be read afterwards.
+- [x] **X5** Two library invariants now tested: every built-in profile names signals the table
+  defines, and every threshold profile records its own trigger signal. Both passed on the existing
+  library, confirming the fault was purely the missing Apply press, not profile/table drift.
+- [x] **X6** TextBox styling added (none existed app-wide): Fluent's dark theme inverts a focused
+  TextBox to near-white. Overrode the `TextControl*` theme resources so focus reads as a green
+  border instead. Affected every text field, not just the UDS DID entry.
+- [x] **X7** UDS Quick DID row rebuilt as a `WrapPanel`. It had no elastic member, so exceeding the
+  container clipped the last button outright; DID numbers moved from labels to tooltips, freeing
+  ~150 px. Needed for 800x480, where the row cannot fit on one line at any label length.
+- [x] **X8** Three buttons on the Capture screen were all labelled "Trigger". Now: "Trigger…"
+  (configure), "Fire now" (manual fire while armed), "Go to t=0" (playback navigation — centres the
+  loaded trace on the trigger instant).
+
+**Layout gotcha:** a row of fixed-width controls with no `*` column cannot degrade — it clips. Any
+such row needs either a star spacer or a WrapPanel before it reaches the Pi's 800x480.

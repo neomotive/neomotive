@@ -3,7 +3,63 @@
 
     <StyleInclude Source="avares://Neomotive.UI.Styles/Styles.axaml" />
 
+    <Styles.Resources>
+        <!-- CAN network connection glyphs. Drawn paths rather than font glyphs so they render
+             reliably under minimal font environments (e.g. Raspberry Pi DRM/KMS). -->
+        <StreamGeometry x:Key="IconCanConnected">M10.59,13.41C11,13.8 11,14.44 10.59,14.83C10.2,15.22 9.56,15.22 9.17,14.83L6.34,12C4.78,10.44 4.78,7.9 6.34,6.34C7.9,4.78 10.44,4.78 12,6.34L14.83,9.17C15.22,9.56 15.22,10.2 14.83,10.59C14.44,11 13.8,11 13.41,10.59L10.59,7.76C9.81,6.97 8.54,6.97 7.76,7.76C6.97,8.54 6.97,9.81 7.76,10.59L10.59,13.41M13.41,10.59C13,10.2 13,9.56 13.41,9.17C13.8,8.78 14.44,8.78 14.83,9.17L17.66,12C19.22,13.56 19.22,16.1 17.66,17.66C16.1,19.22 13.56,19.22 12,17.66L9.17,14.83C8.78,14.44 8.78,13.8 9.17,13.41C9.56,13.03 10.2,13.03 10.59,13.41L13.41,16.24C14.2,17.03 15.46,17.03 16.24,16.24C17.03,15.46 17.03,14.2 16.24,13.41L13.41,10.59Z</StreamGeometry>
+        <StreamGeometry x:Key="IconCanDisconnected">M22.11,21.46L2.39,1.73L1.11,3L5.83,7.71C4.69,8.92 4,10.37 4,12C4,15.31 6.69,18 10,18H14C14.8,18 15.56,17.79 16.23,17.43L20.84,22.04L22.11,21.46M10,16C7.79,16 6,14.21 6,12C6,11 6.36,10.09 7,9.41L13.59,16H10M20,12C20,8.69 17.31 6 14,6H10C9.17,6 8.39,6.22 7.71,6.6L9.24,8.13C9.47,8.05 9.73,8 10,8H14C16.21,8 18,9.79 18,12C18,12.27 17.95,12.53 17.87,12.76L19.4,14.29C19.78,13.61 20,12.83 20,12Z</StreamGeometry>
+    </Styles.Resources>
+
     <!-- ScanTool-specific additions -->
+
+    <!--
+        TextBox theming. Fluent's dark TextBox turns near-white when focused, which is correct for
+        a light-on-dark document but wrong here: it flares against the panel and reads as a
+        misplaced control rather than a focused field. Nothing styled TextBox before, so this was
+        visible on every text field in the app, not just the DID entry.
+
+        Overriding the theme resources rather than writing :focus setters keeps the fix in one
+        place and stays with the Fluent template's own state handling.
+    -->
+    <Style Selector="TextBox">
+        <Style.Resources>
+            <SolidColorBrush x:Key="TextControlBackground"                Color="#0E1117" />
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver"     Color="#141A24" />
+            <SolidColorBrush x:Key="TextControlBackgroundFocused"         Color="#0E1117" />
+            <SolidColorBrush x:Key="TextControlBackgroundDisabled"        Color="#12151B" />
+
+            <SolidColorBrush x:Key="TextControlForeground"                Color="#C8CDD6" />
+            <SolidColorBrush x:Key="TextControlForegroundPointerOver"     Color="#E0E5EC" />
+            <SolidColorBrush x:Key="TextControlForegroundFocused"         Color="#E0E5EC" />
+            <SolidColorBrush x:Key="TextControlForegroundDisabled"        Color="#556878" />
+
+            <SolidColorBrush x:Key="TextControlBorderBrush"               Color="#2E3440" />
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"    Color="#3C4557" />
+            <SolidColorBrush x:Key="TextControlBorderBrushFocused"        Color="#4A7C59" />
+            <SolidColorBrush x:Key="TextControlBorderBrushDisabled"       Color="#232833" />
+
+            <SolidColorBrush x:Key="TextControlPlaceholderForeground"            Color="#6A7888" />
+            <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#6A7888" />
+            <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused"     Color="#556878" />
+
+            <SolidColorBrush x:Key="TextControlSelectionHighlightColor"   Color="#2F5D8C" />
+        </Style.Resources>
+
+        <Setter Property="MinHeight"       Value="30" />
+        <Setter Property="Padding"         Value="7,4" />
+        <Setter Property="CornerRadius"    Value="4" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+        <Setter Property="FontSize"        Value="13" />
+    </Style>
+
+    <!-- Icon-only tab. Narrower than a labelled tab but still a comfortable touch target on the
+         800x480 panel, so dropping the word does not make the button harder to hit. -->
+    <Style Selector="Button.tab-icon">
+        <Setter Property="Padding"  Value="14,6" />
+        <Setter Property="MinWidth" Value="56" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
 
     <Style Selector="TextBlock.vin">
         <Setter Property="FontSize"   Value="20" />

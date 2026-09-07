@@ -13,6 +13,9 @@
                  opens a modal, which leaves the full width for the trace. -->
             <Border Grid.Row="0" Background="#141820" Padding="8,6"
                     BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+                <!-- No Apply button: choosing a profile applies it. A separate press made the
+                     profile look inert, since only the description changed. "Reset" puts the
+                     chosen profile back after hand edits. -->
                 <Grid ColumnDefinitions="Auto, 150, 190, Auto, Auto" ColumnSpacing="6">
                     <TextBlock Grid.Column="0" Classes="label" Text="Profile"
                                VerticalAlignment="Center" Margin="0,0,4,0" />
@@ -22,8 +25,9 @@
                     <ComboBox Grid.Column="2" HorizontalAlignment="Stretch"
                               ItemsSource="{Binding ProfilesInCategory}"
                               SelectedItem="{Binding SelectedProfile}" />
-                    <Button Grid.Column="3" Content="Apply" Click="OnApplyProfile"
-                            IsEnabled="{Binding HasSelectedProfile}" />
+                    <Button Grid.Column="3" Content="Reset" Click="OnApplyProfile"
+                            IsEnabled="{Binding HasSelectedProfile}"
+                            ToolTip.Tip="Re-apply the selected profile, discarding hand edits" />
                     <Button Grid.Column="4" Content="Signals…" Click="OnOpenPicker" />
                 </Grid>
             </Border>
@@ -36,7 +40,8 @@
                     <Grid ColumnDefinitions="*, Auto">
                         <TextBlock Grid.Column="0" Classes="xs" TextTrimming="CharacterEllipsis"
                                    Text="{Binding SelectedSummary}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="Trigger…" Click="OnOpenTrigger" />
+                        <Button Grid.Column="1" Content="Trigger…" Click="OnOpenTrigger"
+                                ToolTip.Tip="Configure what starts and stops the capture" />
                     </Grid>
                     <TextBlock Classes="xs dim" TextWrapping="Wrap"
                                Text="{Binding TriggerSummary, StringFormat='Trigger: {0}'}" />
@@ -48,7 +53,8 @@
                     BorderBrush="#1E2530" BorderThickness="0,1,0,1">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button Content="Arm"     Click="OnArm"     IsEnabled="{Binding CanArm}" />
-                    <Button Content="Trigger" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}" />
+                    <Button Content="Fire now" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}"
+                            ToolTip.Tip="Trigger the armed capture immediately, without waiting for the condition" />
                     <Button Content="Stop"    Click="OnStop"    IsEnabled="{Binding IsArmed}" />
                     <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding RateText}" />
                     <TextBlock Classes="xs dim" VerticalAlignment="Center"

@@ -31,7 +31,10 @@
                 <Button Content="+ Zoom"  Click="OnZoomIn" />
                 <Button Content="◀"       Click="OnPanLeft" />
                 <Button Content="▶"       Click="OnPanRight" />
-                <Button Content="Trigger" Click="OnJumpToTrigger" />
+                <!-- Playback navigation, not a trigger control: centres the view on t=0, the
+                     instant the capture fired. Named for what it does, since two other buttons on
+                     this screen said "Trigger" and meant entirely different things. -->
+                <Button Content="t=0" Click="OnJumpToTrigger" />
                 <TextBlock Name="RangeLabel" Classes="xs dim" VerticalAlignment="Center" />
             </StackPanel>
         </Border>

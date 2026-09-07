@@ -18,16 +18,21 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
                     <!-- Connection is an icon rather than a word: it frees the widest label in the
                          bar, and the icon colour carries the connection state, so the separate
-                         "No vehicle" indicator on the right is no longer needed. -->
+                         "No vehicle" indicator on the right is no longer needed.
+
+                         Saturated red/green rather than the muted theme brushes: this is the one
+                         piece of state read from arm's length in a driveway, and the dim grey it
+                         used for "not connected" was easy to miss entirely. Amber marks the
+                         transient connecting state. -->
                     <Button Classes="tab tab-icon" Classes.active="{Binding IsConnectionView}"
                             Click="OnShowConnection" ToolTip.Tip="{Binding StatusText}">
-                        <Panel Width="20" Height="20">
-                            <Path Data="{StaticResource IconPower}" Stretch="Uniform"
-                                  Fill="{StaticResource BrushOk}"    IsVisible="{Binding IsConnected}" />
-                            <Path Data="{StaticResource IconPower}" Stretch="Uniform"
-                                  Fill="{StaticResource BrushWarn}"  IsVisible="{Binding IsConnecting}" />
-                            <Path Data="{StaticResource IconPower}" Stretch="Uniform"
-                                  Fill="{StaticResource BrushFgDim}" IsVisible="{Binding IsIdle}" />
+                        <Panel Width="24" Height="24">
+                            <Path Data="{StaticResource IconCanConnected}" Stretch="Uniform"
+                                  Fill="#22C55E" IsVisible="{Binding IsConnected}" />
+                            <Path Data="{StaticResource IconCanConnected}" Stretch="Uniform"
+                                  Fill="#F5A524" IsVisible="{Binding IsConnecting}" />
+                            <Path Data="{StaticResource IconCanDisconnected}" Stretch="Uniform"
+                                  Fill="#EF4444" IsVisible="{Binding IsIdle}" />
                         </Panel>
                     </Button>
                     <Button Content="Vehicle"    Classes="tab" Classes.active="{Binding IsVehicleView}"    Click="OnShowVehicle" />

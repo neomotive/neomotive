@@ -180,15 +180,26 @@
                     CornerRadius="4"
                     Padding="10,8">
                 <Grid RowDefinitions="Auto, Auto">
-                    <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto, *, Auto" VerticalAlignment="Center">
-                        <TextBlock Grid.Column="0" Classes="label" Text="Quick DID:" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <Button Grid.Column="1" Content="VIN ($F190)" Classes="action-sm" Margin="0,0,4,0" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadVinDid" />
-                        <Button Grid.Column="2" Content="Part# ($F187)" Classes="action-sm" Margin="0,0,4,0" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadPartDid" />
-                        <Button Grid.Column="3" Content="SW ($F189)" Classes="action-sm" Margin="0,0,8,0" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadSwDid" />
-                        
-                        <TextBox Grid.Column="4" Text="{Binding DidInputHex}" MaxLength="4" Width="70" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" />
-                        <Button Grid.Column="5" Content="Read Hex DID" Classes="action-sm" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadCustomDid" />
-                    </Grid>
+                    <!-- A WrapPanel, not a Grid: this row has no elastic member, so once the
+                         fixed widths exceed the panel the last control is simply clipped. Wrapping
+                         degrades instead, which matters at 800x480 where it cannot fit on one line.
+                         The DID numbers moved to tooltips — they were the widest part of each
+                         label and are noise once you know which button is which. -->
+                    <WrapPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Classes="label" Text="Quick DID:" VerticalAlignment="Center" Margin="0,0,8,4" />
+                        <Button Content="VIN"   Classes="action-sm" Margin="0,0,4,4" ToolTip.Tip="Read VIN — DID $F190"
+                                IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadVinDid" />
+                        <Button Content="Part#" Classes="action-sm" Margin="0,0,4,4" ToolTip.Tip="Read part number — DID $F187"
+                                IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadPartDid" />
+                        <Button Content="SW"    Classes="action-sm" Margin="0,0,8,4" ToolTip.Tip="Read software version — DID $F189"
+                                IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadSwDid" />
+
+                        <TextBox Text="{Binding DidInputHex}" MaxLength="4" Width="70"
+                                 VerticalAlignment="Center" Margin="0,0,4,4"
+                                 PlaceholderText="F190" ToolTip.Tip="Data identifier in hex, e.g. F190" />
+                        <Button Content="Read Hex DID" Classes="action-sm" Margin="0,0,0,4"
+                                IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadCustomDid" />
+                    </WrapPanel>
                     
                     <TextBlock Grid.Row="1" Classes="value xs" Margin="0,6,0,0"
                                IsVisible="{Binding HasDidResult}"
