@@ -2,6 +2,7 @@ using System.Text.Json;
 using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core.Capture;
 using Neomotive.ScanTool.Core.Diagnostics;
+using Neomotive.ScanTool.Core.Signals;
 using Xunit;
 
 namespace Neomotive.ScanTool.Core.Tests;
@@ -34,7 +35,7 @@ public class DiagnosticProfileLibraryTests
     [Fact]
     public void Every_referenced_signal_exists_in_the_pid_registry()
     {
-        var known = PidRegistry.CommonPids.Select(d => d.Id.ToString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var known = SignalLibrary.BuiltIn.Select(s => s.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         // Built-in profiles must not reference signals the tool cannot actually capture; a
         // user-authored profile may, and is tolerated at runtime, but the shipped set should not.

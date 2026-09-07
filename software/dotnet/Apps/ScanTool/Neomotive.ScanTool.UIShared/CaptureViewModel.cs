@@ -11,6 +11,7 @@ using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core;
 using Neomotive.ScanTool.Core.Capture;
 using Neomotive.ScanTool.Core.Diagnostics;
+using Neomotive.ScanTool.Core.Signals;
 
 namespace Neomotive.ScanTool.UI;
 
@@ -69,15 +70,95 @@ public class CaptureViewModel : INotifyPropertyChanged
         _scanner = scanner;
         _udsScanner = udsScanner;
 
-        AvailablePids = PidRegistry.CommonPids
-            .Select(d => new CapturePidItem(d))
-            .ToList();
+        Picker = new SignalPickerViewModel { Table = Table };
+        Picker.Confirmed += OnSignalsChosen;
+
+        TriggerEditor = new TriggerEditorViewModel(scanner) { Table = Table };
+        TriggerEditor.Confirmed += OnTriggerConfigured;
 
         // Profiles load once ConfigDirectory is set; until then offer the built-in library.
         _profiles = DiagnosticProfileLibrary.BuiltIn;
     }
 
-    public IReadOnlyList<CapturePidItem> AvailablePids { get; }
+    /// <summary>Everything this vehicle session can read, standard PIDs plus Mode $22.</summary>
+    public SignalTable Table { get; private set; } = new(SignalLibrary.BuiltIn);
+
+    /// <summary>Signal keys currently chosen for capture, in table order.</summary>
+    public IReadOnlyList<string> SelectedKeys { get; private set; } = [];
+
+    public string SelectedSummary => SelectedKeys.Count == 0
+        ? "No signals selected"
+        : $"{SelectedKeys.Count} signals: " + string.Join(", ",
+            SelectedKeys.Take(4).Select(k => Table.Find(k)?.DisplayName ?? k))
+          + (SelectedKeys.Count > 4 ? $" +{SelectedKeys.Count - 4}" : string.Empty);
+
+    /// <summary>Shared search-driven picker, opened as a modal overlay.</summary>
+    public SignalPickerViewModel Picker { get; }
+
+    /// <summary>Modal editor for the trigger and stop conditions.</summary>
+    public TriggerEditorViewModel TriggerEditor { get; }
+
+    public void OpenPicker() => Picker.Open(SelectedKeys);
+
+    public void OpenTriggerEditor()
+    {
+        if (SelectedKeys.Count == 0)
+        {
+            Status = "Select signals before configuring the trigger.";
+            return;
+        }
+
+        TriggerEditor.Table = Table;
+
+        TriggerEditor.Open(
+            SelectedKeys,
+            new ProfileTrigger
+            {
+                Mode = UseBusWakeTrigger ? ProfileTriggerMode.BusWake
+                     : UseThresholdTrigger ? ProfileTriggerMode.Threshold
+                     : ProfileTriggerMode.Manual,
+                Signal = TriggerSignalKey,
+                Above = TriggerAbove,
+                Value = TriggerValue,
+                DwellMs = TriggerDwellMs,
+            },
+            new ProfileStop
+            {
+                Enabled = StallStopEnabled,
+                Signal = StallSignalKey,
+                Floor = StallFloor,
+                DurationMs = StallDurationMs,
+            },
+            PreTriggerSeconds,
+            MaxDurationSeconds);
+    }
+
+    private void OnSignalsChosen(IReadOnlyList<string> keys)
+    {
+        SelectedKeys = keys;
+        OnPropertyChanged(nameof(SelectedKeys));
+        OnPropertyChanged(nameof(SelectedSummary));
+        Status = $"{keys.Count} signals selected.";
+    }
+
+    private void OnTriggerConfigured(
+        ProfileTrigger trigger, ProfileStop stop, double preTrigger, double maxDuration)
+    {
+        UseBusWakeTrigger = trigger.Mode == ProfileTriggerMode.BusWake;
+        UseThresholdTrigger = trigger.Mode == ProfileTriggerMode.Threshold;
+        TriggerSignalKey = trigger.Signal ?? string.Empty;
+        TriggerAbove = trigger.Above;
+        TriggerValue = trigger.Value;
+        TriggerDwellMs = trigger.DwellMs;
+
+        StallStopEnabled = stop.Enabled;
+        StallSignalKey = stop.Signal ?? string.Empty;
+        StallFloor = stop.Floor;
+        StallDurationMs = stop.DurationMs;
+
+        PreTriggerSeconds = preTrigger;
+        MaxDurationSeconds = maxDuration;
+    }
 
     // ── Diagnostic profiles ──────────────────────────────────────────────────
 
@@ -169,14 +250,10 @@ public class CaptureViewModel : INotifyPropertyChanged
         SelectedProfile ??= ProfilesInCategory.FirstOrDefault();
     }
 
-    /// <summary>User-defined Mode $22 channels, loaded from the config directory.</summary>
-    public System.Collections.ObjectModel.ObservableCollection<Mode22SignalItem> Mode22Signals { get; } = new();
-
-    public bool HasMode22Signals => Mode22Signals.Count > 0;
-
     /// <summary>
-    /// Where <c>mode22-signals.json</c> lives. Setting it loads the definitions; a template is
-    /// written on first run so the format is discoverable on the device.
+    /// Where <c>pid-table.json</c> and <c>mode22-signals.json</c> live. Setting it loads the
+    /// signal table, writing the built-in PID table on first run so it is discoverable and
+    /// correctable on the device.
     /// </summary>
     public string ConfigDirectory
     {
@@ -185,38 +262,22 @@ public class CaptureViewModel : INotifyPropertyChanged
         {
             _configDirectory = value;
             OnPropertyChanged();
-            LoadMode22Signals();
+            LoadSignalTable();
             LoadProfiles();
         }
     }
 
-    private void LoadMode22Signals()
+    private void LoadSignalTable()
     {
-        Mode22Signals.Clear();
+        Table = SignalTable.Load(_configDirectory);
+        Picker.Table = Table;
+        TriggerEditor.Table = Table;
+        OnPropertyChanged(nameof(Table));
 
-        if (string.IsNullOrWhiteSpace(_configDirectory))
-        {
-            OnPropertyChanged(nameof(HasMode22Signals));
-            return;
-        }
-
-        var path = System.IO.Path.Combine(_configDirectory, Mode22SignalFile.DefaultFileName);
-
-        try
-        {
-            Mode22SignalFile.WriteTemplateIfMissing(path);
-        }
-        catch (Exception)
-        {
-            // Read-only config directory; the definitions below simply stay empty.
-        }
-
-        foreach (var definition in Mode22SignalFile.Load(path))
-        {
-            Mode22Signals.Add(new Mode22SignalItem(definition));
-        }
-
-        OnPropertyChanged(nameof(HasMode22Signals));
+        // Drop any selection the reloaded table no longer defines.
+        SelectedKeys = SelectedKeys.Where(k => Table.Find(k) is not null).ToArray();
+        OnPropertyChanged(nameof(SelectedKeys));
+        OnPropertyChanged(nameof(SelectedSummary));
     }
 
     /// <summary>Where captures are written. Set by the host app at startup.</summary>
@@ -453,20 +514,14 @@ public class CaptureViewModel : INotifyPropertyChanged
     /// </remarks>
     public void ApplyProfile(DiagnosticProfile profile)
     {
-        var wanted = profile.Signals.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var matched = 0;
+        // Keys the table does not define are dropped rather than treated as an error: a profile
+        // may name a Mode $22 channel this vehicle has not had configured.
+        var resolved = profile.Signals.Where(k => Table.Find(k) is not null).ToArray();
+        var matched = resolved.Length;
 
-        foreach (var item in AvailablePids)
-        {
-            item.IsSelected = wanted.Contains(item.Key);
-            if (item.IsSelected) matched++;
-        }
-
-        foreach (var item in Mode22Signals)
-        {
-            item.IsSelected = wanted.Contains(item.Definition.Key);
-            if (item.IsSelected) matched++;
-        }
+        SelectedKeys = resolved;
+        OnPropertyChanged(nameof(SelectedKeys));
+        OnPropertyChanged(nameof(SelectedSummary));
 
         UseBusWakeTrigger = profile.Trigger.Mode == ProfileTriggerMode.BusWake;
         UseThresholdTrigger = profile.Trigger.Mode == ProfileTriggerMode.Threshold;
@@ -505,20 +560,11 @@ public class CaptureViewModel : INotifyPropertyChanged
             : $"Applied '{profile.Name}' — {matched} signals selected.";
     }
 
-    public void SelectAll()
-    {
-        foreach (var item in AvailablePids)
-        {
-            item.IsSelected = true;
-        }
-    }
-
     public void SelectNone()
     {
-        foreach (var item in AvailablePids)
-        {
-            item.IsSelected = false;
-        }
+        SelectedKeys = [];
+        OnPropertyChanged(nameof(SelectedKeys));
+        OnPropertyChanged(nameof(SelectedSummary));
     }
 
     /// <summary>Arms the capture and starts polling on a background task.</summary>
@@ -529,7 +575,7 @@ public class CaptureViewModel : INotifyPropertyChanged
             return;
         }
 
-        var selected = AvailablePids.Where(p => p.IsSelected).Select(p => p.Descriptor.Id).ToArray();
+        var selected = SelectedKeys.Select(k => Table.Find(k)).OfType<SignalDefinition>().ToArray();
 
         if (selected.Length == 0)
         {
@@ -548,26 +594,30 @@ public class CaptureViewModel : INotifyPropertyChanged
         try
         {
             var builder = new CaptureChannelSetBuilder();
+            var skipped = 0;
 
-            foreach (var pid in selected)
+            // Mode $01 and Mode $22 signals ride in the same sweep, so commanded and actual land
+            // on one timeline.
+            foreach (var definition in selected)
             {
-                builder.AddPid(_scanner, pid);
-            }
-
-            // Mode $22 channels ride alongside the standard PIDs in the same sweep, so commanded
-            // and actual rail pressure land on one timeline.
-            foreach (var definition in Mode22Signals.Where(d => d.IsSelected))
-            {
-                if (_udsScanner is null)
+                if (!builder.TryAdd(definition, _scanner, _udsScanner))
                 {
-                    Status = "Mode $22 channels selected but no UDS scanner is available.";
-                    return;
+                    skipped++;
                 }
-
-                builder.AddMode22(_udsScanner, definition.Definition);
             }
 
             channels = builder.Build();
+
+            if (channels.Count == 0)
+            {
+                Status = "No selected signal can be read on this connection.";
+                return;
+            }
+
+            if (skipped > 0)
+            {
+                Status = $"{skipped} Mode $22 signal(s) skipped — no UDS client available.";
+            }
         }
         catch (InvalidOperationException ex)
         {

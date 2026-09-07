@@ -9,13 +9,7 @@ public partial class LiveDataView : UserControl
 
     public LiveDataView() => InitializeComponent();
 
-    private void OnPidToggle(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.DataContext is LivePidItem item)
-            item.IsSelected = !item.IsSelected;
-    }
-
-    private void OnSelectAll(object? sender, RoutedEventArgs e)   => Vm.SelectAllPids();
+    private void OnOpenPicker(object? sender, RoutedEventArgs e)  => Vm.OpenLivePicker();
     private void OnSelectNone(object? sender, RoutedEventArgs e)  => Vm.SelectNoPids();
     private void OnShowTable(object? sender, RoutedEventArgs e)   => Vm.ShowTable();
     private void OnShowGauges(object? sender, RoutedEventArgs e)  => Vm.ShowGauges();

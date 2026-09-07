@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Meadow.Foundation.Telematics.J1979;
+using Neomotive.ScanTool.Core.Signals;
 
 namespace Neomotive.ScanTool.Core.Diagnostics;
 
@@ -15,7 +15,8 @@ namespace Neomotive.ScanTool.Core.Diagnostics;
 /// </remarks>
 public static class DiagnosticProfileLibrary
 {
-    private static string Key(Pid pid) => pid.ToString();
+    // Signal keys come from the table, so a profile and the picker always agree.
+    private static string Key(string signalKey) => signalKey;
 
     public static IReadOnlyList<DiagnosticProfile> BuiltIn { get; } =
     [
@@ -27,7 +28,7 @@ public static class DiagnosticProfileLibrary
             Description =
                 "Records whatever signals you select, starting and stopping on the buttons. "
                 + "The fallback when no other profile fits.",
-            Signals = [Key(Pid.EngineRpm), Key(Pid.VehicleSpeed), Key(Pid.CalculatedEngineLoad)],
+            Signals = [Key("EngineRpm"), Key("VehicleSpeed"), Key("CalculatedEngineLoad")],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 5,
             MaxDurationSeconds = 300,
@@ -44,8 +45,8 @@ public static class DiagnosticProfileLibrary
                 + "symptom occurs; the pre-trigger buffer keeps the 30 s leading up to it.",
             Signals =
             [
-                Key(Pid.EngineRpm), Key(Pid.VehicleSpeed), Key(Pid.ControlModuleVoltage),
-                Key(Pid.CalculatedEngineLoad), Key(Pid.EngineCoolantTemperature),
+                Key("EngineRpm"), Key("VehicleSpeed"), Key("ControlModuleVoltage"),
+                Key("CalculatedEngineLoad"), Key("EngineCoolantTemperature"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 30,
@@ -63,13 +64,13 @@ public static class DiagnosticProfileLibrary
                 + "about 9.5 V while cranking, and for it rising above 13.5 V once running.",
             Signals =
             [
-                Key(Pid.ControlModuleVoltage), Key(Pid.EngineRpm),
-                Key(Pid.EngineCoolantTemperature), Key(Pid.CalculatedEngineLoad),
+                Key("ControlModuleVoltage"), Key("EngineRpm"),
+                Key("EngineCoolantTemperature"), Key("CalculatedEngineLoad"),
             ],
             Trigger = new ProfileTrigger
             {
                 Mode = ProfileTriggerMode.Threshold,
-                Signal = Key(Pid.EngineRpm),
+                Signal = Key("EngineRpm"),
                 Above = true,
                 Value = 150,
                 DwellMs = 200,
@@ -91,13 +92,13 @@ public static class DiagnosticProfileLibrary
                 + "automatically once the engine has run and then died.",
             Signals =
             [
-                Key(Pid.ControlModuleVoltage), Key(Pid.EngineRpm), Key(Pid.FuelRailGaugePressure),
-                Key(Pid.EngineCoolantTemperature), Key(Pid.IntakeManifoldPressure),
+                Key("ControlModuleVoltage"), Key("EngineRpm"), Key("FuelRailGaugePressure"),
+                Key("EngineCoolantTemperature"), Key("IntakeManifoldPressure"),
             ],
             Trigger = new ProfileTrigger
             {
                 Mode = ProfileTriggerMode.Threshold,
-                Signal = Key(Pid.EngineRpm),
+                Signal = Key("EngineRpm"),
                 Above = true,
                 Value = 150,
                 DwellMs = 200,
@@ -107,7 +108,7 @@ public static class DiagnosticProfileLibrary
             Stop = new ProfileStop
             {
                 Enabled = true,
-                Signal = Key(Pid.EngineRpm),
+                Signal = Key("EngineRpm"),
                 Floor = 50,
                 DurationMs = 5000,
             },
@@ -125,9 +126,9 @@ public static class DiagnosticProfileLibrary
                 + "point at fuel delivery or a skewed MAF.",
             Signals =
             [
-                Key(Pid.ShortTermFuelTrimBank1), Key(Pid.LongTermFuelTrimBank1),
-                Key(Pid.ShortTermFuelTrimBank2), Key(Pid.LongTermFuelTrimBank2),
-                Key(Pid.MafAirFlowRate), Key(Pid.CalculatedEngineLoad), Key(Pid.EngineRpm),
+                Key("ShortTermFuelTrimBank1"), Key("LongTermFuelTrimBank1"),
+                Key("ShortTermFuelTrimBank2"), Key("LongTermFuelTrimBank2"),
+                Key("MafAirFlowRate"), Key("CalculatedEngineLoad"), Key("EngineRpm"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 10,
@@ -145,8 +146,8 @@ public static class DiagnosticProfileLibrary
                 + "failing pump, restricted filter or a leaking regulator.",
             Signals =
             [
-                Key(Pid.FuelPressure), Key(Pid.FuelRailGaugePressure), Key(Pid.EngineRpm),
-                Key(Pid.CalculatedEngineLoad), Key(Pid.EngineFuelRate),
+                Key("FuelPressure"), Key("FuelRailGaugePressure"), Key("EngineRpm"),
+                Key("CalculatedEngineLoad"), Key("EngineFuelRate"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 10,
@@ -164,13 +165,13 @@ public static class DiagnosticProfileLibrary
                 + "complaint. Look for boost failing to follow demand, or airflow flattening off.",
             Signals =
             [
-                Key(Pid.IntakeManifoldPressure), Key(Pid.MafAirFlowRate), Key(Pid.ThrottlePosition),
-                Key(Pid.EngineRpm), Key(Pid.IntakeAirTemperature), Key(Pid.BarometricPressure),
+                Key("IntakeManifoldPressure"), Key("MafAirFlowRate"), Key("ThrottlePosition"),
+                Key("EngineRpm"), Key("IntakeAirTemperature"), Key("BarometricPressure"),
             ],
             Trigger = new ProfileTrigger
             {
                 Mode = ProfileTriggerMode.Threshold,
-                Signal = Key(Pid.ThrottlePosition),
+                Signal = Key("ThrottlePosition"),
                 Above = true,
                 Value = 70,
                 DwellMs = 100,
@@ -190,9 +191,9 @@ public static class DiagnosticProfileLibrary
                 + "pre-trigger window for what moved first — load, timing, trims or airflow.",
             Signals =
             [
-                Key(Pid.EngineRpm), Key(Pid.CalculatedEngineLoad), Key(Pid.TimingAdvance),
-                Key(Pid.ShortTermFuelTrimBank1), Key(Pid.MafAirFlowRate),
-                Key(Pid.IntakeManifoldPressure),
+                Key("EngineRpm"), Key("CalculatedEngineLoad"), Key("TimingAdvance"),
+                Key("ShortTermFuelTrimBank1"), Key("MafAirFlowRate"),
+                Key("IntakeManifoldPressure"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 20,
@@ -210,9 +211,9 @@ public static class DiagnosticProfileLibrary
                 + "captured with its lead-up intact.",
             Signals =
             [
-                Key(Pid.EngineRpm), Key(Pid.CalculatedEngineLoad), Key(Pid.ThrottlePosition),
-                Key(Pid.ShortTermFuelTrimBank1), Key(Pid.IntakeManifoldPressure),
-                Key(Pid.EngineCoolantTemperature),
+                Key("EngineRpm"), Key("CalculatedEngineLoad"), Key("ThrottlePosition"),
+                Key("ShortTermFuelTrimBank1"), Key("IntakeManifoldPressure"),
+                Key("EngineCoolantTemperature"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 20,
@@ -220,7 +221,7 @@ public static class DiagnosticProfileLibrary
             Stop = new ProfileStop
             {
                 Enabled = true,
-                Signal = Key(Pid.EngineRpm),
+                Signal = Key("EngineRpm"),
                 Floor = 200,
                 DurationMs = 3000,
             },
@@ -237,13 +238,13 @@ public static class DiagnosticProfileLibrary
                 + "comparing power delivery against a known-good pull.",
             Signals =
             [
-                Key(Pid.ThrottlePosition), Key(Pid.EngineRpm), Key(Pid.VehicleSpeed),
-                Key(Pid.CalculatedEngineLoad), Key(Pid.TimingAdvance), Key(Pid.MafAirFlowRate),
+                Key("ThrottlePosition"), Key("EngineRpm"), Key("VehicleSpeed"),
+                Key("CalculatedEngineLoad"), Key("TimingAdvance"), Key("MafAirFlowRate"),
             ],
             Trigger = new ProfileTrigger
             {
                 Mode = ProfileTriggerMode.Threshold,
-                Signal = Key(Pid.ThrottlePosition),
+                Signal = Key("ThrottlePosition"),
                 Above = true,
                 Value = 80,
                 DwellMs = 100,
@@ -263,9 +264,9 @@ public static class DiagnosticProfileLibrary
                 + "downstream sensor mirroring the upstream one indicates a spent converter.",
             Signals =
             [
-                Key(Pid.OxygenSensor1ShortTermFuelTrim), Key(Pid.OxygenSensor2ShortTermFuelTrim),
-                Key(Pid.CatalystTemperatureBank1Sensor1), Key(Pid.EngineRpm),
-                Key(Pid.CalculatedEngineLoad),
+                Key("O2Sensor1Voltage"), Key("O2Sensor2Voltage"),
+                Key("CatalystTemperatureB1S1"), Key("EngineRpm"),
+                Key("CalculatedEngineLoad"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 10,
@@ -283,8 +284,8 @@ public static class DiagnosticProfileLibrary
                 + "persistent error means the valve is not following the command.",
             Signals =
             [
-                Key(Pid.CommandedEgr), Key(Pid.EgrError), Key(Pid.IntakeManifoldPressure),
-                Key(Pid.CalculatedEngineLoad), Key(Pid.EngineRpm),
+                Key("CommandedEgr"), Key("EgrError"), Key("IntakeManifoldPressure"),
+                Key("CalculatedEngineLoad"), Key("EngineRpm"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 10,
@@ -302,8 +303,8 @@ public static class DiagnosticProfileLibrary
                 + "while road speed does not; slip shows as the two diverging under load.",
             Signals =
             [
-                Key(Pid.EngineRpm), Key(Pid.VehicleSpeed), Key(Pid.CalculatedEngineLoad),
-                Key(Pid.ThrottlePosition), Key(Pid.EngineOilTemperature),
+                Key("EngineRpm"), Key("VehicleSpeed"), Key("CalculatedEngineLoad"),
+                Key("ThrottlePosition"), Key("EngineOilTemperature"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 15,
@@ -321,9 +322,9 @@ public static class DiagnosticProfileLibrary
                 + "look at how coolant temperature tracks load and ambient.",
             Signals =
             [
-                Key(Pid.EngineCoolantTemperature), Key(Pid.EngineOilTemperature),
-                Key(Pid.IntakeAirTemperature), Key(Pid.AmbientAirTemperature),
-                Key(Pid.CalculatedEngineLoad), Key(Pid.VehicleSpeed), Key(Pid.EngineRpm),
+                Key("EngineCoolantTemperature"), Key("EngineOilTemperature"),
+                Key("IntakeAirTemperature"), Key("AmbientAirTemperature"),
+                Key("CalculatedEngineLoad"), Key("VehicleSpeed"), Key("EngineRpm"),
             ],
             Trigger = new ProfileTrigger { Mode = ProfileTriggerMode.Manual },
             PreTriggerSeconds = 30,

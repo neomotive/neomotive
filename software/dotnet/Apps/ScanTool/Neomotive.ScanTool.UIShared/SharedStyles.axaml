@@ -56,4 +56,64 @@
         <Setter Property="Foreground" Value="#A5D6A7" />
     </Style>
 
+    <!-- Signal picker result row. Tighter than live-pid-row so the modal shows more of a
+         ~110-entry table at 800x480, while staying a comfortable touch target. -->
+    <Style Selector="Button.pidrow">
+        <Setter Property="Background"      Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding"         Value="8,4" />
+        <Setter Property="MinHeight"       Value="30" />
+        <Setter Property="FontSize"        Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius"    Value="0" />
+        <Setter Property="Cursor"          Value="Hand" />
+    </Style>
+    <Style Selector="Button.pidrow:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#1A2030" />
+    </Style>
+    <Style Selector="Button.pidrow:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#243040" />
+    </Style>
+
+    <!-- System filter chip. The default Fluent button padding made these wide enough to
+         overflow the row; these are sized to fit several per line at 800px. -->
+    <Style Selector="Button.chip">
+        <Setter Property="Background"      Value="#1A2030" />
+        <Setter Property="BorderBrush"     Value="#2E3440" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding"         Value="7,3" />
+        <Setter Property="MinHeight"       Value="26" />
+        <Setter Property="MinWidth"        Value="0" />
+        <Setter Property="FontSize"        Value="11" />
+        <Setter Property="CornerRadius"    Value="12" />
+        <Setter Property="Cursor"          Value="Hand" />
+    </Style>
+    <Style Selector="Button.chip:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#243040" />
+    </Style>
+
+    <!-- Numeric keypad key. Stretches to fill its grid cell: the default Fluent button centres
+         itself at its content size, which left the keys as small squares floating in dead space. -->
+    <Style Selector="Button.keypad">
+        <Setter Property="HorizontalAlignment"        Value="Stretch" />
+        <Setter Property="VerticalAlignment"          Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment"   Value="Center" />
+        <Setter Property="MinWidth"        Value="0" />
+        <Setter Property="MinHeight"       Value="40" />
+        <Setter Property="Padding"         Value="0" />
+        <Setter Property="FontSize"        Value="19" />
+        <Setter Property="Background"      Value="#1A2030" />
+        <Setter Property="BorderBrush"     Value="#2E3440" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius"    Value="4" />
+        <Setter Property="Cursor"          Value="Hand" />
+    </Style>
+    <Style Selector="Button.keypad:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#243040" />
+    </Style>
+    <Style Selector="Button.keypad:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#31415A" />
+    </Style>
+
 </Styles>

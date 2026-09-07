@@ -59,6 +59,22 @@ public class Obd2Scanner : IObd2Scanner
         return data != null ? Obd2Protocol.ParseEcuName(data) : null;
     }
 
+    public async Task<byte[]?> ReadPidDataAsync(byte pid, CancellationToken ct = default)
+    {
+        var data = await SendAndReceive(
+            [(byte)Service.Current, pid],
+            ResponseServiceId(Service.Current), ct);
+
+        // Response is [0x41, pid, A, B, ...]; hand back only the data bytes so signal definitions
+        // can address them from zero.
+        if (data == null || data.Length < 3 || data[1] != pid)
+        {
+            return null;
+        }
+
+        return data[2..];
+    }
+
     public async Task<string?> ReadCalibrationIdAsync(CancellationToken ct = default)
     {
         var data = await SendAndReceive(

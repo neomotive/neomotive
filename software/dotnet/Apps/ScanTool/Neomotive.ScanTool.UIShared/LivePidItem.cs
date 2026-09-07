@@ -1,4 +1,4 @@
-using Neomotive.ScanTool.Core;
+using Neomotive.ScanTool.Core.Signals;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,7 +10,7 @@ public class LivePidItem : INotifyPropertyChanged
 {
     private const int HistoryCapacity = 120; // 60 s at 2 Hz
 
-    public PidDescriptor Descriptor { get; }
+    public SignalDefinition Descriptor { get; }
 
     private bool _isSelected;
     public bool IsSelected
@@ -37,7 +37,7 @@ public class LivePidItem : INotifyPropertyChanged
     private readonly Queue<(DateTime Timestamp, double Value)> _history = new(HistoryCapacity);
     public IReadOnlyCollection<(DateTime Timestamp, double Value)> History => _history;
 
-    public LivePidItem(PidDescriptor descriptor)
+    public LivePidItem(SignalDefinition descriptor)
     {
         Descriptor = descriptor;
     }

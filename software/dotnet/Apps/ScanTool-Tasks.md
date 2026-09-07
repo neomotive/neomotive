@@ -562,3 +562,52 @@ across a round trip.
 **Design rule going forward:** anything scenario-specific belongs in a profile or config file, not
 in `CaptureViewModel`. The capture engine, poll loop, storage and review pane are domain-agnostic
 and must stay that way.
+
+## Group W — Loadable signal table and modal UX (2026-09-07)
+
+- [x] **W1** `SignalDefinition` (`Core/Signals/`) — one shape for Mode $01 and Mode $22, differing
+  only in where the bytes come from. Addressed by **numeric** PID/DID rather than an enum name, so
+  the table can describe signals the J1979 enum never named.
+  - **`ByteOffset`/`ByteLength`/`Signed` were the unlock.** The old decoder read only 1-2 unsigned
+    bytes at a fixed offset, which cannot express the multi-value PIDs ($14-$1B pack O2 voltage and
+    fuel trim into one response; $24-$2B and $34-$3B pack two 16-bit values). Those are now simply
+    two definitions sharing an address.
+  - `Mode22SignalDefinition` was folded into this and deleted.
+- [x] **W2** `IObd2Scanner.ReadPidDataAsync(byte pid)` returns raw data bytes with the service and
+  PID echo stripped, leaving decoding to the signal definition. `ReadPidAsync(Pid)` stays for the
+  legacy path.
+- [x] **W3** `SignalLibrary` — ~110 built-in Mode $01 signals across Engine, Fuel, Air & Boost,
+  Emissions, Thermal, Electrical, Vehicle and Diagnostics, written to `config/pid-table.json` on
+  first run.
+  - **Scaling was taken from the SAE definitions; PIDs whose scaling could not be stated with
+    confidence were omitted rather than guessed.** A wrong scale factor is worse than a missing
+    signal because it yields a plausible number that quietly misleads. Deliberately excluded:
+    status bitmaps/enums ($01, $03, $12, $13, $1C-$1E, $41, $51, $5F) and composite PIDs packing
+    3+ sensors ($64, $67, $68, $6B, $6C, $70, $73, $77, $78-$7C, $83, $86). The file format can
+    express them once there is a presentation for them.
+- [x] **W4** `SignalTable` — merges `pid-table.json` with `mode22-signals.json`, so a Mode $22
+  channel is a first-class signal everywhere (search, filter, live, capture, triggers, profiles).
+  A Mode $22 entry may deliberately override a standard key. Corrupt files fall back to built-ins.
+- [x] **W5** `SignalPickerViewModel` + `SignalPickerView` — **search-first, not a tree.** Search
+  matches name, key, unit, tags and the PID number (with or without `0x`, since people read it out
+  of a service manual). System filters are **multi-select chips, not tree nodes**, because a signal
+  legitimately belongs to several systems — rail pressure is both Fuel and Engine — and a strict
+  tree would force it into one branch. Chips also avoid expander hit targets on the 800x480 panel.
+- [x] **W6** `TriggerEditorViewModel` + `TriggerEditorView` — modal replacing the cramped sidebar.
+  **Polls the chosen signal live while you set the threshold**, warns when the condition is already
+  true (which would fire the instant it arms), offers "Use" to take the current reading, and shows
+  a plain-language summary of what will happen. Numeric keypad because text entry on the Pi's touch
+  panel is painful.
+- [x] **W7** Live Data and Capture now share one picker and one table, so a signal means the same
+  thing in both. `LivePidItem.Descriptor` became a `SignalDefinition` — the existing
+  `Descriptor.Name/Unit/Min/Max` bindings kept working unchanged. Live polling switched to
+  `ReadPidDataAsync` + `Decode` so multi-value PIDs read correctly.
+- [x] **W8** 27 signal tests: scaling spot-checks against known SAE values, 4-byte and signed
+  decoding, multi-value PIDs sharing an address, search by name/tag/PID number, multi-system
+  membership, and file load/save/fallback.
+
+**Modal hosting:** overlays inside the view, **not** `Window` dialogs. The Pi runs a single-view
+DRM lifetime with no window manager, so a real dialog has nowhere to go.
+
+**Bug found and fixed:** `CaptureVm` was being constructed before `_udsScanner` was assigned, so it
+always received null and Mode $22 channels could never have worked.

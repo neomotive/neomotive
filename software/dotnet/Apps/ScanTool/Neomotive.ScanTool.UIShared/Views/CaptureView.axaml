@@ -5,126 +5,62 @@
              x:Class="Neomotive.ScanTool.UI.Views.CaptureView"
              x:DataType="local:CaptureViewModel">
 
-    <Grid ColumnDefinitions="260, *">
+    <Grid>
+        <!-- Main content -->
+        <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
 
-        <!-- Left: signals and trigger setup -->
-        <Border Grid.Column="0" Background="#0E1117"
-                BorderBrush="#1E2530" BorderThickness="0,0,1,0">
-            <ScrollViewer Padding="8,6">
-                <StackPanel Spacing="6">
-
-                    <!-- Profile picker: category then profile. Profiles are data, loaded from
-                         config/diagnostic-profiles.json, so any scenario can be added without a
-                         rebuild. Applying one only fills in the settings below — everything stays
-                         editable. -->
-                    <TextBlock Classes="label" Text="Diagnostic profile" />
-                    <ComboBox HorizontalAlignment="Stretch"
+            <!-- Setup: profile, signals, trigger. The scrolling sidebar is gone; each of these
+                 opens a modal, which leaves the full width for the trace. -->
+            <Border Grid.Row="0" Background="#141820" Padding="8,6"
+                    BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto, 150, 190, Auto, Auto" ColumnSpacing="6">
+                    <TextBlock Grid.Column="0" Classes="label" Text="Profile"
+                               VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
                               ItemsSource="{Binding Categories}"
                               SelectedItem="{Binding SelectedCategory}" />
-                    <ComboBox HorizontalAlignment="Stretch"
+                    <ComboBox Grid.Column="2" HorizontalAlignment="Stretch"
                               ItemsSource="{Binding ProfilesInCategory}"
                               SelectedItem="{Binding SelectedProfile}" />
+                    <Button Grid.Column="3" Content="Apply" Click="OnApplyProfile"
+                            IsEnabled="{Binding HasSelectedProfile}" />
+                    <Button Grid.Column="4" Content="Signals…" Click="OnOpenPicker" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Padding="8,4">
+                <StackPanel Spacing="2">
                     <TextBlock Classes="xs dim" TextWrapping="Wrap"
                                IsVisible="{Binding HasSelectedProfile}"
                                Text="{Binding SelectedProfileDescription}" />
-                    <Button Content="Apply profile" HorizontalAlignment="Stretch"
-                            Click="OnApplyProfile" IsEnabled="{Binding HasSelectedProfile}" />
-
-                    <TextBlock Classes="label" Text="Signals" Margin="0,6,0,0" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="All"  Click="OnSelectAll" />
-                        <Button Content="None" Click="OnSelectNone" />
-                    </StackPanel>
-
-                    <ItemsControl ItemsSource="{Binding AvailablePids}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="local:CapturePidItem">
-                                <Button Classes="pidrow" HorizontalAlignment="Stretch"
-                                        Click="OnTogglePid" Tag="{Binding}">
-                                    <Grid ColumnDefinitions="18, *, Auto">
-                                        <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" />
-                                        <TextBlock Grid.Column="2" Classes="xs dim" Text="{Binding Unit}" />
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <!-- User-defined Mode $22 channels. Commanded rail pressure lives here;
-                         the identifiers are manufacturer-specific, so they come from
-                         config/mode22-signals.json rather than being built in. -->
-                    <TextBlock Classes="label" Text="Mode $22" Margin="0,8,0,0"
-                               IsVisible="{Binding HasMode22Signals}" />
-                    <ItemsControl ItemsSource="{Binding Mode22Signals}" IsVisible="{Binding HasMode22Signals}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="local:Mode22SignalItem">
-                                <Button Classes="pidrow" HorizontalAlignment="Stretch"
-                                        Click="OnToggleMode22" Tag="{Binding}"
-                                        ToolTip.Tip="{Binding Detail}">
-                                    <Grid ColumnDefinitions="18, *, Auto">
-                                        <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" />
-                                        <TextBlock Grid.Column="2" Classes="xs dim" Text="{Binding Unit}" />
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <TextBlock Classes="label" Text="Trigger" Margin="0,8,0,0" />
-                    <CheckBox Content="On threshold" IsChecked="{Binding UseThresholdTrigger}" />
-                    <CheckBox Content="On first ECU response" IsChecked="{Binding UseBusWakeTrigger}"
-                              ToolTip.Tip="Arm before key-on; recording starts the moment the ECU answers." />
-
-                    <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
-                        <TextBox Grid.Column="0" Watermark="signal" Text="{Binding TriggerSignalKey}" />
-                        <TextBox Grid.Column="1" Watermark="value"  Text="{Binding TriggerValue}" />
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBlock Grid.Column="0" Classes="xs" TextTrimming="CharacterEllipsis"
+                                   Text="{Binding SelectedSummary}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Trigger…" Click="OnOpenTrigger" />
                     </Grid>
-                    <CheckBox Content="Above (uncheck for below)" IsChecked="{Binding TriggerAbove}" />
-
-                    <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
-                        <TextBox Grid.Column="0" Watermark="dwell ms"    Text="{Binding TriggerDwellMs}" />
-                        <TextBox Grid.Column="1" Watermark="pre-trig s"  Text="{Binding PreTriggerSeconds}" />
-                    </Grid>
-
-                    <TextBlock Classes="label" Text="Stop" Margin="0,8,0,0" />
-                    <CheckBox Content="Stop on stall" IsChecked="{Binding StallStopEnabled}" />
-                    <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
-                        <TextBox Grid.Column="0" Watermark="floor"     Text="{Binding StallFloor}" />
-                        <TextBox Grid.Column="1" Watermark="stall ms"  Text="{Binding StallDurationMs}" />
-                    </Grid>
-                    <TextBox Watermark="max seconds" Text="{Binding MaxDurationSeconds}" />
-                    <TextBox Watermark="capture name" Text="{Binding CaptureName}" />
-
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                               Text="{Binding TriggerSummary, StringFormat='Trigger: {0}'}" />
                 </StackPanel>
-            </ScrollViewer>
-        </Border>
+            </Border>
 
-        <!-- Right: run controls, status, review -->
-        <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *, Auto">
-
-            <Border Grid.Row="0" Background="#141820" Padding="8,6"
-                    BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+            <!-- Run controls -->
+            <Border Grid.Row="2" Background="#141820" Padding="8,6"
+                    BorderBrush="#1E2530" BorderThickness="0,1,0,1">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button Content="Arm"     Click="OnArm"     IsEnabled="{Binding CanArm}" />
                     <Button Content="Trigger" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}" />
                     <Button Content="Stop"    Click="OnStop"    IsEnabled="{Binding IsArmed}" />
                     <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding RateText}" />
-                    <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding SampleCount, StringFormat='{}{0} samples'}" />
+                    <TextBlock Classes="xs dim" VerticalAlignment="Center"
+                               Text="{Binding SampleCount, StringFormat='{}{0} samples'}" />
+                    <TextBlock Classes="xs" VerticalAlignment="Center" Text="{Binding Status}"
+                               TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </Border>
 
-            <Border Grid.Row="1" Padding="8,4">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="value" Text="{Binding Status}" TextWrapping="Wrap" />
-                    <TextBlock Classes="xs dim" Text="{Binding TriggerSummary, StringFormat='Trigger: {0}'}" />
-                </StackPanel>
-            </Border>
+            <views:CaptureReviewPane Grid.Row="3" DataContext="{Binding}" />
 
-            <views:CaptureReviewPane Grid.Row="2" DataContext="{Binding}" />
-
-            <Border Grid.Row="3" Background="#141820" Padding="8,6"
+            <Border Grid.Row="4" Background="#141820" Padding="8,6"
                     BorderBrush="#1E2530" BorderThickness="0,1,0,0">
                 <Grid ColumnDefinitions="Auto, *, Auto, Auto">
                     <TextBlock Grid.Column="0" Classes="xs dim" VerticalAlignment="Center"
@@ -137,7 +73,16 @@
                             Click="OnExport" IsEnabled="{Binding HasLoadedRecording}" />
                 </Grid>
             </Border>
-
         </Grid>
+
+        <!-- Modal overlays. Hosted here rather than as Windows because the Pi runs a single-view
+             DRM lifetime with no window manager, so a real dialog would have nowhere to go. -->
+        <Panel IsVisible="{Binding Picker.IsOpen}" Background="#CC0B0E13">
+            <views:SignalPickerView DataContext="{Binding Picker}" />
+        </Panel>
+
+        <Panel IsVisible="{Binding TriggerEditor.IsOpen}" Background="#CC0B0E13">
+            <views:TriggerEditorView DataContext="{Binding TriggerEditor}" />
+        </Panel>
     </Grid>
 </UserControl>

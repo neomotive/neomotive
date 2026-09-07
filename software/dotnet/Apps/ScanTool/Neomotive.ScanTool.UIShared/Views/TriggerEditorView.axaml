@@ -1,0 +1,137 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.TriggerEditorView"
+             x:DataType="local:TriggerEditorViewModel">
+
+    <Border Background="#141820" BorderBrush="#2E3440" BorderThickness="1" CornerRadius="6"
+            Margin="24">
+        <Grid RowDefinitions="Auto, *, Auto, Auto">
+
+            <!-- Mode -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="10,10,10,6">
+                <TextBlock Classes="label" Text="Start" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Button Content="Manual"   Classes="tab" Classes.active="{Binding IsManual}"    Click="OnModeManual" />
+                <Button Content="Threshold" Classes="tab" Classes.active="{Binding IsThreshold}" Click="OnModeThreshold" />
+                <Button Content="ECU wake" Classes="tab" Classes.active="{Binding IsBusWake}"   Click="OnModeBusWake" />
+            </StackPanel>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*, 220" Margin="10,0">
+
+                <!-- Condition -->
+                <ScrollViewer Grid.Column="0">
+                    <StackPanel Spacing="6" Margin="0,0,10,0">
+
+                        <StackPanel Spacing="6" IsVisible="{Binding IsThreshold}">
+                            <TextBlock Classes="label" Text="Signal" />
+                            <ComboBox HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding AvailableSignals}"
+                                      SelectedItem="{Binding TriggerSignal}" />
+
+                            <!-- The live reading is why this is a modal and not a sidebar: you pick
+                                 a threshold against what the signal is actually doing. -->
+                            <Grid ColumnDefinitions="Auto, *, Auto">
+                                <TextBlock Grid.Column="0" Classes="label" Text="NOW" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Classes="vin" Margin="8,0"
+                                           Text="{Binding LiveText}" VerticalAlignment="Center" />
+                                <Button Grid.Column="2" Content="Use" Click="OnUseLive" />
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Button Content="Rises above" Classes="tab" Classes.active="{Binding Above}" Click="OnAbove" />
+                                <Button Content="Falls below" Classes="tab" Click="OnBelow" />
+                            </StackPanel>
+
+                            <TextBlock Classes="xs" Foreground="#FFCC00" TextWrapping="Wrap"
+                                       Text="{Binding ThresholdHint}" />
+
+                            <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Classes="label" Text="Dwell (ms)" />
+                                    <TextBox Text="{Binding DwellMs}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock Classes="label" Text="Pre-trigger (s)" />
+                                    <TextBox Text="{Binding PreTriggerSeconds}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Spacing="6" IsVisible="{Binding !IsThreshold}">
+                            <TextBlock Classes="label" Text="Pre-trigger (s)" />
+                            <TextBox Text="{Binding PreTriggerSeconds}" />
+                        </StackPanel>
+
+                        <TextBlock Classes="label" Text="Stop" Margin="0,8,0,0" />
+                        <CheckBox Content="Stop when a signal goes quiet" IsChecked="{Binding StopEnabled}"
+                                  ToolTip.Tip="Ends the capture once the signal has been active and then stays below the floor." />
+                        <Grid ColumnDefinitions="*, *, *" ColumnSpacing="6" IsVisible="{Binding StopEnabled}">
+                            <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding AvailableSignals}"
+                                      SelectedItem="{Binding StopSignal}" />
+                            <TextBox Grid.Column="1" Watermark="floor"  Text="{Binding StopFloor}" />
+                            <TextBox Grid.Column="2" Watermark="for ms" Text="{Binding StopDurationMs}" />
+                        </Grid>
+                        <StackPanel Spacing="2">
+                            <TextBlock Classes="label" Text="Max duration (s)" />
+                            <TextBox Text="{Binding MaxDurationSeconds}" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Keypad: text entry on the Pi touch panel is painful -->
+                <Border Grid.Column="1" IsVisible="{Binding IsThreshold}"
+                        Background="#0E1117" BorderBrush="#1E2530" BorderThickness="1"
+                        CornerRadius="4" Padding="6">
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="label" Text="Threshold" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock Grid.Column="0" Classes="vin" Text="{Binding ValueText}" />
+                            <TextBlock Grid.Column="1" Classes="xs dim" VerticalAlignment="Bottom"
+                                       Text="{Binding TriggerUnit}" />
+                        </Grid>
+                        <!-- Explicit Grid rather than UniformGrid: the buttons stretch to fill
+                             their cells, and backspace spans two columns so the bottom row has no
+                             dead cell. -->
+                        <Grid RowDefinitions="*,*,*,*,*" ColumnDefinitions="*,*,*"
+                              RowSpacing="4" ColumnSpacing="4" MinHeight="250">
+                            <Button Grid.Row="0" Grid.Column="0" Classes="keypad" Content="7" Click="OnKey" Tag="7" />
+                            <Button Grid.Row="0" Grid.Column="1" Classes="keypad" Content="8" Click="OnKey" Tag="8" />
+                            <Button Grid.Row="0" Grid.Column="2" Classes="keypad" Content="9" Click="OnKey" Tag="9" />
+
+                            <Button Grid.Row="1" Grid.Column="0" Classes="keypad" Content="4" Click="OnKey" Tag="4" />
+                            <Button Grid.Row="1" Grid.Column="1" Classes="keypad" Content="5" Click="OnKey" Tag="5" />
+                            <Button Grid.Row="1" Grid.Column="2" Classes="keypad" Content="6" Click="OnKey" Tag="6" />
+
+                            <Button Grid.Row="2" Grid.Column="0" Classes="keypad" Content="1" Click="OnKey" Tag="1" />
+                            <Button Grid.Row="2" Grid.Column="1" Classes="keypad" Content="2" Click="OnKey" Tag="2" />
+                            <Button Grid.Row="2" Grid.Column="2" Classes="keypad" Content="3" Click="OnKey" Tag="3" />
+
+                            <Button Grid.Row="3" Grid.Column="0" Classes="keypad" Content="0" Click="OnKey" Tag="0" />
+                            <Button Grid.Row="3" Grid.Column="1" Classes="keypad" Content="." Click="OnKey" Tag="." />
+                            <Button Grid.Row="3" Grid.Column="2" Classes="keypad" Content="±" Click="OnNegate" />
+
+                            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                                    Classes="keypad" Content="⌫" Click="OnBackspace" />
+                            <Button Grid.Row="4" Grid.Column="2" Classes="keypad" Content="C" Click="OnClear" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Plain-language summary -->
+            <Border Grid.Row="2" Background="#0E1117" BorderBrush="#1E2530" BorderThickness="0,1,0,1"
+                    Padding="10,8" Margin="0,8,0,0">
+                <TextBlock Classes="value" TextWrapping="Wrap" Text="{Binding Summary}" />
+            </Border>
+
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"
+                        Spacing="6" Margin="10,8">
+                <Button Content="Cancel" Click="OnCancel" />
+                <Button Content="Apply"  Click="OnConfirm" />
+            </StackPanel>
+
+        </Grid>
+    </Border>
+</UserControl>

@@ -36,10 +36,12 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     {
         _scanner = scanner;
         _loggingBus = loggingBus;
-        CaptureVm = new CaptureViewModel(scanner, _udsScanner);
         _vinDecoder = vinDecoder;
         _updateService = updateService;
         _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus) : null);
+
+        // Constructed after _udsScanner: capture needs the UDS client for Mode $22 channels.
+        CaptureVm = new CaptureViewModel(scanner, _udsScanner);
         if (_loggingBus != null)
         {
             _log = _loggingBus.Log;
@@ -59,19 +61,41 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             _updateService.UsbNoUpdateOnDrive      += () => Dispatcher.UIThread.Post(() => OnUsbNoUpdate());
         }
 
-        LivePidItems = PidRegistry.CommonPids.Select(d => new LivePidItem(d)).ToList();
-        foreach (var item in LivePidItems)
-            item.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName == nameof(LivePidItem.IsSelected))
-                {
-                    OnPropertyChanged(nameof(HasSelectedPids));
-                    OnPropertyChanged(nameof(HasNoSelectedPids));
-                    OnPropertyChanged(nameof(SelectedLivePids));
-                    OnPropertyChanged(nameof(GaugePids));
-                    OnPropertyChanged(nameof(CanStartPolling));
-                }
-            };
+        // Live view and capture select from the same table through the same picker, so a signal
+        // means the same thing in both places.
+        LivePicker = new SignalPickerViewModel { Table = CaptureVm.Table };
+        LivePicker.Confirmed += OnLiveSignalsChosen;
+    }
+
+    /// <summary>Signals chosen for live viewing, in table order.</summary>
+    private void OnLiveSignalsChosen(IReadOnlyList<string> keys)
+    {
+        var items = keys
+            .Select(k => CaptureVm.Table.Find(k))
+            .Where(d => d is not null)
+            .Select(d => new LivePidItem(d!))
+            .ToList();
+
+        // Everything in the list is by definition selected now that the picker owns the set.
+        foreach (var item in items)
+        {
+            item.IsSelected = true;
+        }
+
+        _liveItems = items;
+
+        OnPropertyChanged(nameof(LivePidItems));
+        OnPropertyChanged(nameof(HasSelectedPids));
+        OnPropertyChanged(nameof(HasNoSelectedPids));
+        OnPropertyChanged(nameof(SelectedLivePids));
+        OnPropertyChanged(nameof(GaugePids));
+        OnPropertyChanged(nameof(CanStartPolling));
+    }
+
+    public void OpenLivePicker()
+    {
+        LivePicker.Table = CaptureVm.Table;
+        LivePicker.Open(_liveItems.Select(i => i.Descriptor.Key));
     }
 
     public void StartCanLogTimer()
@@ -1031,11 +1055,16 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
     // ── Live Data ─────────────────────────────────────────────────────────────
 
-    public IReadOnlyList<LivePidItem> LivePidItems { get; }
+    private List<LivePidItem> _liveItems = new();
 
-    public IEnumerable<LivePidItem> SelectedLivePids => LivePidItems.Where(p => p.IsSelected);
-    public IEnumerable<LivePidItem> GaugePids => LivePidItems.Where(p => p.IsSelected).Take(6);
-    public bool HasSelectedPids => LivePidItems.Any(p => p.IsSelected);
+    /// <summary>Shared search-driven picker, opened as a modal overlay.</summary>
+    public SignalPickerViewModel LivePicker { get; }
+
+    public IReadOnlyList<LivePidItem> LivePidItems => _liveItems;
+
+    public IEnumerable<LivePidItem> SelectedLivePids => _liveItems;
+    public IEnumerable<LivePidItem> GaugePids => _liveItems.Take(6);
+    public bool HasSelectedPids => _liveItems.Count > 0;
     public bool HasNoSelectedPids => !HasSelectedPids;
 
     private bool _isPolling;
@@ -1075,11 +1104,14 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
                     if (ct.IsCancellationRequested) break;
                     try
                     {
-                        var pidValue = await Task.Run(() => _scanner.ReadPidAsync(item.Descriptor.Id, ct), ct);
-                        if (pidValue != null)
+                        // Raw read plus per-signal decode: one PID can carry several signals,
+                        // so the value depends on the definition, not just the PID.
+                        var data = await Task.Run(
+                            () => _scanner.ReadPidDataAsync((byte)item.Descriptor.Address, ct), ct);
+
+                        if (item.Descriptor.Decode(data) is { } v)
                         {
                             var captured = item;
-                            var v = pidValue.Value;
                             Dispatcher.UIThread.Post(() => captured.UpdateValue(v));
                         }
                     }
@@ -1096,16 +1128,17 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         }
     }
 
-    public void SelectAllPids()
-    {
-        foreach (var item in LivePidItems)
-            item.IsSelected = true;
-    }
-
+    /// <summary>Clears the live set. Adding is done through the picker.</summary>
     public void SelectNoPids()
     {
-        foreach (var item in LivePidItems)
-            item.IsSelected = false;
+        _liveItems = new List<LivePidItem>();
+
+        OnPropertyChanged(nameof(LivePidItems));
+        OnPropertyChanged(nameof(HasSelectedPids));
+        OnPropertyChanged(nameof(HasNoSelectedPids));
+        OnPropertyChanged(nameof(SelectedLivePids));
+        OnPropertyChanged(nameof(GaugePids));
+        OnPropertyChanged(nameof(CanStartPolling));
     }
 
     // ── CAN Logging ───────────────────────────────────────────────────────────

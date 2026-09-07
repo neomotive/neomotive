@@ -13,10 +13,23 @@
                 Background="#141820"
                 BorderBrush="#2E3440"
                 BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="*, Auto">
+            <Grid>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
-                    <Button Content="Connection" Classes="tab" Classes.active="{Binding IsConnectionView}" Click="OnShowConnection" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <!-- Connection is an icon rather than a word: it frees the widest label in the
+                         bar, and the icon colour carries the connection state, so the separate
+                         "No vehicle" indicator on the right is no longer needed. -->
+                    <Button Classes="tab tab-icon" Classes.active="{Binding IsConnectionView}"
+                            Click="OnShowConnection" ToolTip.Tip="{Binding StatusText}">
+                        <Panel Width="20" Height="20">
+                            <Path Data="{StaticResource IconPower}" Stretch="Uniform"
+                                  Fill="{StaticResource BrushOk}"    IsVisible="{Binding IsConnected}" />
+                            <Path Data="{StaticResource IconPower}" Stretch="Uniform"
+                                  Fill="{StaticResource BrushWarn}"  IsVisible="{Binding IsConnecting}" />
+                            <Path Data="{StaticResource IconPower}" Stretch="Uniform"
+                                  Fill="{StaticResource BrushFgDim}" IsVisible="{Binding IsIdle}" />
+                        </Panel>
+                    </Button>
                     <Button Content="Vehicle"    Classes="tab" Classes.active="{Binding IsVehicleView}"    Click="OnShowVehicle" />
                     <Button Content="Monitors"  Classes="tab" Classes.active="{Binding IsEmissionsView}"  Click="OnShowEmissions" />
                     <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
@@ -26,22 +39,6 @@
                     <Button Content="CAN"        Classes="tab" Classes.active="{Binding IsCanLogView}"     Click="OnShowCanLog" />
                     <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
-
-                <!-- Connection state indicator -->
-                <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
-                    <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding IsConnected}">
-                        <TextBlock Text="●" FontSize="10" Foreground="{StaticResource BrushOk}"      VerticalAlignment="Center" />
-                        <TextBlock Text="Connected"   FontSize="11" Foreground="{StaticResource BrushFgSubtle}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding IsConnecting}">
-                        <TextBlock Text="●" FontSize="10" Foreground="{StaticResource BrushWarn}"    VerticalAlignment="Center" />
-                        <TextBlock Text="Connecting…" FontSize="11" Foreground="{StaticResource BrushFgSubtle}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding IsIdle}">
-                        <TextBlock Text="●" FontSize="10" Foreground="{StaticResource BrushFgDim}"   VerticalAlignment="Center" />
-                        <TextBlock Text="No vehicle"  FontSize="11" Foreground="{StaticResource BrushFgDim}"    VerticalAlignment="Center" />
-                    </StackPanel>
-                </Grid>
 
             </Grid>
         </Border>

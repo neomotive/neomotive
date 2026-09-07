@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.SignalPickerView"
+             x:DataType="local:SignalPickerViewModel">
+
+    <!-- Modal content. Hosted as an overlay rather than a Window: the Pi runs a single-view
+         DRM lifetime with no window manager, so a real dialog would have nowhere to go. -->
+    <Border Background="#141820" BorderBrush="#2E3440" BorderThickness="1" CornerRadius="6"
+            Margin="24" Padding="0">
+        <Grid RowDefinitions="Auto, Auto, *, Auto">
+
+            <!-- Search -->
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="10,10,10,6" ColumnSpacing="8">
+                <TextBox Grid.Column="0" Name="SearchBox"
+                         Watermark="Search name, PID number, unit or tag…"
+                         Text="{Binding SearchText}" />
+                <TextBlock Grid.Column="1" Classes="xs dim" VerticalAlignment="Center"
+                           Text="{Binding SelectedCountText}" />
+            </Grid>
+
+            <!-- System filter chips: multi-select, because a signal can belong to several.
+                 No ScrollViewer here on purpose — an unbounded width stops the WrapPanel
+                 wrapping, which is what forced horizontal scrolling. -->
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding SystemFilters}" Margin="10,0,10,4">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:SystemFilterItem">
+                        <Button Classes="chip" Margin="0,0,4,4" Padding="7,3"
+                                Click="OnToggleSystem" Tag="{Binding}">
+                            <TextBlock FontSize="11" Text="{Binding Label}" />
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Results -->
+            <Border Grid.Row="2" Background="#0E1117" BorderBrush="#1E2530" BorderThickness="0,1,0,1">
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Results}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:SignalItem">
+                                <Button Classes="pidrow" HorizontalAlignment="Stretch"
+                                        Click="OnToggleSignal" Tag="{Binding}"
+                                        ToolTip.Tip="{Binding DetailText}">
+                                    <Grid ColumnDefinitions="18, 52, *, Auto" ColumnSpacing="6">
+                                        <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
+                                        <!-- PID leads: techs usually arrive knowing the number. -->
+                                        <TextBlock Grid.Column="1" Classes="xs"
+                                                   FontFamily="Consolas,Menlo,monospace"
+                                                   Foreground="{StaticResource BrushFgSubtle}"
+                                                   Text="{Binding ShortAddressText}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="3" Classes="xs dim" Text="{Binding Unit}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Footer -->
+            <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, Auto, *, Auto, Auto"
+                  Margin="10,8" ColumnSpacing="6">
+                <Button Grid.Column="0" Content="Selected only" Click="OnToggleSelectedOnly" />
+                <Button Grid.Column="1" Content="Add listed"    Click="OnSelectAllResults" />
+                <Button Grid.Column="2" Content="Clear"         Click="OnClearSelection" />
+                <TextBlock Grid.Column="3" Classes="xs dim" VerticalAlignment="Center"
+                           HorizontalAlignment="Right" Margin="0,0,8,0"
+                           Text="{Binding ResultCountText}" />
+                <Button Grid.Column="4" Content="Cancel" Click="OnCancel" />
+                <Button Grid.Column="5" Content="Done"   Click="OnConfirm" />
+            </Grid>
+
+        </Grid>
+    </Border>
+</UserControl>

@@ -36,6 +36,33 @@ internal sealed class FakeObd2Scanner : IObd2Scanner
         return Task.FromResult<PidValue?>(new PidValue(descriptor, value.Value, DateTime.UtcNow));
     }
 
+    /// <summary>
+    /// Raw-byte reads used by the capture channels. Returns two big-endian bytes of whatever the
+    /// script yields, so a definition with scale 1 reads back the scripted number.
+    /// </summary>
+    public Task<byte[]?> ReadPidDataAsync(byte pid, CancellationToken ct = default)
+    {
+        var index = _readCount++;
+        var value = _readRaw is not null ? _readRaw(pid, index) : _read((Pid)pid, index);
+
+        if (value is null)
+        {
+            return Task.FromResult<byte[]?>(null);
+        }
+
+        var raw = (int)value.Value;
+        return Task.FromResult<byte[]?>([(byte)(raw >> 8), (byte)raw, 0, 0]);
+    }
+
+    /// <summary>Optional override addressed by raw PID rather than the enum.</summary>
+    public Func<byte, int, double?>? RawScript
+    {
+        get => _readRaw;
+        set => _readRaw = value;
+    }
+
+    private Func<byte, int, double?>? _readRaw;
+
     /// <summary>Scripted vehicle fingerprint, for tune-check tests.</summary>
     public string? CalibrationId { get; set; }
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Meadow.Foundation.Telematics.J1979;
+using Neomotive.ScanTool.Core.Signals;
 
 namespace Neomotive.ScanTool.Core.Capture;
 
@@ -19,31 +19,31 @@ public interface ICaptureChannelSource
 /// <summary>A capture channel: what it is, and where its value comes from.</summary>
 public record CaptureChannel(CaptureSignal Signal, ICaptureChannelSource Source);
 
-/// <summary>Reads a standard Mode $01 PID.</summary>
+/// <summary>Reads a standard Mode $01 PID and decodes one field from it.</summary>
 public sealed class PidChannelSource : ICaptureChannelSource
 {
     private readonly IObd2Scanner _scanner;
-    private readonly Pid _pid;
+    private readonly SignalDefinition _definition;
 
-    public PidChannelSource(IObd2Scanner scanner, Pid pid)
+    public PidChannelSource(IObd2Scanner scanner, SignalDefinition definition)
     {
         _scanner = scanner;
-        _pid = pid;
+        _definition = definition;
     }
 
     public async Task<double?> ReadAsync(CancellationToken ct)
-        => (await _scanner.ReadPidAsync(_pid, ct))?.Value;
+        => _definition.Decode(await _scanner.ReadPidDataAsync((byte)_definition.Address, ct));
 
-    public string Describe() => $"Mode $01 PID 0x{(byte)_pid:X2}";
+    public string Describe() => _definition.AddressText;
 }
 
-/// <summary>Reads a user-defined UDS / Mode $22 Data Identifier.</summary>
+/// <summary>Reads a UDS / Mode $22 Data Identifier and decodes one field from it.</summary>
 public sealed class Mode22ChannelSource : ICaptureChannelSource
 {
     private readonly IUdsScanner _uds;
-    private readonly Mode22SignalDefinition _definition;
+    private readonly SignalDefinition _definition;
 
-    public Mode22ChannelSource(IUdsScanner uds, Mode22SignalDefinition definition)
+    public Mode22ChannelSource(IUdsScanner uds, SignalDefinition definition)
     {
         _uds = uds;
         _definition = definition;
@@ -51,11 +51,13 @@ public sealed class Mode22ChannelSource : ICaptureChannelSource
 
     public async Task<double?> ReadAsync(CancellationToken ct)
     {
-        var value = await _uds.ReadDidAsync(_definition.TxId, _definition.RxId, _definition.Did, ct);
+        var value = await _uds.ReadDidAsync(
+            _definition.TxId, _definition.RxId, (ushort)_definition.Address, ct);
+
         return value is null ? null : _definition.Decode(value.RawBytes);
     }
 
-    public string Describe() => $"Mode $22 {_definition.Describe()}";
+    public string Describe() => _definition.AddressText;
 }
 
 /// <summary>
@@ -69,43 +71,44 @@ public sealed class CaptureChannelSetBuilder
 {
     private readonly List<CaptureChannel> _channels = new();
 
-    public CaptureChannelSetBuilder AddPid(IObd2Scanner scanner, Pid pid)
-    {
-        var descriptor = PidRegistry.CommonPids.FirstOrDefault(d => d.Id == pid)
-            ?? throw new InvalidOperationException(
-                $"PID {pid} has no descriptor in PidRegistry and cannot be captured.");
-
-        _channels.Add(new CaptureChannel(
-            new CaptureSignal(
-                _channels.Count,
-                pid.ToString(),
-                descriptor.Name,
-                descriptor.Unit,
-                descriptor.Min,
-                descriptor.Max),
-            new PidChannelSource(scanner, pid)));
-
-        return this;
-    }
-
-    public CaptureChannelSetBuilder AddMode22(IUdsScanner uds, Mode22SignalDefinition definition)
+    /// <summary>
+    /// Adds a signal, routing it to the right transport for its source. Returns false when the
+    /// signal needs a UDS client and none was supplied.
+    /// </summary>
+    public bool TryAdd(SignalDefinition definition, IObd2Scanner scanner, IUdsScanner? uds)
     {
         if (string.IsNullOrWhiteSpace(definition.Key))
         {
-            throw new InvalidOperationException("A Mode $22 signal definition needs a Key.");
+            throw new InvalidOperationException("A signal definition needs a Key.");
+        }
+
+        ICaptureChannelSource source;
+
+        switch (definition.Source)
+        {
+            case SignalSource.Mode22 when uds is null:
+                return false;
+
+            case SignalSource.Mode22:
+                source = new Mode22ChannelSource(uds, definition);
+                break;
+
+            default:
+                source = new PidChannelSource(scanner, definition);
+                break;
         }
 
         _channels.Add(new CaptureChannel(
             new CaptureSignal(
                 _channels.Count,
                 definition.Key,
-                string.IsNullOrWhiteSpace(definition.Name) ? definition.Key : definition.Name,
+                definition.Name,
                 definition.Unit,
                 definition.Min,
                 definition.Max),
-            new Mode22ChannelSource(uds, definition)));
+            source));
 
-        return this;
+        return true;
     }
 
     public IReadOnlyList<CaptureChannel> Build() => _channels.ToArray();
@@ -113,14 +116,17 @@ public sealed class CaptureChannelSetBuilder
 
 public static class CaptureChannelSet
 {
-    /// <summary>Builds channels for a set of standard PIDs, in the order given.</summary>
-    public static IReadOnlyList<CaptureChannel> FromPids(IObd2Scanner scanner, IEnumerable<Pid> pids)
+    /// <summary>Builds channels for a set of signals, in the order given.</summary>
+    public static IReadOnlyList<CaptureChannel> From(
+        IObd2Scanner scanner,
+        IEnumerable<SignalDefinition> definitions,
+        IUdsScanner? uds = null)
     {
         var builder = new CaptureChannelSetBuilder();
 
-        foreach (var pid in pids)
+        foreach (var definition in definitions)
         {
-            builder.AddPid(scanner, pid);
+            builder.TryAdd(definition, scanner, uds);
         }
 
         return builder.Build();

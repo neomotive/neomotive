@@ -1,6 +1,7 @@
 using System.Text;
 using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core.Capture;
+using Neomotive.ScanTool.Core.Signals;
 using Xunit;
 
 namespace Neomotive.ScanTool.Core.Tests;
@@ -239,12 +240,12 @@ public class TuneAnalyzerTests
     }
 }
 
-public class Mode22SignalDefinitionTests
+public class SignalDecodingTests
 {
     [Fact]
     public void Two_byte_big_endian_value_is_scaled()
     {
-        var def = new Mode22SignalDefinitionBuilder().WithLength(2).WithScale(10).Build();
+        var def = new SignalDefinitionBuilder().WithLength(2).WithScale(10).Build();
 
         Assert.Equal(30_000, def.Decode([0x0B, 0xB8]));
     }
@@ -252,7 +253,7 @@ public class Mode22SignalDefinitionTests
     [Fact]
     public void Byte_offset_selects_the_field()
     {
-        var def = new Mode22SignalDefinitionBuilder().WithOffset(2).WithLength(2).Build();
+        var def = new SignalDefinitionBuilder().WithOffset(2).WithLength(2).Build();
 
         Assert.Equal(0x0BB8, def.Decode([0xFF, 0xFF, 0x0B, 0xB8]));
     }
@@ -260,7 +261,7 @@ public class Mode22SignalDefinitionTests
     [Fact]
     public void Signed_values_are_sign_extended()
     {
-        var def = new Mode22SignalDefinitionBuilder().WithLength(2).WithSigned(true).Build();
+        var def = new SignalDefinitionBuilder().WithLength(2).WithSigned(true).Build();
 
         Assert.Equal(-1, def.Decode([0xFF, 0xFF]));
         Assert.Equal(-40, def.Decode([0xFF, 0xD8]));
@@ -269,7 +270,7 @@ public class Mode22SignalDefinitionTests
     [Fact]
     public void Unsigned_values_stay_positive()
     {
-        var def = new Mode22SignalDefinitionBuilder().WithLength(2).Build();
+        var def = new SignalDefinitionBuilder().WithLength(2).Build();
 
         Assert.Equal(65535, def.Decode([0xFF, 0xFF]));
     }
@@ -277,7 +278,7 @@ public class Mode22SignalDefinitionTests
     [Fact]
     public void Offset_is_applied_after_scaling()
     {
-        var def = new Mode22SignalDefinitionBuilder().WithLength(1).WithScale(1).WithOffsetValue(-40).Build();
+        var def = new SignalDefinitionBuilder().WithLength(1).WithScale(1).WithOffsetValue(-40).Build();
 
         Assert.Equal(50, def.Decode([90]));
     }
@@ -285,7 +286,7 @@ public class Mode22SignalDefinitionTests
     [Fact]
     public void Short_or_missing_data_yields_null()
     {
-        var def = new Mode22SignalDefinitionBuilder().WithOffset(2).WithLength(2).Build();
+        var def = new SignalDefinitionBuilder().WithOffset(2).WithLength(2).Build();
 
         Assert.Null(def.Decode(null));
         Assert.Null(def.Decode([0x01, 0x02, 0x03]));
@@ -294,11 +295,11 @@ public class Mode22SignalDefinitionTests
     [Fact]
     public void An_unsupported_width_yields_null()
     {
-        Assert.Null(new Mode22SignalDefinitionBuilder().WithLength(0).Build().Decode([1, 2]));
-        Assert.Null(new Mode22SignalDefinitionBuilder().WithLength(5).Build().Decode([1, 2, 3, 4, 5, 6]));
+        Assert.Null(new SignalDefinitionBuilder().WithLength(0).Build().Decode([1, 2]));
+        Assert.Null(new SignalDefinitionBuilder().WithLength(5).Build().Decode([1, 2, 3, 4, 5, 6]));
     }
 
-    private sealed class Mode22SignalDefinitionBuilder
+    private sealed class SignalDefinitionBuilder
     {
         private int _offset;
         private int _length = 2;
@@ -306,17 +307,17 @@ public class Mode22SignalDefinitionTests
         private double _scale = 1;
         private double _offsetValue;
 
-        public Mode22SignalDefinitionBuilder WithOffset(int v) { _offset = v; return this; }
-        public Mode22SignalDefinitionBuilder WithLength(int v) { _length = v; return this; }
-        public Mode22SignalDefinitionBuilder WithSigned(bool v) { _signed = v; return this; }
-        public Mode22SignalDefinitionBuilder WithScale(double v) { _scale = v; return this; }
-        public Mode22SignalDefinitionBuilder WithOffsetValue(double v) { _offsetValue = v; return this; }
+        public SignalDefinitionBuilder WithOffset(int v) { _offset = v; return this; }
+        public SignalDefinitionBuilder WithLength(int v) { _length = v; return this; }
+        public SignalDefinitionBuilder WithSigned(bool v) { _signed = v; return this; }
+        public SignalDefinitionBuilder WithScale(double v) { _scale = v; return this; }
+        public SignalDefinitionBuilder WithOffsetValue(double v) { _offsetValue = v; return this; }
 
-        public Mode22SignalDefinition Build() => new()
+        public SignalDefinition Build() => new()
         {
             Key = "test",
             Name = "Test",
-            Did = 0x1234,
+            Address = 0x1234,
             ByteOffset = _offset,
             ByteLength = _length,
             Signed = _signed,

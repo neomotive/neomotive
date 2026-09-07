@@ -11,25 +11,9 @@ public partial class CaptureView : UserControl
 
     private void OnApplyProfile(object? sender, RoutedEventArgs e) => Vm.ApplySelectedProfile();
 
-    private void OnSelectAll(object? sender, RoutedEventArgs e) => Vm.SelectAll();
+    private void OnOpenPicker(object? sender, RoutedEventArgs e) => Vm.OpenPicker();
 
-    private void OnSelectNone(object? sender, RoutedEventArgs e) => Vm.SelectNone();
-
-    private void OnTogglePid(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: CapturePidItem item })
-        {
-            item.IsSelected = !item.IsSelected;
-        }
-    }
-
-    private void OnToggleMode22(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: Mode22SignalItem item })
-        {
-            item.IsSelected = !item.IsSelected;
-        }
-    }
+    private void OnOpenTrigger(object? sender, RoutedEventArgs e) => Vm.OpenTriggerEditor();
 
     private void OnArm(object? sender, RoutedEventArgs e) => Vm.Arm();
 

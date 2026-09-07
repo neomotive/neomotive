@@ -1,16 +1,19 @@
 using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core.Capture;
+using Neomotive.ScanTool.Core.Signals;
 using Xunit;
 
 namespace Neomotive.ScanTool.Core.Tests;
 
 public class CapturePollLoopTests
 {
-    private static readonly Pid[] DieselSet =
+    private static readonly SignalTable Table = new(SignalLibrary.BuiltIn);
+
+    private static readonly SignalDefinition[] DieselSet =
     [
-        Pid.EngineRpm,
-        Pid.FuelRailGaugePressure,
-        Pid.ControlModuleVoltage,
+        Table.Find("EngineRpm")!,
+        Table.Find("FuelRailGaugePressure")!,
+        Table.Find("ControlModuleVoltage")!,
     ];
 
     /// <summary>
@@ -22,7 +25,7 @@ public class CapturePollLoopTests
         IObd2Scanner scanner,
         CaptureTrigger? trigger = null)
     {
-        var channels = CaptureChannelSet.FromPids(scanner, DieselSet);
+        var channels = CaptureChannelSet.From(scanner, DieselSet);
 
         var session = new CaptureSession(new CaptureSessionOptions(
             channels.Signals(),
@@ -35,26 +38,41 @@ public class CapturePollLoopTests
     }
 
     [Fact]
-    public void A_pid_with_no_descriptor_is_rejected()
+    public void A_signal_without_a_key_is_rejected()
     {
         var scanner = new FakeObd2Scanner((_, _) => 0);
 
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => CaptureChannelSet.FromPids(scanner, [Pid.FuelSystemStatus]));
-
-        Assert.Contains("PidRegistry", ex.Message);
+        Assert.Throws<InvalidOperationException>(
+            () => new CaptureChannelSetBuilder().TryAdd(new SignalDefinition(), scanner, null));
     }
 
     [Fact]
-    public void Diesel_channels_are_available_in_the_registry()
+    public void A_mode22_signal_is_skipped_when_no_uds_client_is_available()
     {
-        var channels = CaptureChannelSet.FromPids(new FakeObd2Scanner((_, _) => 0), DieselSet);
+        var scanner = new FakeObd2Scanner((_, _) => 0);
+        var builder = new CaptureChannelSetBuilder();
+
+        var added = builder.TryAdd(
+            new SignalDefinition { Key = "x", Source = SignalSource.Mode22, Address = 0x1234 },
+            scanner,
+            uds: null);
+
+        // Skipped rather than thrown: a profile may name a Mode $22 channel this vehicle has not
+        // had configured, and the rest of the capture should still run.
+        Assert.False(added);
+        Assert.Empty(builder.Build());
+    }
+
+    [Fact]
+    public void Diesel_channels_are_available_in_the_table()
+    {
+        var channels = CaptureChannelSet.From(new FakeObd2Scanner((_, _) => 0), DieselSet);
 
         Assert.Equal(3, channels.Count);
         Assert.Equal(new[] { 0, 1, 2 }, channels.Select(c => c.Signal.Index));
 
         var rail = channels[1].Signal;
-        Assert.Equal("Rail Pressure", rail.Name);
+        Assert.Equal("Fuel Rail Gauge Pressure", rail.Name);
         Assert.Equal("kPa", rail.Unit);
 
         // Must reach common-rail pressures; the low-side FuelPressure PID caps at 765 kPa.
@@ -196,21 +214,22 @@ public class CapturePollLoopTests
         // 0x1234 returns 0x0BB8 = 3000 raw; at 10 kPa/bit that is 30,000 kPa commanded.
         var uds = new FakeUdsScanner(did => did == 0x1234 ? [0x0B, 0xB8] : null);
 
-        var commanded = new Mode22SignalDefinition
+        var commanded = new SignalDefinition
         {
             Key = "CommandedRail",
             Name = "Commanded Rail Pressure",
             Unit = "kPa",
-            Did = 0x1234,
+            Source = SignalSource.Mode22,
+            Address = 0x1234,
             ByteLength = 2,
             Scale = 10,
             Max = 250_000,
         };
 
-        var channels = new CaptureChannelSetBuilder()
-            .AddPid(scanner, Pid.EngineRpm)
-            .AddMode22(uds, commanded)
-            .Build();
+        var builder = new CaptureChannelSetBuilder();
+        builder.TryAdd(Table.Find("EngineRpm")!, scanner, uds);
+        builder.TryAdd(commanded, scanner, uds);
+        var channels = builder.Build();
 
         var session = new CaptureSession(new CaptureSessionOptions(
             channels.Signals(), new BusWakeTrigger(), MaxDurationSeconds: null));
@@ -224,12 +243,4 @@ public class CapturePollLoopTests
         Assert.True(uds.ReadCount > 0);
     }
 
-    [Fact]
-    public void Mode22_channels_need_a_key()
-    {
-        var uds = new FakeUdsScanner(_ => null);
-
-        Assert.Throws<InvalidOperationException>(
-            () => new CaptureChannelSetBuilder().AddMode22(uds, new Mode22SignalDefinition()));
-    }
 }

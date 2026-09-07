@@ -20,6 +20,16 @@ public interface IObd2Scanner
     Task ClearModuleDtcsAsync(ushort moduleResponseAddress, CancellationToken ct = default);
     Task<PidValue?> ReadPidAsync(Pid pid, CancellationToken ct = default);
 
+    /// <summary>
+    /// Reads a Mode $01 PID and returns its raw data bytes, with the service and PID echo stripped.
+    /// </summary>
+    /// <remarks>
+    /// Decoding is left to the caller so one PID can carry several signals — oxygen sensor PIDs
+    /// pack voltage and fuel trim into one response, and a fixed one-value-per-PID read cannot
+    /// express that.
+    /// </remarks>
+    Task<byte[]?> ReadPidDataAsync(byte pid, CancellationToken ct = default);
+
     /// <summary>Mode $09 PID $04 — the ECU's calibration ID string.</summary>
     Task<string?> ReadCalibrationIdAsync(CancellationToken ct = default);
 

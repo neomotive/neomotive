@@ -5,36 +5,39 @@
              x:Class="Neomotive.ScanTool.UI.Views.LiveDataView"
              x:DataType="local:MainWindowViewModel">
 
-    <Grid ColumnDefinitions="220, *">
+    <Grid>
+      <Grid ColumnDefinitions="220, *">
 
-        <!-- Left: PID selector list -->
+        <!-- Left: the chosen signals. Adding is done in the search modal rather than by
+             scrolling a list of every PID the vehicle supports. -->
         <Grid Grid.Column="0" RowDefinitions="*, Auto">
 
-            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <TextBlock Grid.Row="0" Classes="dim xs" Margin="10"
+                       TextWrapping="Wrap" IsVisible="{Binding HasNoSelectedPids}"
+                       Text="No signals selected. Press Add to search the PID table." />
+
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
+                          IsVisible="{Binding HasSelectedPids}">
                 <ItemsControl ItemsSource="{Binding LivePidItems}" Padding="0,4,0,4">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="local:LivePidItem">
-                            <Button Classes="live-pid-row" Classes.selected="{Binding IsSelected}"
-                                    Click="OnPidToggle" HorizontalAlignment="Stretch">
-                                <Grid ColumnDefinitions="20, *">
-                                    <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}"
-                                               Classes="pid-indicator"
-                                               FontSize="16" VerticalAlignment="Center"
-                                               Margin="0,0,4,0"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Descriptor.Name}"
-                                               Classes="pid-name"
-                                               FontSize="12" Foreground="{StaticResource BrushFgDefault}"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                            </Button>
+                            <Grid ColumnDefinitions="*, Auto" Margin="8,2">
+                                <TextBlock Grid.Column="0" Text="{Binding Descriptor.Name}"
+                                           Classes="pid-name" FontSize="12"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{StaticResource BrushFgDefault}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Descriptor.Unit}"
+                                           Classes="xs dim" VerticalAlignment="Center"/>
+                            </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="8,4,8,6">
-                <Button Content="All"  Classes="action-sm" Click="OnSelectAll"/>
-                <Button Content="None" Classes="action-sm" Click="OnSelectNone"/>
+                <Button Content="Add…"  Classes="action-sm" Click="OnOpenPicker"/>
+                <Button Content="Clear" Classes="action-sm" Click="OnSelectNone"/>
             </StackPanel>
         </Grid>
 
@@ -75,5 +78,11 @@
             </Grid>
 
         </Grid>
+      </Grid>
+
+        <!-- Same picker as capture, hosted as an overlay: the Pi has no window manager. -->
+        <Panel IsVisible="{Binding LivePicker.IsOpen}" Background="#CC0B0E13">
+            <views:SignalPickerView DataContext="{Binding LivePicker}" />
+        </Panel>
     </Grid>
 </UserControl>
