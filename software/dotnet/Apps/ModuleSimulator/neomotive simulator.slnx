@@ -13,6 +13,9 @@
     <Project Path="Neomotive.ModuleSimulator.RaspberryPi/Neomotive.ModuleSimulator.RaspberryPi.csproj" Id="2924b058-5d05-4129-a9c6-59e0fb1ad822" />
     <Project Path="Neomotive.ModuleSimulator.UIShared/Neomotive.ModuleSimulator.UIShared.csproj" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Neomotive.ModuleSimulator.Core.Tests/Neomotive.ModuleSimulator.Core.Tests.csproj" />
+  </Folder>
   <Folder Name="/Shared/">
     <Project Path="../Shared/Neomotive.Can.Hardware/Neomotive.Can.Hardware.csproj" />
     <Project Path="../Shared/Neomotive.Can.UI/Neomotive.Can.UI.csproj" />

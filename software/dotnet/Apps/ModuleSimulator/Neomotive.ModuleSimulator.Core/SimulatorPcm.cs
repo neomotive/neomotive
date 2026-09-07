@@ -21,7 +21,32 @@ public class SimulatorPcm : PcmBase
         => new Temperature(_state.CoolantTempCelsius, Temperature.UnitType.Celsius);
 
     protected override float? GetEngineRpm()
-        => _state.Rpm;
+        => _state.CurrentRpm;
+
+    /// <summary>
+    /// Adds the common-rail diesel channels on top of the base set. Registering them here also
+    /// puts them into <c>SupportedPids</c>, so they show up in the supported-PID bitmap the way a
+    /// real diesel PCM would report them.
+    /// </summary>
+    protected override void RegisterPids()
+    {
+        base.RegisterPids();
+
+        // PID 0x23, 10 kPa per bit, two bytes — range reaches past the ~200 MPa a common-rail
+        // system runs. (PID 0x0A, the low-side supply, tops out at 765 kPa.)
+        RegisterPid(Pid.FuelRailGaugePressure, () =>
+        {
+            var raw = (ushort)Math.Clamp(_state.CurrentFuelRailPressureKpa / 10.0, 0, ushort.MaxValue);
+            return [(byte)(raw >> 8), (byte)(raw & 0xFF)];
+        });
+
+        // PID 0x42, 1 mV per bit, two bytes.
+        RegisterPid(Pid.ControlModuleVoltage, () =>
+        {
+            var raw = (ushort)Math.Clamp(_state.CurrentControlModuleVolts * 1000.0, 0, ushort.MaxValue);
+            return [(byte)(raw >> 8), (byte)(raw & 0xFF)];
+        });
+    }
 
     protected override Speed? GetVehicleSpeed()
         => new Speed(_state.SpeedKph, Speed.UnitType.KilometersPerHour);

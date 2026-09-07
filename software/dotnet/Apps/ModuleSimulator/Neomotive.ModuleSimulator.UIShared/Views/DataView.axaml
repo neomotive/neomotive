@@ -16,6 +16,18 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+            <!-- Bench fixture for ScanTool capture: replays a scripted crank over CAN so
+                 triggers, pre-trigger retention and stall detection can be exercised without
+                 a vehicle. Each profile is one branch of the hard-start diagnostic. -->
+            <TextBlock Classes="label" Margin="0,16,0,4" Text="Start attempt" />
+            <WrapPanel>
+                <Button Content="Healthy"      Margin="0,0,6,6" Click="OnHealthyStart" />
+                <Button Content="Weak Pump"    Margin="0,0,6,6" Click="OnWeakLiftPump" />
+                <Button Content="Rail Collapse" Margin="0,0,6,6" Click="OnRailCollapse" />
+                <Button Content="Weak Battery" Margin="0,0,6,6" Click="OnWeakBattery" />
+                <Button Content="No Crank"     Margin="0,0,6,6" Click="OnNoCrank" />
+                <Button Content="Stop"         Margin="0,0,6,6" Click="OnStopAttempt" />
+            </WrapPanel>
 
         </StackPanel>
     </ScrollViewer>

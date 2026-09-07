@@ -380,3 +380,94 @@ Runbook: `ScanTool/scripts/pi/README.md`.
 `CanPacketEntry` / `LoggingCanBus` exist in both `*.Core` projects and are near-identical;
 `DescribePacket` differs meaningfully between the two apps, so the log *formatting* stays
 app-side.
+
+## Group T — Event capture (Phase 3)
+
+Driven by a Nissan Titan XD (Cummins 5.0) with an emissions delete: extremely hard to start,
+dies before it can set a DTC. The event lasts 2-5 s, so the 2 Hz live-data loop describes a
+crank in about four samples. Capture needs its own high-rate path.
+
+- [x] **T1** `Core/Capture` model types — `CaptureSignal` (decoupled from `PidDescriptor` so a
+  Mode 22 / UDS channel can be described identically), `CaptureSample` (interned signal index,
+  per-sample timestamp), `CaptureEvent`, `CaptureState`.
+- [x] **T2** `RollingBuffer<T>` — fixed-capacity ring holding pre-trigger history so arming
+  before key-on still captures the prime phase.
+- [x] **T3** `CaptureTrigger` — `ThresholdTrigger` (with dwell, to reject the starter-engagement
+  noise spike), `ManualTrigger`, `BusWakeTrigger`, `AnyTrigger`. `AnyTrigger` deliberately does
+  not short-circuit: a dwell trigger must see every sample to accumulate its window.
+- [x] **T4** `StallDetector` — requires the signal to rise above the floor before it can report a
+  stall, otherwise a capture armed during cranking truncates itself immediately.
+- [x] **T5** `CaptureSession` — Idle/Buffering/Recording/Stopped state machine, pre-trigger flush
+  in chronological order, stall and max-duration stops, bus-loss markers that do not end the run.
+  Clock-free: callers stamp samples, which keeps it testable and ties timestamps to when the OBD
+  response actually arrived.
+- [x] **T6** `CapturePollLoop` — polls only the armed signals back to back with no inter-sweep
+  delay. The scanner's 3 s `ResponseTimeout` is bypassed with caller-side cancellation
+  (~150 ms) rather than editing `Obd2Scanner`, so one unanswered request cannot blow a
+  three-second hole in the trace. Retries `ConnectAsync` while arming to survive a dark ECU, and
+  tolerates mid-capture bus loss from crank brownout.
+- [x] **T7** Storage — long-format CSV (`timestamp_ms,signal,value`, one row per real sample) plus
+  a JSON sidecar carrying VIN/CALID/CVN, signal definitions, trigger config, measured sample rate
+  and event markers. Long format is deliberate: OBD polling is round-robin, so a wide grid would
+  force forward-filling and fabricate the very rise-rate timing this feature exists to measure.
+  `CaptureReader` tolerates a missing sidecar — a capture cut short by a flat battery is exactly
+  when the data matters most.
+- [x] **T8** `CaptureExporter.WriteWideCsv` — derived, forward-filled wide export for spreadsheets.
+  Explicitly not the source of truth.
+- [x] **T9** Diesel channels added to `PidRegistry`: `FuelRailGaugePressure` (0x23, 10 kPa/bit),
+  `FuelRailPressureRelativeToManifold` (0x22), `ControlModuleVoltage` (0x42),
+  `EngineOilTemperature` (0x5C). The existing `FuelPressure` (0x0A) is the low-side supply and
+  caps at 765 kPa — nowhere near common-rail pressures.
+- [x] **T10** 72 unit tests across buffer, triggers, stall, session, storage round-trip and poll
+  loop. Core suite 109/109 green.
+
+**Remaining:**
+- [ ] **T11** `CaptureView` + `CaptureReviewPane` in `UIShared` — arm/trigger config, and a
+  strip-chart review with cursor readout, jump-to-trigger and zoom. New tab in `ScanToolView`.
+  Pi gets the same panes constrained to 800x480; desktop adds multi-capture overlay (a good
+  crank against a bad one is the most diagnostic view available), derived channels (dP/dt,
+  commanded-actual) and PNG export.
+- [ ] **T12** Wire captures to the `data/` directory, which `App.axaml.cs` already creates but
+  nothing writes to. On the Pi only `/data` is writable.
+- [ ] **T13** Tune detection: `ReadCalibrationIdAsync` / `ReadCvnAsync` (`VehicleInfoPid` already
+  defines 0x04 and 0x06 but `IObd2Scanner` exposes no method), supported-PID bitmap reads, and a
+  UI that distinguishes "not supported" from "not complete" in readiness. Touches
+  `IObd2Scanner`/`Obd2Scanner` — coordinate with the UDS work.
+- [ ] **T14** Mode 22 channels for commanded rail pressure and FCA/MPROP duty. The UDS work has
+  already landed `ReadDataByIdentifier` in `Core/Uds`, so this is now mostly a config-driven
+  signal-definition file rather than new protocol.
+- [x] **T15** `ModuleSimulator` start-attempt scenarios — see Group U.
+
+## Group U — Simulator start-attempt scenarios (bench fixture for capture)
+
+- [x] **U1** `StartScenario` in `ModuleSimulator.Core` — five profiles, each one branch of the
+  hard-start diagnostic: `HealthyStart` (reaches injection pressure, catches, idles),
+  `WeakLiftPump` (rail asymptotes below threshold, never fires), `RailCollapse` (catches then
+  loses pressure and dies — the Titan's reported symptom), `WeakBattery` (voltage sag as the
+  primary fault, low rail downstream of it), `NoCrank`.
+- [x] **U2** Evaluated as a pure function of elapsed time rather than ticked. PID handlers are
+  pulled on demand, so the profile stays smooth at any poll rate, needs no timer, and is
+  deterministic under an injected clock. `t=0` is key-on and cranking starts at 0.5 s, so a
+  capture armed before key-on has a genuine quiet prime phase in its pre-trigger buffer.
+- [x] **U3** `SimulatorState` gains `FuelRailPressureKpa` / `ControlModuleVolts` plus
+  `Current*` accessors — a running scenario overrides the manual values, stopping restores them.
+- [x] **U4** `SimulatorPcm` overrides `RegisterPids()` to add `FuelRailGaugePressure` (0x23,
+  10 kPa/bit) and `ControlModuleVoltage` (0x42, 1 mV/bit). No J1979 library change was needed:
+  `RegisterPids` is virtual and `SupportedPids` derives from the handler dictionary, so the new
+  channels appear in the supported-PID bitmap the way a real diesel PCM would report them.
+- [x] **U5** Start-attempt buttons on the simulator's Data tab; rail pressure, module voltage and
+  a live `t+Ns` status added to the data readout, refreshed on the existing 250 ms tick while a
+  scenario runs.
+- [x] **U6** New `Neomotive.ModuleSimulator.Core.Tests` project (24 tests, registered in the
+  simulator slnx — the simulator had no test project before). Tests assert the *diagnostic
+  character* of each profile, not exact curve values: that healthy genuinely crosses the
+  injection threshold and weak-pump genuinely does not, that rail collapse loses pressure
+  *before* RPM falls, and that weak battery sags below the cranking limit.
+
+**Still requires hardware:** running a real ScanTool capture against the simulator over CAN
+(PCAN on desktop, MCP2515 on Pi) to confirm the achieved sample rate clears ~10 Hz for five
+signals. The fixture is ready; the bench run is not automated.
+
+**Gotcha:** concurrent `dotnet build` runs against these projects produce spurious
+`NuGet.targets(782,5): Value cannot be null. (Parameter 'path1')` restore errors on unrelated
+projects. Build with `-m:1` when another agent or IDE may be building the same tree.

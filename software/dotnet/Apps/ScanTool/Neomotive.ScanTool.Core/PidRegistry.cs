@@ -22,5 +22,15 @@ public static class PidRegistry
         new(Pid.OxygenSensor1ShortTermFuelTrim, "O2 Sensor B1S1", "V",    0.005,       0,    1, 0,    1.275),
         new(Pid.OxygenSensor2ShortTermFuelTrim, "O2 Sensor B1S2", "V",    0.005,       0,    1, 0,    1.275),
         new(Pid.BarometricPressure,          "Baro Pressure",      "kPa",  1,           0,    1, 0,    255),
+
+        // Diesel / common-rail channels. Standard SAE PIDs, curated here for capture work on
+        // compression-ignition engines where rail pressure and crank voltage are the headline
+        // measurements. Rail pressure is 10 kPa/bit, giving a range well past the ~200 MPa a
+        // modern common-rail system reaches — Pid.FuelPressure above is the low-side supply and
+        // tops out at 765 kPa, nowhere near enough.
+        new(Pid.FuelRailGaugePressure,       "Rail Pressure",      "kPa",  10,          0,    2, 0,    655350),
+        new(Pid.FuelRailPressureRelativeToManifold, "Rail Press Rel", "kPa", 0.079,     0,    2, 0,    5177.3),
+        new(Pid.ControlModuleVoltage,        "Module Voltage",     "V",    0.001,       0,    2, 0,    65.535),
+        new(Pid.EngineOilTemperature,        "Oil Temp",           "°C",   1,           -40,  1, -40,  210),
     ];
 }

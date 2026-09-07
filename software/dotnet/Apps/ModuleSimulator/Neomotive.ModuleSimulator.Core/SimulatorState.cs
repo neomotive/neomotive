@@ -12,6 +12,38 @@ public class SimulatorState
     public double SpeedKph { get; set; } = 0.0;
     public float ThrottlePercent { get; set; } = 0f;
 
+    // Common-rail channels. Manual values apply whenever no start scenario is running.
+    public double FuelRailPressureKpa { get; set; } = 35_000;
+    public double ControlModuleVolts { get; set; } = 14.2;
+
+    /// <summary>
+    /// Scripted start attempt for bench-testing capture. While running it overrides RPM, rail
+    /// pressure and module voltage; the manual values above take over again once it is stopped.
+    /// </summary>
+    public StartScenario? Scenario { get; set; }
+
+    private bool ScenarioActive => Scenario is { IsRunning: true };
+
+    public float CurrentRpm
+        => ScenarioActive ? (float)Scenario!.Current.Rpm : Rpm;
+
+    public double CurrentFuelRailPressureKpa
+        => ScenarioActive ? Scenario!.Current.RailPressureKpa : FuelRailPressureKpa;
+
+    public double CurrentControlModuleVolts
+        => ScenarioActive ? Scenario!.Current.Volts : ControlModuleVolts;
+
+    /// <summary>Starts (or restarts) a scripted start attempt.</summary>
+    public StartScenario BeginStartAttempt(StartProfile profile)
+    {
+        var scenario = new StartScenario(profile);
+        scenario.Begin();
+        Scenario = scenario;
+        return scenario;
+    }
+
+    public void StopStartAttempt() => Scenario?.Stop();
+
     // PCM time/distance metrics
     public DateTime EngineStartedAt { get; set; } = DateTime.UtcNow;
     public DateTime DtcsClearedAt { get; set; } = DateTime.UtcNow;

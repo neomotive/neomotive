@@ -1,0 +1,65 @@
+using Meadow.Foundation.Telematics.J1979;
+
+namespace Neomotive.ScanTool.Core.Tests;
+
+/// <summary>Scriptable scanner for capture tests. Unused members throw so gaps are obvious.</summary>
+internal sealed class FakeObd2Scanner : IObd2Scanner
+{
+    private readonly Func<Pid, int, double?> _read;
+    private int _readCount;
+
+    public FakeObd2Scanner(Func<Pid, int, double?> read) => _read = read;
+
+    public int ReadCount => _readCount;
+
+    public int ConnectAttempts { get; private set; }
+
+    /// <summary>Given the 1-based attempt number, decides whether the bus answers.</summary>
+    public Func<int, bool> ConnectResult { get; set; } = _ => true;
+
+    public bool IsSimulated => true;
+
+    public Task<bool> ConnectAsync(CancellationToken ct = default)
+        => Task.FromResult(ConnectResult(++ConnectAttempts));
+
+    public Task<PidValue?> ReadPidAsync(Pid pid, CancellationToken ct = default)
+    {
+        var index = _readCount++;
+        var value = _read(pid, index);
+
+        if (value is null)
+        {
+            return Task.FromResult<PidValue?>(null);
+        }
+
+        var descriptor = PidRegistry.CommonPids.First(d => d.Id == pid);
+        return Task.FromResult<PidValue?>(new PidValue(descriptor, value.Value, DateTime.UtcNow));
+    }
+
+    public Task<string?> ReadVinAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task<string?> ReadEcuNameAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<DiagnosticTroubleCode>> ReadStoredDtcsAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<DiagnosticTroubleCode>> ReadPendingDtcsAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task ClearDtcsAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<ReadinessMonitor>> ReadReadinessAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<VehicleModule>> ScanModulesAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task<IReadOnlyList<ModuleDtcGroup>> ReadDtcsByModuleAsync(CancellationToken ct = default)
+        => throw new NotSupportedException();
+
+    public Task ClearModuleDtcsAsync(ushort moduleResponseAddress, CancellationToken ct = default)
+        => throw new NotSupportedException();
+}

@@ -164,6 +164,13 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
                     RefreshCanLog();
                     InputsVm.RefreshValues();
                     CheckCanBusWatchdog();
+
+                    // A start attempt is a moving target; keep the readout live while it runs so
+                    // the operator can watch the ramp against what ScanTool is capturing.
+                    if (IsDataView && _pcmState?.Scenario is { IsRunning: true })
+                    {
+                        DataFields = BuildDataFields();
+                    }
                 };
 
             timer.Start();
@@ -413,6 +420,48 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             case "throttle": _pcmState.ThrottlePercent = (float)value; break;
             default: return;
         }
+        Dispatcher.UIThread.Post(() => DataFields = BuildDataFields());
+    }
+
+    // ── Start-attempt scenarios ───────────────────────────────────────────────
+    // Bench fixture for the ScanTool capture feature: replays a scripted crank so triggers,
+    // pre-trigger retention and stall detection can be verified without a vehicle.
+
+    public string StartAttemptStatus
+    {
+        get
+        {
+            if (_pcmState?.Scenario is not { IsRunning: true } scenario)
+            {
+                return "idle";
+            }
+
+            return $"{scenario.Profile} — t+{scenario.Elapsed.TotalSeconds:F1}s";
+        }
+    }
+
+    /// <summary>Starts a scripted start attempt. Unknown names are ignored.</summary>
+    public void BeginStartAttempt(string profile)
+    {
+        if (_pcmState is null || !Enum.TryParse<StartProfile>(profile, ignoreCase: true, out var parsed))
+        {
+            return;
+        }
+
+        _pcmState.BeginStartAttempt(parsed);
+        FeedbackText = $"Start attempt: {parsed}";
+        Dispatcher.UIThread.Post(() => DataFields = BuildDataFields());
+    }
+
+    public void StopStartAttempt()
+    {
+        if (_pcmState is null)
+        {
+            return;
+        }
+
+        _pcmState.StopStartAttempt();
+        FeedbackText = "Start attempt stopped";
         Dispatcher.UIThread.Post(() => DataFields = BuildDataFields());
     }
 
@@ -869,9 +918,12 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             new("CVN",         _pcm.CalibrationVerificationNumber is { } cv ? $"0x{cv:X8}" : "—"),
             new("VIN",         _pcmState.Vin),
             new("Coolant Temp", coolant),
-            new("Engine RPM",  $"{_pcmState.Rpm:F0} rpm"),
+            new("Engine RPM",  $"{_pcmState.CurrentRpm:F0} rpm"),
             new("Speed",       speed),
             new("Throttle",    $"{_pcmState.ThrottlePercent:F1} %"),
+            new("Rail Pressure", $"{_pcmState.CurrentFuelRailPressureKpa:F0} kPa"),
+            new("Module Voltage", $"{_pcmState.CurrentControlModuleVolts:F2} V"),
+            new("Start Attempt", StartAttemptStatus),
         ];
     }
 

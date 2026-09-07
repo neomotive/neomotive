@@ -1,0 +1,153 @@
+namespace Neomotive.ScanTool.Core.Capture;
+
+/// <summary>
+/// Decides when buffering becomes recording. Triggers are bound to the session's signal list
+/// once, at arm time, so evaluation on the sample path stays an index comparison.
+/// </summary>
+public abstract class CaptureTrigger
+{
+    /// <summary>Resolves signal keys to indices. Throws if a configured key is not being captured.</summary>
+    public virtual void Bind(IReadOnlyList<CaptureSignal> signals) { }
+
+    /// <summary>Returns true when this sample should fire the trigger.</summary>
+    public abstract bool Evaluate(CaptureSample sample);
+
+    public virtual void Reset() { }
+
+    protected static int ResolveIndex(IReadOnlyList<CaptureSignal> signals, string key)
+    {
+        foreach (var signal in signals)
+        {
+            if (string.Equals(signal.Key, key, StringComparison.OrdinalIgnoreCase))
+            {
+                return signal.Index;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Trigger references signal '{key}', which is not part of the capture.");
+    }
+}
+
+public enum ThresholdComparison
+{
+    Above,
+    Below,
+}
+
+/// <summary>
+/// Fires when a signal crosses a threshold and stays there for <see cref="DwellMs"/>. The dwell
+/// exists to reject the noise spike a starter motor puts on sensor readings at initial engagement.
+/// </summary>
+public sealed class ThresholdTrigger : CaptureTrigger
+{
+    private int _signalIndex = -1;
+    private long _conditionSinceMs = -1;
+
+    public ThresholdTrigger(string signalKey, ThresholdComparison comparison, double value, int dwellMs = 0)
+    {
+        SignalKey = signalKey;
+        Comparison = comparison;
+        Value = value;
+        DwellMs = dwellMs;
+    }
+
+    public string SignalKey { get; }
+
+    public ThresholdComparison Comparison { get; }
+
+    public double Value { get; }
+
+    public int DwellMs { get; }
+
+    public override void Bind(IReadOnlyList<CaptureSignal> signals)
+        => _signalIndex = ResolveIndex(signals, SignalKey);
+
+    public override bool Evaluate(CaptureSample sample)
+    {
+        if (sample.SignalIndex != _signalIndex)
+        {
+            return false;
+        }
+
+        var satisfied = Comparison == ThresholdComparison.Above
+            ? sample.Value > Value
+            : sample.Value < Value;
+
+        if (!satisfied)
+        {
+            _conditionSinceMs = -1;
+            return false;
+        }
+
+        if (_conditionSinceMs < 0)
+        {
+            _conditionSinceMs = sample.TimestampMs;
+        }
+
+        return sample.TimestampMs - _conditionSinceMs >= DwellMs;
+    }
+
+    public override void Reset() => _conditionSinceMs = -1;
+}
+
+/// <summary>Fires only when <see cref="Fire"/> is called, for the on-screen START button.</summary>
+public sealed class ManualTrigger : CaptureTrigger
+{
+    private volatile bool _fired;
+
+    public void Fire() => _fired = true;
+
+    public override bool Evaluate(CaptureSample sample) => _fired;
+
+    public override void Reset() => _fired = false;
+}
+
+/// <summary>
+/// Fires on the first sample of any signal. Combined with connect-retry arming this begins
+/// recording the instant the ECU answers, which on a hard-start vehicle is the moment of key-on.
+/// </summary>
+public sealed class BusWakeTrigger : CaptureTrigger
+{
+    public override bool Evaluate(CaptureSample sample) => true;
+}
+
+/// <summary>Fires when any of the supplied triggers fires.</summary>
+public sealed class AnyTrigger : CaptureTrigger
+{
+    private readonly CaptureTrigger[] _triggers;
+
+    public AnyTrigger(params CaptureTrigger[] triggers) => _triggers = triggers;
+
+    public override void Bind(IReadOnlyList<CaptureSignal> signals)
+    {
+        foreach (var trigger in _triggers)
+        {
+            trigger.Bind(signals);
+        }
+    }
+
+    public override bool Evaluate(CaptureSample sample)
+    {
+        // Evaluate all of them: a dwell-based trigger needs to see every sample to track state.
+        var fired = false;
+
+        foreach (var trigger in _triggers)
+        {
+            if (trigger.Evaluate(sample))
+            {
+                fired = true;
+            }
+        }
+
+        return fired;
+    }
+
+    public override void Reset()
+    {
+        foreach (var trigger in _triggers)
+        {
+            trigger.Reset();
+        }
+    }
+}

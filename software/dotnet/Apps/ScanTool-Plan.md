@@ -178,9 +178,18 @@ letterboxes instead of stretching.
 - Fixed pre-existing Resolver.Log null issue in Obd2Scanner — 28/28 tests pass
 - Fixed Avalonia 12.0.4 crash: `Polyline.Points = null` → `new Points()` (ArgumentNullException in PolylineGeometry)
 
-**Remaining (Phase 3):**
-3. CSV/JSON recording with start/stop controls
-4. Playback of recorded sessions (offline review)
+**Phase 3 — event capture (in progress, see Tasks Group T):**
+
+Capture engine, high-rate poll loop and storage are complete and tested (109/109 Core tests).
+`Neomotive.ScanTool.Core/Capture/` provides a rolling pre-trigger buffer, threshold/manual/
+bus-wake triggers, stall auto-stop, and long-format CSV + JSON sidecar storage. The capture path
+polls only the armed signals with no inter-sweep delay, reaching roughly 10 Hz against ~2 Hz for
+the live-data loop — the difference between four samples across a crank and forty.
+
+3. ~~CSV/JSON recording with start/stop controls~~ — engine and storage done; UI pending (T11/T12)
+4. Playback of recorded sessions (offline review) — pending (T11)
+5. Tune detection via Mode 09 CALID/CVN and supported-PID bitmaps — pending (T13)
+6. Mode 22 commanded rail pressure, now that UDS `ReadDataByIdentifier` has landed — pending (T14)
 
 ### Phase 4 — UDS Support
 
