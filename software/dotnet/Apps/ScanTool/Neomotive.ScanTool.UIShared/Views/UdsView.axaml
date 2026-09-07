@@ -1,0 +1,213 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
+             x:Class="Neomotive.ScanTool.UI.Views.UdsView"
+             x:DataType="local:MainWindowViewModel"
+             Padding="16,12">
+
+    <Grid RowDefinitions="*, Auto" ColumnDefinitions="260, *">
+
+        <!-- Left Column: Discovered Modules List -->
+        <Border Grid.Row="0" Grid.Column="0"
+                Background="#141820"
+                BorderBrush="#2E3440"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="0,0,12,8">
+            <Grid RowDefinitions="Auto, *">
+                
+                <!-- Modules List Header -->
+                <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="10,8" VerticalAlignment="Center">
+                    <TextBlock Grid.Column="0" Classes="heading" Text="UDS MODULES" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Content="Scan" Classes="action-sm"
+                            IsEnabled="{Binding CanScanUds}"
+                            Click="OnScanModules" />
+                </Grid>
+
+                <!-- Modules List -->
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel>
+                        <TextBlock Classes="dim italic" Margin="10"
+                                   IsVisible="{Binding HasNoUdsModules}"
+                                   Text="No UDS modules detected. Click 'Scan' to probe CAN bus." />
+
+                        <ItemsControl ItemsSource="{Binding UdsModules}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="core:UdsModuleInfo">
+                                    <Button Classes="live-pid-row"
+                                            Click="OnSelectModule"
+                                            Tag="{Binding}">
+                                        <Grid ColumnDefinitions="*, Auto" Margin="4,2">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Classes="value" FontWeight="SemiBold" Text="{Binding Name}" />
+                                                <TextBlock Classes="dim xs" Text="{Binding AddressSummary}" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1"
+                                                    CornerRadius="3"
+                                                    Padding="6,2"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding HasFaults, Converter={x:Static local:Converters.FaultBackgroundConverter}}">
+                                                <TextBlock FontSize="10" FontWeight="Bold"
+                                                           Foreground="{Binding HasFaults, Converter={x:Static local:Converters.FaultForegroundConverter}}"
+                                                           Text="{Binding DtcCount, StringFormat='{}{0} DTCs'}" />
+                                            </Border>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Right Column: Module Details & Diagnostics -->
+        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto, *, Auto" Margin="0,0,0,8">
+
+            <!-- Selected Module Overview & Actions -->
+            <Border Grid.Row="0"
+                    Background="#161B22"
+                    BorderBrush="#2E3440"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,10"
+                    Margin="0,0,0,8">
+                <Grid RowDefinitions="Auto, Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Classes="value" FontSize="15" FontWeight="Bold" Text="{Binding SelectedModuleName}" />
+                            <TextBlock Classes="dim xs" Text="{Binding SelectedModuleAddressSummary}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button Content="Read DTCs" Classes="action-sm"
+                                    IsEnabled="{Binding CanOperateUdsModule}"
+                                    Click="OnReadModuleDtcs" />
+                            <Button Content="Clear Module" Classes="action-sm"
+                                    IsEnabled="{Binding CanOperateUdsModule}"
+                                    Click="OnClearModuleDtcs" />
+                            <Button Content="Clear All (Global)" Classes="action-sm"
+                                    IsEnabled="{Binding CanScanUds}"
+                                    Click="OnClearAllDtcs" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Module Identification DIDs -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto, Auto, Auto, Auto" Margin="0,8,0,0"
+                          IsVisible="{Binding HasSelectedUdsModule}">
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Classes="label xs" Text="PART NUMBER" />
+                            <TextBlock Classes="value xs" Text="{Binding SelectedModulePartNumber}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                            <TextBlock Classes="label xs" Text="SOFTWARE VER" />
+                            <TextBlock Classes="value xs" Text="{Binding SelectedModuleSoftwareVersion}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,16,0">
+                            <TextBlock Classes="label xs" Text="HARDWARE NO" />
+                            <TextBlock Classes="value xs" Text="{Binding SelectedModuleHardwareNumber}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Classes="label xs" Text="VIN" />
+                            <TextBlock Classes="value xs" Text="{Binding SelectedModuleVin}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- DTCs List for Selected Module -->
+            <Border Grid.Row="1"
+                    Background="#141820"
+                    BorderBrush="#2E3440"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <Grid RowDefinitions="Auto, *">
+                    <TextBlock Grid.Row="0" Classes="heading" Text="DIAGNOSTIC TROUBLE CODES (UDS $19)" Margin="0,0,0,6" />
+                    
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel>
+                            <TextBlock Classes="dim italic" Margin="4,8"
+                                       IsVisible="{Binding HasNoSelectedModuleDtcs}"
+                                       Text="No DTCs reported for this module." />
+
+                            <ItemsControl ItemsSource="{Binding SelectedModuleDtcs}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="core:UdsDtc">
+                                        <Border BorderBrush="#242B38" BorderThickness="0,0,0,1" Padding="4,6">
+                                            <Grid ColumnDefinitions="110, *, Auto">
+                                                <!-- DTC Full Code -->
+                                                <TextBlock Grid.Column="0" Classes="error" FontWeight="Bold" Text="{Binding FullCode}" VerticalAlignment="Center" />
+
+                                                <!-- Description & Failure Type -->
+                                                <StackPanel Grid.Column="1" Margin="8,0">
+                                                    <TextBlock Classes="value" Text="{Binding Description}" />
+                                                    <TextBlock Classes="dim xs" Text="{Binding FaultTypeDescription, StringFormat='FTB: {0}'}" />
+                                                </StackPanel>
+
+                                                <!-- Status Flags Badges -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                    <Border Background="#4A1818" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsActive}">
+                                                        <TextBlock Text="ACTIVE" Classes="xs" Foreground="#FF6B6B" FontWeight="Bold" />
+                                                    </Border>
+                                                    <Border Background="#4A3418" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsConfirmed}">
+                                                        <TextBlock Text="CONFIRMED" Classes="xs" Foreground="#FFB86B" FontWeight="Bold" />
+                                                    </Border>
+                                                    <Border Background="#3B3818" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsPending}">
+                                                        <TextBlock Text="PENDING" Classes="xs" Foreground="#FFEB6B" FontWeight="Bold" />
+                                                    </Border>
+                                                    <Border Background="#5A1010" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsWarning}">
+                                                        <TextBlock Text="MIL" Classes="xs" Foreground="#FF4444" FontWeight="Bold" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- DID Inspector Section -->
+            <Border Grid.Row="2"
+                    Background="#161B22"
+                    BorderBrush="#2E3440"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="10,8">
+                <Grid RowDefinitions="Auto, Auto">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto, Auto, Auto, *, Auto" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Classes="label" Text="Quick DID:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Button Grid.Column="1" Content="VIN ($F190)" Classes="action-sm" Margin="0,0,4,0" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadVinDid" />
+                        <Button Grid.Column="2" Content="Part# ($F187)" Classes="action-sm" Margin="0,0,4,0" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadPartDid" />
+                        <Button Grid.Column="3" Content="SW ($F189)" Classes="action-sm" Margin="0,0,8,0" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadSwDid" />
+                        
+                        <TextBox Grid.Column="4" Text="{Binding DidInputHex}" MaxLength="4" Width="70" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" />
+                        <Button Grid.Column="5" Content="Read Hex DID" Classes="action-sm" IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadCustomDid" />
+                    </Grid>
+                    
+                    <TextBlock Grid.Row="1" Classes="value xs" Margin="0,6,0,0"
+                               IsVisible="{Binding HasDidResult}"
+                               Text="{Binding DidResultText}" />
+                </Grid>
+            </Border>
+
+        </Grid>
+
+        <!-- Bottom Footer Status Bar -->
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                Background="#0D1117"
+                BorderBrush="#2E3440"
+                BorderThickness="1"
+                CornerRadius="3"
+                Padding="8,4">
+            <TextBlock Classes="dim xs" Text="{Binding UdsStatusText}" />
+        </Border>
+
+    </Grid>
+
+</UserControl>
