@@ -17,12 +17,13 @@ namespace Neomotive.ScanTool.UI;
 
 public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, CanLog, LiveData, Updates }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Uds, CanLog, LiveData, Updates }
     private enum LiveSubView { Table, Gauges, Waveform }
 
     private ScanView _view = ScanView.Connection;
     private LiveSubView _liveSubView = LiveSubView.Table;
     private readonly IObd2Scanner _scanner;
+    private readonly IUdsScanner? _udsScanner;
     private readonly LoggingCanBus? _loggingBus;
     private readonly CanPacketLog? _log;
     private DispatcherTimer? _logTimer;
@@ -31,12 +32,13 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     private readonly IVinDecoder? _vinDecoder;
     private readonly UpdateService? _updateService;
 
-    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null, IVinDecoder? vinDecoder = null, UpdateService? updateService = null)
+    public MainWindowViewModel(IObd2Scanner scanner, LoggingCanBus? loggingBus = null, IVinDecoder? vinDecoder = null, UpdateService? updateService = null, IUdsScanner? udsScanner = null)
     {
         _scanner = scanner;
         _loggingBus = loggingBus;
         _vinDecoder = vinDecoder;
         _updateService = updateService;
+        _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus) : null);
         if (_loggingBus != null)
         {
             _log = _loggingBus.Log;
@@ -211,6 +213,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsVehicleView => _view == ScanView.Vehicle;
     public bool IsEmissionsView => _view == ScanView.Emissions;
     public bool IsDtcsView => _view == ScanView.Dtcs;
+    public bool IsUdsView => _view == ScanView.Uds;
     public bool IsCanLogView => _view == ScanView.CanLog;
     public bool IsLiveDataView => _view == ScanView.LiveData;
     public bool IsUpdatesView => _view == ScanView.Updates;
@@ -219,6 +222,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public void ShowVehicle() { StopPolling(); _view = ScanView.Vehicle; NotifyViewChanged(); }
     public void ShowEmissions() { StopPolling(); _view = ScanView.Emissions; NotifyViewChanged(); }
     public void ShowDtcs() { StopPolling(); _view = ScanView.Dtcs; NotifyViewChanged(); }
+    public void ShowUds() { StopPolling(); _view = ScanView.Uds; NotifyViewChanged(); }
     public void ShowCanLog() { StopPolling(); _view = ScanView.CanLog; NotifyViewChanged(); }
     public void ShowLiveData() { _view = ScanView.LiveData; NotifyViewChanged(); }
     public void ShowUpdates() { StopPolling(); _view = ScanView.Updates; NotifyViewChanged(); }
@@ -229,6 +233,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         OnPropertyChanged(nameof(IsVehicleView));
         OnPropertyChanged(nameof(IsEmissionsView));
         OnPropertyChanged(nameof(IsDtcsView));
+        OnPropertyChanged(nameof(IsUdsView));
         OnPropertyChanged(nameof(IsCanLogView));
         OnPropertyChanged(nameof(IsLiveDataView));
         OnPropertyChanged(nameof(IsUpdatesView));
@@ -456,8 +461,256 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         ReadinessMonitors = [];
         ModuleDtcGroups = [];
         Modules = [];
+        UdsModules = [];
+        SelectedUdsModule = null;
+        UdsStatusText = "Disconnected";
+        DidResultText = "";
         foreach (var item in LivePidItems)
             item.Reset();
+    }
+
+    // ── UDS (Unified Diagnostic Services) ─────────────────────────────────────
+
+    private IReadOnlyList<UdsModuleInfo> _udsModules = [];
+    public IReadOnlyList<UdsModuleInfo> UdsModules
+    {
+        get => _udsModules;
+        private set
+        {
+            _udsModules = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasUdsModules));
+            OnPropertyChanged(nameof(HasNoUdsModules));
+        }
+    }
+
+    public bool HasUdsModules => _udsModules.Count > 0;
+    public bool HasNoUdsModules => !HasUdsModules;
+
+    private UdsModuleInfo? _selectedUdsModule;
+    public UdsModuleInfo? SelectedUdsModule
+    {
+        get => _selectedUdsModule;
+        set
+        {
+            _selectedUdsModule = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSelectedUdsModule));
+            OnPropertyChanged(nameof(SelectedModuleDtcs));
+            OnPropertyChanged(nameof(HasSelectedModuleDtcs));
+            OnPropertyChanged(nameof(HasNoSelectedModuleDtcs));
+            OnPropertyChanged(nameof(SelectedModuleName));
+            OnPropertyChanged(nameof(SelectedModuleAddressSummary));
+            OnPropertyChanged(nameof(SelectedModuleVin));
+            OnPropertyChanged(nameof(SelectedModulePartNumber));
+            OnPropertyChanged(nameof(SelectedModuleSoftwareVersion));
+            OnPropertyChanged(nameof(SelectedModuleHardwareNumber));
+            OnPropertyChanged(nameof(CanOperateUdsModule));
+        }
+    }
+
+    public bool HasSelectedUdsModule => _selectedUdsModule != null;
+    public IReadOnlyList<UdsDtc> SelectedModuleDtcs => _selectedUdsModule?.Dtcs ?? [];
+    public bool HasSelectedModuleDtcs => SelectedModuleDtcs.Count > 0;
+    public bool HasNoSelectedModuleDtcs => HasSelectedUdsModule && !HasSelectedModuleDtcs;
+
+    public string SelectedModuleName => _selectedUdsModule?.Name ?? "No module selected";
+    public string SelectedModuleAddressSummary => _selectedUdsModule?.AddressSummary ?? "—";
+    public string SelectedModuleVin => _selectedUdsModule?.Vin ?? "—";
+    public string SelectedModulePartNumber => _selectedUdsModule?.PartNumber ?? "—";
+    public string SelectedModuleSoftwareVersion => _selectedUdsModule?.SoftwareVersion ?? "—";
+    public string SelectedModuleHardwareNumber => _selectedUdsModule?.HardwareNumber ?? "—";
+
+    private bool _isScanningUds;
+    public bool IsScanningUds
+    {
+        get => _isScanningUds;
+        private set
+        {
+            _isScanningUds = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanScanUds));
+            OnPropertyChanged(nameof(CanOperateUdsModule));
+        }
+    }
+
+    public bool CanScanUds => _isConnected && !_isScanningUds && _udsScanner != null;
+    public bool CanOperateUdsModule => _isConnected && !_isScanningUds && _selectedUdsModule != null && _udsScanner != null;
+
+    private string _udsStatusText = "Ready to scan UDS modules.";
+    public string UdsStatusText
+    {
+        get => _udsStatusText;
+        private set { _udsStatusText = value; OnPropertyChanged(); }
+    }
+
+    private string _didInputHex = "F190";
+    public string DidInputHex
+    {
+        get => _didInputHex;
+        set { _didInputHex = value; OnPropertyChanged(); }
+    }
+
+    private string _didResultText = "";
+    public string DidResultText
+    {
+        get => _didResultText;
+        private set { _didResultText = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasDidResult)); }
+    }
+    public bool HasDidResult => !string.IsNullOrEmpty(_didResultText);
+
+    public async Task ScanUdsModulesAsync()
+    {
+        if (_udsScanner == null || !_isConnected || _isScanningUds) return;
+        IsScanningUds = true;
+        UdsStatusText = "Scanning for UDS modules on CAN bus...";
+        try
+        {
+            var modules = await Task.Run(() => _udsScanner.DiscoverModulesAsync(_opCts?.Token ?? CancellationToken.None));
+            Dispatcher.UIThread.Post(() =>
+            {
+                UdsModules = modules;
+                SelectedUdsModule = modules.FirstOrDefault();
+                UdsStatusText = modules.Count > 0
+                    ? $"Found {modules.Count} module(s)."
+                    : "No UDS modules responded.";
+            });
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = $"Scan failed: {ex.Message}");
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsScanningUds = false);
+        }
+    }
+
+    public async Task ReadSelectedModuleDtcsAsync()
+    {
+        if (_udsScanner == null || !_isConnected || _selectedUdsModule == null || _isScanningUds) return;
+        var mod = _selectedUdsModule;
+        IsScanningUds = true;
+        UdsStatusText = $"Reading DTCs from {mod.Name}...";
+        try
+        {
+            var dtcs = await Task.Run(() => _udsScanner.ReadModuleDtcsAsync(mod.TxId, mod.RxId, _opCts?.Token ?? CancellationToken.None));
+            Dispatcher.UIThread.Post(() =>
+            {
+                var updated = mod with { Dtcs = dtcs };
+                var list = _udsModules.Select(m => m.RxId == mod.RxId ? updated : m).ToList();
+                UdsModules = list;
+                SelectedUdsModule = updated;
+                UdsStatusText = $"Read {dtcs.Count} DTC(s) from {mod.Name}.";
+            });
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = $"Read DTCs failed: {ex.Message}");
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsScanningUds = false);
+        }
+    }
+
+    public async Task ClearSelectedModuleDtcsAsync()
+    {
+        if (_udsScanner == null || !_isConnected || _selectedUdsModule == null || _isScanningUds) return;
+        var mod = _selectedUdsModule;
+        IsScanningUds = true;
+        UdsStatusText = $"Clearing DTCs on {mod.Name}...";
+        try
+        {
+            var ok = await Task.Run(() => _udsScanner.ClearModuleDtcsAsync(mod.TxId, mod.RxId, _opCts?.Token ?? CancellationToken.None));
+            var dtcs = await Task.Run(() => _udsScanner.ReadModuleDtcsAsync(mod.TxId, mod.RxId, _opCts?.Token ?? CancellationToken.None));
+            Dispatcher.UIThread.Post(() =>
+            {
+                var updated = mod with { Dtcs = dtcs };
+                var list = _udsModules.Select(m => m.RxId == mod.RxId ? updated : m).ToList();
+                UdsModules = list;
+                SelectedUdsModule = updated;
+                UdsStatusText = ok ? $"DTCs cleared on {mod.Name}." : $"Clear rejected by {mod.Name}.";
+            });
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = $"Clear failed: {ex.Message}");
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsScanningUds = false);
+        }
+    }
+
+    public async Task ClearAllUdsDtcsAsync()
+    {
+        if (_udsScanner == null || !_isConnected || _isScanningUds) return;
+        IsScanningUds = true;
+        UdsStatusText = "Clearing DTCs across all modules (broadcast)...";
+        try
+        {
+            await Task.Run(() => _udsScanner.ClearAllDtcsAsync(_opCts?.Token ?? CancellationToken.None));
+            await ScanUdsModulesAsync();
+            UdsStatusText = "Global DTC clear sent.";
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = $"Global clear failed: {ex.Message}");
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsScanningUds = false);
+        }
+    }
+
+    public async Task ReadDidAsync(ushort did)
+    {
+        if (_udsScanner == null || !_isConnected || _selectedUdsModule == null || _isScanningUds) return;
+        var mod = _selectedUdsModule;
+        IsScanningUds = true;
+        UdsStatusText = $"Reading DID 0x{did:X4} from {mod.Name}...";
+        try
+        {
+            var res = await Task.Run(() => _udsScanner.ReadDidAsync(mod.TxId, mod.RxId, did, _opCts?.Token ?? CancellationToken.None));
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (res != null)
+                {
+                    DidResultText = $"0x{did:X4} ({res.Name}): {res.DisplayValue}";
+                    UdsStatusText = $"Read DID 0x{did:X4} OK.";
+                }
+                else
+                {
+                    DidResultText = $"0x{did:X4}: No response / rejected.";
+                    UdsStatusText = $"DID 0x{did:X4} not supported or no response.";
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                DidResultText = $"Error reading 0x{did:X4}: {ex.Message}";
+                UdsStatusText = $"DID read error: {ex.Message}";
+            });
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() => IsScanningUds = false);
+        }
+    }
+
+    public async Task ReadCustomDidAsync()
+    {
+        if (ushort.TryParse(DidInputHex.TrimStart('0', 'x', 'X', '$'), System.Globalization.NumberStyles.HexNumber, null, out ushort did))
+        {
+            await ReadDidAsync(did);
+        }
+        else
+        {
+            DidResultText = $"Invalid hex DID: '{DidInputHex}'";
+        }
     }
 
     // ── Modules ───────────────────────────────────────────────────────────────
