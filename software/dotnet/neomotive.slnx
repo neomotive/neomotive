@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/Apps/" />
   <Folder Name="/Apps/Shared/">
+    <Project Path="Apps/Shared/Neomotive.Uds/Neomotive.Uds.csproj" />
+    <Project Path="Apps/Shared/Neomotive.Uds.Tests/Neomotive.Uds.Tests.csproj" />
     <Project Path="Apps/Shared/Neomotive.Vin/Neomotive.Vin.csproj" />
     <Project Path="Apps/Shared/Neomotive.Vin.Tests/Neomotive.Vin.Tests.csproj" />
     <Project Path="Apps/Shared/Neomotive.Vin.CatalogGenerator/Neomotive.Vin.CatalogGenerator.csproj" />

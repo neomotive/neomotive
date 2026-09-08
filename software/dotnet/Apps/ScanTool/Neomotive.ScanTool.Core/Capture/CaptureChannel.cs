@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Neomotive.ScanTool.Core.Signals;
+using Meadow.Foundation.Telematics.Uds;
 
 namespace Neomotive.ScanTool.Core.Capture;
 

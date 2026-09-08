@@ -15,12 +15,14 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Neomotive.ModuleSimulator.Core.Tests/Neomotive.ModuleSimulator.Core.Tests.csproj" />
+    <Project Path="../Shared/Neomotive.Uds.Tests/Neomotive.Uds.Tests.csproj" />
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="../Shared/Neomotive.Can.Hardware/Neomotive.Can.Hardware.csproj" />
     <Project Path="../Shared/Neomotive.Can.UI/Neomotive.Can.UI.csproj" />
     <Project Path="../Shared/Neomotive.UI.Styles/Neomotive.UI.Styles.csproj" />
     <Project Path="../Shared/Neomotive.Obd2/Neomotive.Obd2.csproj" />
+    <Project Path="../Shared/Neomotive.Uds/Neomotive.Uds.csproj" />
     <Project Path="../Shared/Neomotive.Update/Neomotive.Update.csproj" />
     <Project Path="../Shared/Neomotive.Vin/Neomotive.Vin.csproj" />
   </Folder>
@@ -45,6 +47,7 @@
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Graphics.MicroLayout/Driver/Graphics.MicroLayout.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Serialization.MicroJson/Driver/Serialization.MicroJson.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.J1979/Driver/Telematics.J1979.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.Uds/Driver/Telematics.Uds.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Silk/Driver/Displays.Silk.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/Displays.Ssd130x/Driver/Displays.Ssd130x.csproj">
       <Deploy />

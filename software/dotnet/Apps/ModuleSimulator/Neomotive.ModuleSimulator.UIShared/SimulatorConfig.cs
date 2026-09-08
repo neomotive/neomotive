@@ -45,6 +45,12 @@ public class SimulatorConfig
 
     /// <summary>Keyed by row label — "POT1", "SWITCH3", etc.</summary>
     public Dictionary<string, InputRowConfig> Inputs { get; set; } = [];
+
+    /// <summary>
+    /// The simulated UDS bus — which modules answer ISO 14229 requests, and with what.
+    /// Edit this section to add a module or a DID without rebuilding.
+    /// </summary>
+    public UdsConfig Uds { get; set; } = UdsConfig.CreateDefault();
 }
 
 public static class ConfigManager

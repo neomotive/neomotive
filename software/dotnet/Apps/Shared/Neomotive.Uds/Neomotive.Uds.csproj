@@ -6,9 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.J1979\Driver\Telematics.J1979.csproj" />
+    <EmbeddedResource Include="Data\uds-catalog.default.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.Uds\Driver\Telematics.Uds.csproj" />
-    <ProjectReference Include="..\..\Shared\Neomotive.Obd2\Neomotive.Obd2.csproj" />
-    <ProjectReference Include="..\..\Shared\Neomotive.Uds\Neomotive.Uds.csproj" />
+    <ProjectReference Include="..\Neomotive.Obd2\Neomotive.Obd2.csproj" />
   </ItemGroup>
 </Project>

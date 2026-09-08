@@ -1,14 +1,14 @@
 namespace Neomotive.ModuleSimulator;
 
-public class SimulatorTcuState
+public class SimulatorTcuState : ISimulatorDtcStore
 {
     public double TransTempCelsius { get; set; } = 80.0;
     public string GearPosition { get; set; } = "P";
 
     // all keyed by uppercase code string, e.g. "P0700"
-    public readonly Dictionary<string, byte[]> StoredDtcs = new();
-    public readonly Dictionary<string, byte[]> PendingDtcs = new();
-    public readonly Dictionary<string, byte[]> PermanentDtcs = new();
+    public Dictionary<string, byte[]> StoredDtcs { get; } = new();
+    public Dictionary<string, byte[]> PendingDtcs { get; } = new();
+    public Dictionary<string, byte[]> PermanentDtcs { get; } = new();
 
     public static readonly KnownDtc[] KnownDtcs =
     {

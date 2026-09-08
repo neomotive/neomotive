@@ -103,6 +103,21 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     }
 
     private LoggingCanBus _bus;
+    private readonly UdsModuleHost _udsHost = new();
+
+    /// <summary>
+    /// A UDS clear empties the same stores the OBD-II side reads, so the J1979 modules have to be
+    /// resynced or they would keep reporting faults the tester just cleared.
+    /// </summary>
+    private void OnUdsDtcsCleared()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            _pcm?.SyncDtcsFromState();
+            _tcu?.SyncDtcsFromState();
+            Refresh();
+        });
+    }
 
     private async Task WaitForHardware()
     {
@@ -155,6 +170,10 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
             _pcm.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
             _tcu.DtcsCleared += () => Dispatcher.UIThread.Post(Refresh);
+
+            // UDS runs on the same LoggingCanBus, so its traffic shows up in the CAN tab
+            // alongside the OBD-II frames.
+            _udsHost.Start(_bus, _config.Uds, _pcmState, _tcuState, OnUdsDtcsCleared);
 
             Refresh();
 

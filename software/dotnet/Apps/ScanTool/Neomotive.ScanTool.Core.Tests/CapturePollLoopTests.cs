@@ -2,6 +2,7 @@ using Meadow.Foundation.Telematics.J1979;
 using Neomotive.ScanTool.Core.Capture;
 using Neomotive.ScanTool.Core.Signals;
 using Xunit;
+using Meadow.Foundation.Telematics.Uds;
 
 namespace Neomotive.ScanTool.Core.Tests;
 

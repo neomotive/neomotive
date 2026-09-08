@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Meadow.Foundation.Telematics.Uds;
+using Neomotive.Uds;
 
-namespace Neomotive.ScanTool.Core.Tests;
+namespace Neomotive.Uds.Tests;
 
 public class UdsScannerTests
 {
@@ -26,7 +28,7 @@ public class UdsScannerTests
     public async Task ReadModuleDtcsAsync_SendsService19Sub02_ParsesDtcList()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         _ = Task.Run(async () =>
         {
@@ -56,7 +58,7 @@ public class UdsScannerTests
     public async Task ClearModuleDtcsAsync_SendsService14_ReturnsTrueOnPositiveResponse()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         _ = Task.Run(async () =>
         {
@@ -82,7 +84,7 @@ public class UdsScannerTests
     public async Task ClearAllDtcsAsync_BroadcastsTo7DF()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         var ok = await scanner.ClearAllDtcsAsync();
 
@@ -97,7 +99,7 @@ public class UdsScannerTests
     public async Task ReadDidAsync_SendsService22_ParsesDecodedDid()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         _ = Task.Run(async () =>
         {
@@ -124,7 +126,7 @@ public class UdsScannerTests
     public async Task SetDiagnosticSessionAsync_SendsService10_ReturnsTrueOnSuccess()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         _ = Task.Run(async () =>
         {
@@ -147,7 +149,7 @@ public class UdsScannerTests
     public async Task SendTesterPresentAsync_SendsService3E()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         await scanner.SendTesterPresentAsync(PcmTx, suppressResponse: true);
 
@@ -162,7 +164,7 @@ public class UdsScannerTests
     public async Task ReadModuleDtcsAsync_MultiFrameIsoTp_AssemblesProperly()
     {
         var bus = new FakeCanBus();
-        var scanner = new UdsScanner(bus);
+        var scanner = new UdsScanner(bus, new UdsCatalog());
 
         _ = Task.Run(async () =>
         {

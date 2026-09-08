@@ -8,11 +8,13 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Neomotive.ScanTool.Core.Tests/Neomotive.ScanTool.Core.Tests.csproj" />
+    <Project Path="../Shared/Neomotive.Uds.Tests/Neomotive.Uds.Tests.csproj" />
   </Folder>
   <Folder Name="/Shared/">
     <Project Path="../Shared/Neomotive.Can.Hardware/Neomotive.Can.Hardware.csproj" />
     <Project Path="../Shared/Neomotive.Can.UI/Neomotive.Can.UI.csproj" />
     <Project Path="../Shared/Neomotive.Obd2/Neomotive.Obd2.csproj" />
+    <Project Path="../Shared/Neomotive.Uds/Neomotive.Uds.csproj" />
     <Project Path="../Shared/Neomotive.UI.Styles/Neomotive.UI.Styles.csproj" />
     <Project Path="../Shared/Neomotive.Update/Neomotive.Update.csproj" />
   </Folder>
@@ -30,6 +32,7 @@
       <Deploy />
     </Project>
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.J1979/Driver/Telematics.J1979.csproj" />
+    <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Libraries_and_Frameworks/Telematics.Uds/Driver/Telematics.Uds.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.Mcp2515/Driver/ICs.CAN.Mcp2515.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Foundation/Source/Meadow.Foundation.Peripherals/ICs.CAN.PCanBasic/Driver/ICs.CAN.PCanBasic.csproj" />
     <Project Path="../../../../../wilderness/Meadow.Logging/Source/Meadow.Logging/lib/Meadow.Logging.csproj" />

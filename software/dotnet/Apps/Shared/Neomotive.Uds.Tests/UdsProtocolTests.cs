@@ -1,10 +1,14 @@
 using System.Linq;
 using Xunit;
+using Meadow.Foundation.Telematics.Uds;
+using Neomotive.Uds;
 
-namespace Neomotive.ScanTool.Core.Tests;
+namespace Neomotive.Uds.Tests;
 
 public class UdsProtocolTests
 {
+    private static readonly UdsCatalog Catalog = new();
+
     [Theory]
     [InlineData(0x01, 0x00, "P0100")]
     [InlineData(0x03, 0x00, "P0300")]
@@ -20,14 +24,14 @@ public class UdsProtocolTests
     [Fact]
     public void GetFaultTypeDescription_KnownAndUnknownFtbs()
     {
-        Assert.Equal("No Subtype Information", UdsProtocol.GetFaultTypeDescription(0x00));
-        Assert.Equal("Circuit Short to Ground", UdsProtocol.GetFaultTypeDescription(0x11));
-        Assert.Equal("Circuit Short to Battery", UdsProtocol.GetFaultTypeDescription(0x12));
-        Assert.Equal("Circuit Open", UdsProtocol.GetFaultTypeDescription(0x13));
-        Assert.Equal("Signal Stuck Low", UdsProtocol.GetFaultTypeDescription(0x23));
-        Assert.Equal("General Checksum Failure", UdsProtocol.GetFaultTypeDescription(0x41));
-        Assert.Equal("Bus Off", UdsProtocol.GetFaultTypeDescription(0x88));
-        Assert.Equal("Failure Type 0xEE", UdsProtocol.GetFaultTypeDescription(0xEE));
+        Assert.Equal("No Subtype Information", Catalog.GetFaultTypeDescription(0x00));
+        Assert.Equal("Circuit Short to Ground", Catalog.GetFaultTypeDescription(0x11));
+        Assert.Equal("Circuit Short to Battery", Catalog.GetFaultTypeDescription(0x12));
+        Assert.Equal("Circuit Open", Catalog.GetFaultTypeDescription(0x13));
+        Assert.Equal("Signal Stuck Low", Catalog.GetFaultTypeDescription(0x23));
+        Assert.Equal("General Checksum Failure", Catalog.GetFaultTypeDescription(0x41));
+        Assert.Equal("Bus Off", Catalog.GetFaultTypeDescription(0x88));
+        Assert.Equal("Failure Type 0xEE", Catalog.GetFaultTypeDescription(0xEE));
     }
 
     [Fact]
@@ -37,7 +41,7 @@ public class UdsProtocolTests
         // Record 1: 0x01, 0x00 (P0100), 0x11 (Short to ground), 0x2F (TestFailed | Pending | Confirmed | TestFailedSinceLastClear)
         byte[] payload = [0x59, 0x02, 0xFF, 0x01, 0x00, 0x11, 0x2F];
 
-        var dtcs = UdsProtocol.ParseDtcResponse(payload);
+        var dtcs = UdsProtocol.ParseDtcResponse(payload, Catalog);
 
         Assert.Single(dtcs);
         var dtc = dtcs[0];
@@ -61,7 +65,7 @@ public class UdsProtocolTests
             0x41, 0x23, 0x13, 0x89  // C0123-13 (Circuit open, Active | Confirmed | MIL)
         ];
 
-        var dtcs = UdsProtocol.ParseDtcResponse(payload);
+        var dtcs = UdsProtocol.ParseDtcResponse(payload, Catalog);
 
         Assert.Equal(3, dtcs.Count);
 
@@ -101,7 +105,7 @@ public class UdsProtocolTests
         payload[2] = 0x90;
         vinBytes.CopyTo(payload, 3);
 
-        var result = UdsProtocol.ParseDidResponse(0xF190, payload);
+        var result = UdsProtocol.ParseDidResponse(0xF190, payload, Catalog);
 
         Assert.NotNull(result);
         Assert.Equal(0xF190, result.Did);
@@ -114,7 +118,7 @@ public class UdsProtocolTests
     {
         byte[] payload = [0x62, 0xF1, 0x86, 0x03];
 
-        var result = UdsProtocol.ParseDidResponse(0xF186, payload);
+        var result = UdsProtocol.ParseDidResponse(0xF186, payload, Catalog);
 
         Assert.NotNull(result);
         Assert.Equal("Extended Diagnostic Session (0x03)", result.DisplayValue);
@@ -125,7 +129,7 @@ public class UdsProtocolTests
     {
         byte[] payload = [0x7F, 0x22, 0x31]; // ReadDataByIdentifier ($22) -> RequestOutOfRange ($31)
 
-        bool isNrc = UdsProtocol.TryParseNegativeResponse(payload, out byte reqSvc, out UdsNrc nrc, out string desc);
+        bool isNrc = UdsProtocol.TryParseNegativeResponse(payload, out byte reqSvc, out UdsNrc nrc, out string desc, Catalog);
 
         Assert.True(isNrc);
         Assert.Equal(0x22, reqSvc);

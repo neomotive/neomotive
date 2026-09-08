@@ -642,3 +642,57 @@ always received null and Mode $22 channels could never have worked.
 
 **Layout gotcha:** a row of fixed-width controls with no `*` column cannot degrade — it clips. Any
 such row needs either a star spacer or a WrapPanel before it reaches the Pi's 800x480.
+
+---
+
+## Group Y — UDS moved to shared libraries, simulator gained a UDS server
+
+The UDS client had no bench target: nothing on the CAN bus answered ISO 14229, so the UDS view could
+only be exercised against a real vehicle. Three moves fixed that.
+
+- [x] **Y1** New Meadow library `Telematics.Uds`
+  (`wilderness/Meadow.Foundation/.../Telematics.Uds/Driver/`, assembly `Uds`, namespace
+  `Meadow.Foundation.Telematics.Uds`). References `Telematics.J1979` so `IsoTp`, `IsoTpFrameType`
+  and `Obd2Addresses` are reused rather than duplicated.
+- [x] **Y2** The generic client moved there out of `ScanTool.Core`: `UdsProtocol`, `UdsScanner`,
+  `IUdsScanner`, `UdsDtc`, `UdsModuleInfo`, `UdsDidValue` and the five enums. Names unchanged, so
+  the call sites needed only a `using`. `Models/Uds/` and `Uds/` are gone from ScanTool.
+- [x] **Y3** Descriptions became injectable. `UdsProtocol` no longer holds tables or references
+  `Neomotive.Obd2`; it takes an optional `IUdsDescriptionProvider` (DID name and formatting, DTC
+  text, fault-type and NRC descriptions). `NullUdsDescriptions` is the tables-free fallback —
+  printable ASCII or hex, inferred from the bytes.
+- [x] **Y4** New server side: `UdsServer` (services $10, $14, $19/$01/$02/$0A, $22, $3E; NRC $11
+  for anything else), `IUdsDataSource`, `UdsDtcRecord`, `UdsSessionState` (S3 timeout),
+  `IsoTpResponder`. A functionally addressed request that would be rejected gets silence, per ISO
+  14229-1 §7.5 — otherwise a `0x7DF` sweep collects refusals as if they were modules.
+- [x] **Y5** New shared library `Apps/Shared/Neomotive.Uds` — the UDS **database**. `UdsCatalog`
+  implements `IUdsDescriptionProvider` over three layers: an embedded seed
+  (`Data/uds-catalog.default.json`, transcribed from the old switch tables), then every
+  `uds-catalog*.json` in the data directory in filename order, then runtime `Upsert`/`Remove`.
+  `Import` (JSON or `did,name` CSV), `Export` (whole table or overrides only), `Save` and `Reload`
+  mean a new DID never needs a rebuild. A malformed overlay is reported in `LoadErrors` and skipped;
+  the rest still load.
+- [x] **Y6** ScanTool passes `UdsCatalog.Shared` to `UdsScanner`, and `ConfigDirectory` now also
+  points the catalog at its overlay files. `UdsView.axaml` binds `UdsModuleInfo`/`UdsDtc` from the
+  `Uds` assembly.
+- [x] **Y7** Simulator gained `Uds/` in `ModuleSimulator.Core`: `UdsConfig`/`UdsModuleProfile`
+  (config-driven modules, DIDs and static DTCs), `SimulatorUdsDataSource` (mirrors the PCM/TCU DTC
+  stores so the toolbox fault buttons drive OBD-II and UDS alike; serves the VIN live) and
+  `UdsModuleHost`. Default config: PCM `0x7E8`, TCU `0x7E9`, plus UDS-only BCM `0x7EA`, ABS `0x7EC`
+  and SRS `0x7ED`. `SimulatorConfig.Uds` persists it in `neoteric.config.json`.
+- [x] **Y8** A UDS clear calls back into the VM, which re-syncs the J1979 modules — otherwise the
+  OBD-II side would keep reporting faults the tester just cleared.
+- [x] **Y9** Tests: 24 in `Uds.Unit.Tests` (server byte-for-byte, plus client↔server loopback over
+  an in-memory bus covering multi-frame and flow control), 35 in `Neomotive.Uds.Tests` (the 20
+  moved protocol/scanner tests pass unchanged — the parity proof — plus catalog layering,
+  import/export and malformed-file handling), 52 in the simulator tests including host-level
+  discovery against the real `UdsScanner`.
+
+**Bug found and fixed:** `IsoTpResponder` (and the `ControllerBase.SendIsoTpResponse` it was modelled
+on) subscribed to flow control *after* transmitting the first frame. A tester that replies
+immediately beats the subscription and the message strands until the 1 s timeout. Real CAN hides it
+because delivery is asynchronous; a loopback bus does not. Subscribe first, then transmit.
+
+**Known, not fixed:** `IsoTp.Encode` numbers the first consecutive frame `0x20` instead of `0x21`.
+Our client ignores sequence numbers so the bench passes, but a third-party scan tool would reject
+the frame.

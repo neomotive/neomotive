@@ -31,6 +31,30 @@ Solution file: `ScanTool/neomotive scantool.slnx`
 - **`NullCanBus`** — no-op `ICanBus` for tests (never returns frames)
 - **`MainWindowViewModel`** — MVVM hub; enum-driven view switching (`Connection / Vehicle / Emissions / Dtcs`); calls `RefreshAllAsync` after connect or manual refresh
 
+### UDS (ISO 14229)
+
+The UDS client, server and protocol types are **not** in this repo — they live in the Meadow library
+`Telematics.Uds` (assembly `Uds`, namespace `Meadow.Foundation.Telematics.Uds`, next to
+`Telematics.J1979`), so firmware can use them too. ScanTool holds only the UI.
+
+- **`UdsScanner` / `IUdsScanner`** — client: `DiscoverModulesAsync`, `ReadModuleDtcsAsync`,
+  `ClearModuleDtcsAsync`, `ReadDidAsync`, `SetDiagnosticSessionAsync`, `SendTesterPresentAsync`
+- **`UdsServer` / `IUdsDataSource`** — ECU side, used by ModuleSimulator
+- **`UdsProtocol`** — pure parsing; takes an optional `IUdsDescriptionProvider` for all text
+- **`UdsCatalog`** (in `Apps/Shared/Neomotive.Uds`) — the description provider ScanTool passes in
+
+**The catalog is meant to be extended without a rebuild.** Layers, lowest first: an embedded seed
+(`Data/uds-catalog.default.json`), then every `uds-catalog*.json` in the ScanTool **config**
+directory in filename order, then runtime `Upsert`/`Remove`. `Import` reads catalog JSON or a
+`did,name` CSV; `Export` writes the merged table or just the overrides; `Save` persists overrides;
+`Reload` re-reads after a file drop. A malformed overlay lands in `LoadErrors` and is skipped — the
+rest still load. Do **not** add DID names, fault-type or NRC strings back into C# switch statements;
+they belong in the catalog JSON.
+
+Addressing: request `0x7DF` (functional) or `0x7E0..0x7E7` (physical), response = request + 8. A
+functionally addressed request that would be rejected gets **silence**, not an NRC (ISO 14229-1
+§7.5) — otherwise a `0x7DF` sweep collects refusals as if they were modules.
+
 ### OBD2 / ISO-TP protocol facts
 
 - **CAN speed**: 500 kbps
@@ -58,7 +82,7 @@ Run tests: `dotnet test` from `Neomotive.ScanTool.Core.Tests/`
 
 | Project | Purpose |
 |---|---|
-| `Neomotive.ModuleSimulator.Core` | `SimulatorState`, `SimulatorPcm`, `SimulatorTcu` |
+| `Neomotive.ModuleSimulator.Core` | `SimulatorState`, `SimulatorPcm`, `SimulatorTcu`, and `Uds/` — the UDS server side |
 | `Neomotive.ControlModule` | Base classes `PrimaryControlModule`, `TransmissionControlModule` |
 | `Neomotive.ModuleSimulator.Desktop` | Avalonia UI (`ToolboxView` + `ToolboxViewModel`) |
 | `Neomotive.ModuleSimulator.RaspberryPi` | Headless entry point for Pi hardware |
@@ -69,6 +93,23 @@ Run tests: `dotnet test` from `Neomotive.ScanTool.Core.Tests/`
 - **`SimulatorPcm`** — extends `PcmBase`; serves engine metrics from `SimulatorState`; calls `SyncDtcsFromState()` to atomically reload DTCs; handles `OnDtcsCleared`
 - **`SimulatorTcu`** — extends `TransmissionControlModule`; serves trans fluid temp; supports PIDs `MonitorStatus`, `OilTemp`
 - **`LoggingCanBus`** — wraps real `ICanBus` and logs all frames (useful for debugging protocol issues)
+- **`UdsModuleHost`** — runs one `UdsServer` per configured module on the same `LoggingCanBus`, so
+  UDS traffic shows up in the CAN tab alongside OBD-II
+- **`SimulatorUdsDataSource`** — serves one module. For the PCM and TCU it mirrors the simulator's
+  own DTC stores, so the toolbox fault buttons drive OBD-II and UDS at once, and a UDS clear empties
+  the same stores (the VM then re-syncs the J1979 modules). Serves the VIN live from `SimulatorState`.
+- **`UdsConfig` / `UdsModuleProfile`** — which ECUs exist and what they report. Persisted as
+  `SimulatorConfig.Uds` in `neoteric.config.json`
+
+### UDS modules (config-driven)
+
+Defaults: PCM `0x7E8` and TCU `0x7E9` (both mirroring simulator DTCs), plus UDS-only BCM `0x7EA`,
+ABS `0x7EC` and SRS `0x7ED`, each carrying a static fault. Extra modules answer UDS but stay silent
+on OBD-II — which is how most body and chassis controllers behave.
+
+**Adding an ECU is a config edit, not a code change**: add a `UdsModuleProfile` to the `Uds.Modules`
+array in `neoteric.config.json` and restart. DID values may carry an encoding prefix
+(`ascii:TEXT`, `hex:01 02 03`); without one the catalog's encoding for that DID decides.
 
 ### Hardcoded test data
 
@@ -81,13 +122,17 @@ Run tests: `dotnet test` from `Neomotive.ScanTool.Core.Tests/`
 1. Plug in Peak PCAN USB adapter
 2. Run **ModuleSimulator.Desktop** — starts PCM + TCU responding on CAN
 3. Run **ScanTool.Desktop** → Connect → reads VIN/DTCs/readiness from the simulator
+4. UDS view → Discover → finds the configured modules, their DIDs and their faults
+
+No hardware? `UdsModuleHostTests` runs the same exchange over an in-memory loopback bus.
 
 ---
 
 ## Shared patterns
 
 - Both use Meadow `ICanBus` abstraction (`Meadow.Hardware.ICanBus`)
-- Both depend on `Meadow.Foundation.Telematics.J1979` for OBD2 base types
+- Both depend on `Meadow.Foundation.Telematics.J1979` for OBD2 base types and
+  `Meadow.Foundation.Telematics.Uds` for ISO 14229
 - Avalonia 12.0.4 with standard MVVM (`INotifyPropertyChanged`, no ReactiveUI)
 - `.NET 10.0` target for all projects
 - CAN adapter driver: `ICS.CAN.PCanBasic` (Peak PCAN USB)
@@ -99,6 +144,7 @@ Run tests: `dotnet test` from `Neomotive.ScanTool.Core.Tests/`
 | `Neomotive.Can.Hardware` | `WaveshareDualCanHat` — dual MCP2515 CAN HAT for the Pi (used by both RaspberryPi heads) |
 | `Neomotive.Can.UI` | `CanView` (CAN bus health + packet log tab), `CanLogItem`, `ICanViewModel` |
 | `Neomotive.Obd2` | `DtcDescriptions` |
+| `Neomotive.Uds` | `UdsCatalog` — the file-backed UDS database (DID names/formatting, fault-type and NRC text) |
 | `Neomotive.UI.Styles` | Common Avalonia styles |
 | `Neomotive.Update` | Update service (USB / network sources) |
 | `Neomotive.Vin` | VIN decode / generate |

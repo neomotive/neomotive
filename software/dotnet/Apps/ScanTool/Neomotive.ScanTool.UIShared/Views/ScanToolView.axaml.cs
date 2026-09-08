@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Meadow.Foundation.Telematics.Uds;
 
 namespace Neomotive.ScanTool.UI.Views;
 

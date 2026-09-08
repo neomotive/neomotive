@@ -4,7 +4,7 @@ namespace Neomotive.ModuleSimulator;
 
 public record KnownDtc(string Code, string Description, byte[] RawBytes);
 
-public class SimulatorState
+public class SimulatorState : ISimulatorDtcStore
 {
     public string Vin { get; set; } = "AWWWWWWWWWWW0YEAH";
     public double CoolantTempCelsius { get; set; } = 90.0;
@@ -54,9 +54,9 @@ public class SimulatorState
     public EmissionsReadinessStatus Readiness { get; } = new EmissionsReadinessStatus();
 
     // all keyed by uppercase code string, e.g. "P0300"
-    public readonly Dictionary<string, byte[]> StoredDtcs = new();
-    public readonly Dictionary<string, byte[]> PendingDtcs = new();
-    public readonly Dictionary<string, byte[]> PermanentDtcs = new();
+    public Dictionary<string, byte[]> StoredDtcs { get; } = new();
+    public Dictionary<string, byte[]> PendingDtcs { get; } = new();
+    public Dictionary<string, byte[]> PermanentDtcs { get; } = new();
 
     public SimulatorState(ISimulatorInputs inputs)
     {

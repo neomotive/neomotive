@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using Neomotive.ScanTool.Core;
 using Neomotive.ScanTool.Core.Diagnostics;
 using Neomotive.ScanTool.Core.Signals;
+using Meadow.Foundation.Telematics.Uds;
 
 namespace Neomotive.ScanTool.UI;
 

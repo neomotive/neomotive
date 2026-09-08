@@ -12,6 +12,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Meadow.Foundation.Telematics.Uds;
+using Neomotive.Uds;
 
 namespace Neomotive.ScanTool.UI;
 
@@ -38,7 +40,9 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         _loggingBus = loggingBus;
         _vinDecoder = vinDecoder;
         _updateService = updateService;
-        _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus) : null);
+        // The shared catalog supplies DID names, DTC text and NRC descriptions. It is file-backed,
+        // so a DID the catalog does not know yet is a JSON drop away — see ConfigDirectory.
+        _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus, UdsCatalog.Shared) : null);
 
         // Constructed after _udsScanner: capture needs the UDS client for Mode $22 channels.
         CaptureVm = new CaptureViewModel(scanner, _udsScanner);
@@ -256,11 +260,18 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         set => CaptureVm.DataDirectory = value;
     }
 
-    /// <summary>Config directory; holds the user-defined Mode $22 signal definitions.</summary>
+    /// <summary>
+    /// Config directory; holds the user-defined Mode $22 signal definitions and any
+    /// <c>uds-catalog*.json</c> overlays that extend the DID database.
+    /// </summary>
     public string ConfigDirectory
     {
         get => CaptureVm.ConfigDirectory;
-        set => CaptureVm.ConfigDirectory = value;
+        set
+        {
+            CaptureVm.ConfigDirectory = value;
+            if (!string.IsNullOrWhiteSpace(value)) UdsCatalog.Shared.SetDataDir(value);
+        }
     }
 
     // ── Calibration / tune check ─────────────────────────────────────────────

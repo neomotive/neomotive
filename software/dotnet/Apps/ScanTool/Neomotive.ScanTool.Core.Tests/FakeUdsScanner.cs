@@ -1,3 +1,5 @@
+using Meadow.Foundation.Telematics.Uds;
+
 namespace Neomotive.ScanTool.Core.Tests;
 
 /// <summary>Scriptable UDS client for Mode $22 capture tests.</summary>

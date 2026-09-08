@@ -1,0 +1,222 @@
+{
+  "$comment": "Seed UDS catalog. Do not edit - place overrides in uds-catalog.json or uds-catalog.<name>.json in the application data directory.",
+  "dids": [
+    {
+      "did": "0xF180",
+      "name": "Boot Software Identification",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF181",
+      "name": "Application Software Identification",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF182",
+      "name": "Application Data Identification",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF183",
+      "name": "Boot Software Fingerprint",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF184",
+      "name": "Application Software Fingerprint",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF185",
+      "name": "Application Data Fingerprint",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF186",
+      "name": "Active Diagnostic Session",
+      "source": "ISO 14229-1",
+      "encoding": "enum",
+      "values": {
+        "0x01": "Default Session (0x01)",
+        "0x02": "Programming Session (0x02)",
+        "0x03": "Extended Diagnostic Session (0x03)",
+        "0x04": "Safety System Diagnostic Session (0x04)"
+      }
+    },
+    {
+      "did": "0xF187",
+      "name": "ECU Spare Part Number",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF188",
+      "name": "ECU Software Number",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF189",
+      "name": "ECU Software Version Number",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF18A",
+      "name": "System Supplier Identifier",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF18B",
+      "name": "ECU Manufacturing Date",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    },
+    {
+      "did": "0xF18C",
+      "name": "ECU Serial Number",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF190",
+      "name": "Vehicle Identification Number (VIN)",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF191",
+      "name": "ECU Hardware Number",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF197",
+      "name": "System Name / Engine Type",
+      "source": "ISO 14229-1",
+      "encoding": "ascii"
+    },
+    {
+      "did": "0xF1A0",
+      "name": "ECU Diagnostic Identifier",
+      "source": "ISO 14229-1",
+      "encoding": "hex"
+    }
+  ],
+  "faultTypes": {
+    "0x00": "No Subtype Information",
+    "0x01": "General Electrical Failure",
+    "0x02": "General Signal Failure",
+    "0x04": "System Internal Failure",
+    "0x05": "System Programming Failure",
+    "0x07": "Mechanical Failure",
+    "0x08": "Bus Signal / Message Failure",
+    "0x09": "Component Internal Failure",
+    "0x11": "Circuit Short to Ground",
+    "0x12": "Circuit Short to Battery",
+    "0x13": "Circuit Open",
+    "0x14": "Circuit Short to Ground or Open",
+    "0x15": "Circuit Short to Battery or Open",
+    "0x16": "Circuit Voltage Below Threshold",
+    "0x17": "Circuit Voltage Above Threshold",
+    "0x18": "Circuit Current Below Threshold",
+    "0x19": "Circuit Current Above Threshold",
+    "0x1A": "Circuit Resistance Below Threshold",
+    "0x1B": "Circuit Resistance Above Threshold",
+    "0x1C": "Circuit Voltage Out of Range",
+    "0x1D": "Circuit Current Out of Range",
+    "0x1E": "Circuit Resistance Out of Range",
+    "0x1F": "Circuit Intermittent",
+    "0x21": "Signal Amplitude < Min",
+    "0x22": "Signal Amplitude > Max",
+    "0x23": "Signal Stuck Low",
+    "0x24": "Signal Stuck High",
+    "0x25": "Signal Shape / Waveform Failure",
+    "0x26": "Signal Rate of Change Below Threshold",
+    "0x27": "Signal Rate of Change Above Threshold",
+    "0x28": "Signal Bias Level Out of Range",
+    "0x29": "Signal Invalid",
+    "0x2F": "Signal Erratic",
+    "0x31": "No Signal",
+    "0x36": "Signal Frequency Too Low",
+    "0x37": "Signal Frequency Too High",
+    "0x38": "Signal Frequency Incorrect",
+    "0x41": "General Checksum Failure",
+    "0x42": "General Memory Failure",
+    "0x43": "Special Memory Failure",
+    "0x44": "Data Memory Failure",
+    "0x45": "Program Memory Failure",
+    "0x46": "Calibration Memory Failure",
+    "0x47": "Watchdog / Safety MCU Failure",
+    "0x48": "Supervision Software Failure",
+    "0x49": "Internal Electronic Failure",
+    "0x4A": "Incorrect Component Installed",
+    "0x51": "Not Programmed",
+    "0x52": "Not Activated",
+    "0x53": "Deactivated",
+    "0x54": "Missing Calibration",
+    "0x55": "Not Configured",
+    "0x61": "Signal Calculation Failure",
+    "0x62": "Signal Compare Failure",
+    "0x63": "Circuit Protection Timeout",
+    "0x64": "Signal Plausibility Failure",
+    "0x65": "Signal Has Too Few Transitions",
+    "0x66": "Signal Has Too Many Transitions",
+    "0x67": "Signal Incorrect Event",
+    "0x71": "Actuator Stuck",
+    "0x72": "Actuator Stuck Open",
+    "0x73": "Actuator Stuck Closed",
+    "0x74": "Actuator Slipping",
+    "0x75": "Emergency Position Not Reachable",
+    "0x76": "Wrong Mounting Position",
+    "0x77": "Commanded Position Not Reachable",
+    "0x78": "Alignment / Adjustment Incorrect",
+    "0x79": "Mechanical Linkage Failure",
+    "0x7A": "Fluid Leak / Seal Failure",
+    "0x81": "Invalid Serial Data Received",
+    "0x82": "Alive Counter Incorrect",
+    "0x83": "Value of Signal Protection Calculation Incorrect",
+    "0x86": "Signal Invalid",
+    "0x87": "Missing Message",
+    "0x88": "Bus Off",
+    "0x91": "Parametric Parameter at Limit",
+    "0x92": "Performance or Incorrect Operation",
+    "0x93": "No Operation",
+    "0x94": "Unexpected Operation",
+    "0x95": "Incorrect Assembly",
+    "0x96": "Component Internal Failure",
+    "0x97": "Component Function Obstructed",
+    "0x98": "Component Overtemperature"
+  },
+  "nrcs": {
+    "0x10": "General Reject",
+    "0x11": "Service Not Supported",
+    "0x12": "Sub-Function Not Supported",
+    "0x13": "Incorrect Message Length Or Invalid Format",
+    "0x14": "Response Too Long",
+    "0x21": "Busy - Repeat Request",
+    "0x22": "Conditions Not Correct",
+    "0x24": "Request Sequence Error",
+    "0x25": "No Response From Subnet Component",
+    "0x26": "Failure Prevents Execution Of Requested Action",
+    "0x31": "Request Out Of Range",
+    "0x33": "Security Access Denied",
+    "0x35": "Invalid Key",
+    "0x36": "Exceeded Number Of Attempts",
+    "0x37": "Required Time Delay Not Expired",
+    "0x70": "Upload/Download Not Accepted",
+    "0x71": "Transfer Data Suspended",
+    "0x72": "General Programming Failure",
+    "0x73": "Wrong Block Sequence Counter",
+    "0x78": "Request Correctly Received - Response Pending",
+    "0x7E": "Sub-Function Not Supported In Active Session",
+    "0x7F": "Service Not Supported In Active Session"
+  }
+}

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
              xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
+             xmlns:uds="clr-namespace:Meadow.Foundation.Telematics.Uds;assembly=Uds"
              x:Class="Neomotive.ScanTool.UI.Views.UdsView"
              x:DataType="local:MainWindowViewModel"
              Padding="16,12">
@@ -34,7 +35,7 @@
 
                         <ItemsControl ItemsSource="{Binding UdsModules}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="core:UdsModuleInfo">
+                                <DataTemplate x:DataType="uds:UdsModuleInfo">
                                     <Button Classes="live-pid-row"
                                             Click="OnSelectModule"
                                             Tag="{Binding}">
@@ -135,7 +136,7 @@
 
                             <ItemsControl ItemsSource="{Binding SelectedModuleDtcs}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="core:UdsDtc">
+                                    <DataTemplate x:DataType="uds:UdsDtc">
                                         <Border BorderBrush="#242B38" BorderThickness="0,0,0,1" Padding="4,6">
                                             <Grid ColumnDefinitions="110, *, Auto">
                                                 <!-- DTC Full Code -->

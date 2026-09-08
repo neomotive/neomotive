@@ -206,10 +206,32 @@ What remains is bench and vehicle verification, which needs hardware:
 **Goal:** UDS (ISO 14229) DTCs, live data, configuration reads, actuator control.
 
 **Tasks:**
-1. Add UDS service layer to `Neomotive.ScanTool.Core` (services $14, $19, $22, $2E, $2F, $31)
-2. Add `UdsView` — ECU selector, UDS DTC list, snapshot data, actuator commands
-3. Security access flow (seed/key) UI
-4. ODX/CDD file import for PID/DTC descriptions *(stretch goal)*
+1. ~~Add UDS service layer to `Neomotive.ScanTool.Core`~~ — done, then moved out. The generic
+   client and server now live in the Meadow library `Telematics.Uds` (assembly `Uds`, namespace
+   `Meadow.Foundation.Telematics.Uds`); ScanTool references it. Services covered client-side:
+   $10, $14, $19, $22, $3E. Still to add: $2E, $2F, $31.
+2. [x] `UdsView` — ECU selector, UDS DTC list, DID reads
+3. Security access flow (seed/key) UI — not started; `UdsServer` answers $27 with NRC $11 today
+4. ODX/CDD file import for PID/DTC descriptions *(stretch goal)* — partly superseded: the
+   `Neomotive.Uds` catalog already imports DID definitions from JSON or CSV at runtime, so an ODX
+   importer only has to emit that shape.
+
+**Bench target (new):** ModuleSimulator now runs a UDS server, so discovery, $19 DTC read, $14
+clear, $22 DID read and $10/$3E session handling can all be exercised without a vehicle. Modules
+and their DIDs come from `SimulatorConfig.Uds` in `neoteric.config.json` — adding an ECU is a
+config edit. See Group Y in `ScanTool-Tasks.md`.
+
+**Where UDS lives now:**
+
+| Concern | Home |
+|---|---|
+| Protocol — client, server, ISO-TP, enums, models | `Telematics.Uds` (Meadow library) |
+| Database — DID names/formatting, FTB and NRC text | `Apps/Shared/Neomotive.Uds` (`UdsCatalog`) |
+| Simulated ECUs — modules, DIDs, faults | `ModuleSimulator.Core/Uds/` + config profile |
+| UI | `ScanTool.UIShared/Views/UdsView.axaml` |
+
+The catalog is file-backed and extensible without a rebuild: drop a `uds-catalog*.json` (or import
+a `did,name` CSV) into the ScanTool config directory, and `Export` writes the merged table back out.
 
 ### Phase 5 — Update Mechanism
 
