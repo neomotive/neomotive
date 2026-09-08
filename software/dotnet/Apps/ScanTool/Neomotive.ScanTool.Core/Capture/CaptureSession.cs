@@ -154,6 +154,23 @@ public sealed class CaptureSession
         }
     }
 
+    /// <summary>
+    /// Injects an event from an external source, such as a DTC polling background task.
+    /// Silently ignored once the session has stopped.
+    /// </summary>
+    public void InjectEvent(CaptureEvent captureEvent)
+    {
+        lock (_sync)
+        {
+            if (State is CaptureState.Idle or CaptureState.Stopped)
+            {
+                return;
+            }
+
+            AddEvent(captureEvent);
+        }
+    }
+
     private void PromoteToRecording(long timestampMs)
     {
         _triggerMs = timestampMs;

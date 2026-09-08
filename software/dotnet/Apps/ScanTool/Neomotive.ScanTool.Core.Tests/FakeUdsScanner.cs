@@ -35,6 +35,11 @@ internal sealed class FakeUdsScanner : IUdsScanner
     public Task<bool> SetDiagnosticSessionAsync(ushort txId, ushort rxId, UdsSessionType session, CancellationToken ct = default)
         => throw new NotSupportedException();
 
+    public List<ushort> TesterPresentTxIds { get; } = new();
+
     public Task SendTesterPresentAsync(ushort txId, bool suppressResponse = true, CancellationToken ct = default)
-        => throw new NotSupportedException();
+    {
+        TesterPresentTxIds.Add(txId);
+        return Task.CompletedTask;
+    }
 }

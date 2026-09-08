@@ -14,11 +14,17 @@ public partial class TriggerEditorView : UserControl
 
     private void OnModeThreshold(object? sender, RoutedEventArgs e) => Vm.Mode = ProfileTriggerMode.Threshold;
 
+    private void OnModeCompound(object? sender, RoutedEventArgs e) => Vm.Mode = ProfileTriggerMode.CompoundThreshold;
+
     private void OnModeBusWake(object? sender, RoutedEventArgs e) => Vm.Mode = ProfileTriggerMode.BusWake;
 
     private void OnAbove(object? sender, RoutedEventArgs e) => Vm.Above = true;
 
     private void OnBelow(object? sender, RoutedEventArgs e) => Vm.Above = false;
+
+    private void OnAbove2(object? sender, RoutedEventArgs e) => Vm.Above2 = true;
+
+    private void OnBelow2(object? sender, RoutedEventArgs e) => Vm.Above2 = false;
 
     private void OnUseLive(object? sender, RoutedEventArgs e) => Vm.UseLiveValue();
 

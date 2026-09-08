@@ -12,6 +12,12 @@ public enum ProfileTriggerMode
     /// <summary>Fire when a signal crosses a threshold.</summary>
     Threshold,
 
+    /// <summary>
+    /// Fire when two signals simultaneously satisfy their conditions (AND logic).
+    /// Use this for compound diagnostics: e.g. "RPM above 150 AND rail pressure below 5000 kPa".
+    /// </summary>
+    CompoundThreshold,
+
     /// <summary>Fire on the first response from the ECU, for arming before key-on.</summary>
     BusWake,
 }
@@ -30,7 +36,18 @@ public record ProfileTrigger
 
     /// <summary>How long the condition must hold, to reject transient noise.</summary>
     public int DwellMs { get; init; }
+
+    // ── Secondary condition (CompoundThreshold only) ─────────────────────────
+
+    /// <summary>Second signal key for <see cref="ProfileTriggerMode.CompoundThreshold"/>.</summary>
+    public string? Signal2 { get; init; }
+
+    /// <summary>True for "rises above", false for "falls below" — for the second condition.</summary>
+    public bool Above2 { get; init; } = true;
+
+    public double Value2 { get; init; }
 }
+
 
 /// <summary>
 /// Ends a capture once the watched signal has been active and then goes quiet.

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -47,12 +48,18 @@ public class CaptureViewModel : INotifyPropertyChanged
     private CaptureState _state = CaptureState.Idle;
 
     private bool _useThresholdTrigger = true;
+    private bool _useCompoundTrigger;
     private string _triggerSignalKey = nameof(Pid.EngineRpm);
     private bool _triggerAbove = true;
     private double _triggerValue = 150;
     private int _triggerDwellMs = 200;
 
+    private string? _triggerSignalKey2;
+    private bool _triggerAbove2 = true;
+    private double _triggerValue2;
+
     private bool _useBusWakeTrigger;
+    private bool _enableDtcMonitoring = true;
     private bool _applyingProfile;
     private double _preTriggerSeconds = 5;
     private double _maxDurationSeconds = 120;
@@ -116,12 +123,16 @@ public class CaptureViewModel : INotifyPropertyChanged
             new ProfileTrigger
             {
                 Mode = UseBusWakeTrigger ? ProfileTriggerMode.BusWake
+                     : UseCompoundTrigger ? ProfileTriggerMode.CompoundThreshold
                      : UseThresholdTrigger ? ProfileTriggerMode.Threshold
                      : ProfileTriggerMode.Manual,
                 Signal = TriggerSignalKey,
                 Above = TriggerAbove,
                 Value = TriggerValue,
                 DwellMs = TriggerDwellMs,
+                Signal2 = TriggerSignalKey2,
+                Above2 = TriggerAbove2,
+                Value2 = TriggerValue2,
             },
             new ProfileStop
             {
@@ -147,10 +158,14 @@ public class CaptureViewModel : INotifyPropertyChanged
     {
         UseBusWakeTrigger = trigger.Mode == ProfileTriggerMode.BusWake;
         UseThresholdTrigger = trigger.Mode == ProfileTriggerMode.Threshold;
+        UseCompoundTrigger = trigger.Mode == ProfileTriggerMode.CompoundThreshold;
         TriggerSignalKey = trigger.Signal ?? string.Empty;
         TriggerAbove = trigger.Above;
         TriggerValue = trigger.Value;
         TriggerDwellMs = trigger.DwellMs;
+        TriggerSignalKey2 = trigger.Signal2;
+        TriggerAbove2 = trigger.Above2;
+        TriggerValue2 = trigger.Value2;
 
         StallStopEnabled = stop.Enabled;
         StallSignalKey = stop.Signal ?? string.Empty;
@@ -164,7 +179,7 @@ public class CaptureViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Adds the threshold trigger's own signal to the recorded set if it is missing.
+    /// Adds the threshold trigger's own signals to the recorded set if they are missing.
     /// </summary>
     /// <remarks>
     /// The capture loop only polls selected signals, so a trigger on an unselected signal would
@@ -173,18 +188,33 @@ public class CaptureViewModel : INotifyPropertyChanged
     /// </remarks>
     private void EnsureTriggerSignalSelected()
     {
-        if (!UseThresholdTrigger || string.IsNullOrWhiteSpace(TriggerSignalKey))
+        var keysToAdd = new List<string>();
+
+        if ((UseThresholdTrigger || UseCompoundTrigger) && !string.IsNullOrWhiteSpace(TriggerSignalKey))
+        {
+            if (Table.Find(TriggerSignalKey) is not null
+                && !SelectedKeys.Contains(TriggerSignalKey, StringComparer.OrdinalIgnoreCase))
+            {
+                keysToAdd.Add(TriggerSignalKey);
+            }
+        }
+
+        if (UseCompoundTrigger && !string.IsNullOrWhiteSpace(TriggerSignalKey2))
+        {
+            if (Table.Find(TriggerSignalKey2) is not null
+                && !SelectedKeys.Contains(TriggerSignalKey2, StringComparer.OrdinalIgnoreCase)
+                && !keysToAdd.Contains(TriggerSignalKey2, StringComparer.OrdinalIgnoreCase))
+            {
+                keysToAdd.Add(TriggerSignalKey2);
+            }
+        }
+
+        if (keysToAdd.Count == 0)
         {
             return;
         }
 
-        if (Table.Find(TriggerSignalKey) is null
-            || SelectedKeys.Contains(TriggerSignalKey, StringComparer.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        SelectedKeys = SelectedKeys.Append(TriggerSignalKey).ToArray();
+        SelectedKeys = SelectedKeys.Concat(keysToAdd).ToArray();
         OnPropertyChanged(nameof(SelectedKeys));
         OnPropertyChanged(nameof(SelectedSummary));
     }
@@ -337,6 +367,12 @@ public class CaptureViewModel : INotifyPropertyChanged
         set { _useThresholdTrigger = value; OnPropertyChanged(); OnPropertyChanged(nameof(TriggerSummary)); }
     }
 
+    public bool UseCompoundTrigger
+    {
+        get => _useCompoundTrigger;
+        set { _useCompoundTrigger = value; OnPropertyChanged(); OnPropertyChanged(nameof(TriggerSummary)); }
+    }
+
     public bool UseBusWakeTrigger
     {
         get => _useBusWakeTrigger;
@@ -365,6 +401,30 @@ public class CaptureViewModel : INotifyPropertyChanged
     {
         get => _triggerDwellMs;
         set { _triggerDwellMs = value; OnPropertyChanged(); OnPropertyChanged(nameof(TriggerSummary)); }
+    }
+
+    public string? TriggerSignalKey2
+    {
+        get => _triggerSignalKey2;
+        set { _triggerSignalKey2 = value; OnPropertyChanged(); OnPropertyChanged(nameof(TriggerSummary)); }
+    }
+
+    public bool TriggerAbove2
+    {
+        get => _triggerAbove2;
+        set { _triggerAbove2 = value; OnPropertyChanged(); OnPropertyChanged(nameof(TriggerSummary)); }
+    }
+
+    public double TriggerValue2
+    {
+        get => _triggerValue2;
+        set { _triggerValue2 = value; OnPropertyChanged(); OnPropertyChanged(nameof(TriggerSummary)); }
+    }
+
+    public bool EnableDtcMonitoring
+    {
+        get => _enableDtcMonitoring;
+        set { _enableDtcMonitoring = value; OnPropertyChanged(); }
     }
 
     public double PreTriggerSeconds
@@ -418,15 +478,23 @@ public class CaptureViewModel : INotifyPropertyChanged
                 return "on first response from the ECU";
             }
 
+            if (UseCompoundTrigger && !string.IsNullOrEmpty(TriggerSignalKey2))
+            {
+                var dir1 = TriggerAbove ? "above" : "below";
+                var dir2 = TriggerAbove2 ? "above" : "below";
+                var dwell = TriggerDwellMs > 0 ? $" for {TriggerDwellMs} ms" : string.Empty;
+                return $"{TriggerSignalKey} {dir1} {TriggerValue:G6} AND {TriggerSignalKey2} {dir2} {TriggerValue2:G6}{dwell}";
+            }
+
             if (!UseThresholdTrigger)
             {
                 return "manual start";
             }
 
             var direction = TriggerAbove ? "above" : "below";
-            var dwell = TriggerDwellMs > 0 ? $" for {TriggerDwellMs} ms" : string.Empty;
+            var dwellSingle = TriggerDwellMs > 0 ? $" for {TriggerDwellMs} ms" : string.Empty;
 
-            return $"{TriggerSignalKey} {direction} {TriggerValue:G6}{dwell}";
+            return $"{TriggerSignalKey} {direction} {TriggerValue:G6}{dwellSingle}";
         }
     }
 
@@ -576,13 +644,21 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         UseBusWakeTrigger = profile.Trigger.Mode == ProfileTriggerMode.BusWake;
         UseThresholdTrigger = profile.Trigger.Mode == ProfileTriggerMode.Threshold;
+        UseCompoundTrigger = profile.Trigger.Mode == ProfileTriggerMode.CompoundThreshold;
 
-        if (profile.Trigger.Mode == ProfileTriggerMode.Threshold)
+        if (profile.Trigger.Mode is ProfileTriggerMode.Threshold or ProfileTriggerMode.CompoundThreshold)
         {
             TriggerSignalKey = profile.Trigger.Signal ?? string.Empty;
             TriggerAbove = profile.Trigger.Above;
             TriggerValue = profile.Trigger.Value;
             TriggerDwellMs = profile.Trigger.DwellMs;
+        }
+
+        if (profile.Trigger.Mode == ProfileTriggerMode.CompoundThreshold)
+        {
+            TriggerSignalKey2 = profile.Trigger.Signal2 ?? string.Empty;
+            TriggerAbove2 = profile.Trigger.Above2;
+            TriggerValue2 = profile.Trigger.Value2;
         }
 
         PreTriggerSeconds = profile.PreTriggerSeconds;
@@ -728,6 +804,19 @@ public class CaptureViewModel : INotifyPropertyChanged
 
         StartStatusTimer();
 
+        // Start UDS session keepalive if any Mode $22 channels were included.
+        var mode22TxIds = selected
+            .Where(s => s.Source == SignalSource.Mode22)
+            .Select(s => s.TxId)
+            .Distinct()
+            .ToArray();
+
+        if (_udsScanner is not null && mode22TxIds.Length > 0)
+        {
+            var keepAlive = new UdsSessionKeepAlive(_udsScanner, mode22TxIds);
+            _ = Task.Run(() => keepAlive.RunAsync(_cts.Token));
+        }
+
         _ = Task.Run(() => RunCaptureAsync(session, channels, _loop, _cts.Token));
     }
 
@@ -756,6 +845,24 @@ public class CaptureViewModel : INotifyPropertyChanged
         if (UseBusWakeTrigger)
         {
             return new BusWakeTrigger();
+        }
+
+        if (UseCompoundTrigger && !string.IsNullOrEmpty(TriggerSignalKey2))
+        {
+            var threshold1 = new ThresholdTrigger(
+                TriggerSignalKey,
+                TriggerAbove ? ThresholdComparison.Above : ThresholdComparison.Below,
+                TriggerValue,
+                TriggerDwellMs);
+
+            var threshold2 = new ThresholdTrigger(
+                TriggerSignalKey2,
+                TriggerAbove2 ? ThresholdComparison.Above : ThresholdComparison.Below,
+                TriggerValue2,
+                dwellMs: 0);
+
+            // Manual stays live alongside the compound trigger so the operator can always force a start.
+            return new AnyTrigger(_manualTrigger, new AllTrigger(threshold1, threshold2));
         }
 
         if (!UseThresholdTrigger)
@@ -791,6 +898,13 @@ public class CaptureViewModel : INotifyPropertyChanged
             var localWriter = writer;
             session.SampleRecorded += sample => localWriter.Write(sample);
             session.StateChanged += state => Dispatcher.UIThread.Post(() => OnStateChanged(state));
+
+            // Start DTC monitoring if enabled. Runs alongside the poll loop on a slow cadence.
+            if (_enableDtcMonitoring)
+            {
+                var dtcChannel = new DtcPollingChannel(_scanner, session, () => loop.ElapsedMs);
+                _ = Task.Run(() => dtcChannel.RunAsync(ct));
+            }
 
             await loop.RunAsync(ct);
         }

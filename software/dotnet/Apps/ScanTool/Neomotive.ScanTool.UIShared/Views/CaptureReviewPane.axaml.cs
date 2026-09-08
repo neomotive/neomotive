@@ -47,7 +47,8 @@ public partial class CaptureReviewPane : UserControl
         TextBlock RangeLabel,
         IReadOnlyList<CaptureSample> Samples,
         double Min,
-        double Max);
+        double Max,
+        List<(CaptureEvent Event, Line MarkerLine, TextBlock? Label)> EventMarkers);
 
     protected override void OnDataContextChanged(EventArgs e)
     {
@@ -133,6 +134,64 @@ public partial class CaptureReviewPane : UserControl
             var canvas = new Canvas { ClipToBounds = true };
             canvas.Children.Add(triggerMark);
             canvas.Children.Add(trace);
+
+            var eventMarkers = new List<(CaptureEvent Event, Line MarkerLine, TextBlock? Label)>();
+
+            // Render noteworthy timeline events (DTC sets/clears, bus drops) across lanes.
+            foreach (var evt in _recording.Metadata.Events)
+            {
+                if (evt.Kind is CaptureEventKind.Armed or CaptureEventKind.Triggered or CaptureEventKind.Stopped)
+                {
+                    continue;
+                }
+
+                var strokeColor = evt.Kind switch
+                {
+                    CaptureEventKind.DtcSet => Color.Parse("#FF5252"),
+                    CaptureEventKind.DtcCleared => Color.Parse("#448AFF"),
+                    CaptureEventKind.BusLost => Color.Parse("#FFAB00"),
+                    CaptureEventKind.BusRestored => Color.Parse("#69F0AE"),
+                    CaptureEventKind.StopConditionMet => Color.Parse("#E040FB"),
+                    _ => Color.Parse("#B0BEC5"),
+                };
+
+                var evtLine = new Line
+                {
+                    Stroke = new SolidColorBrush(strokeColor),
+                    StrokeThickness = 1,
+                    StrokeDashArray = new AvaloniaList<double> { 2, 2 },
+                    IsVisible = false,
+                };
+                canvas.Children.Add(evtLine);
+
+                TextBlock? evtLabel = null;
+                // Place text badge on the first lane only to avoid cluttering every lane.
+                if (i == 0)
+                {
+                    var text = evt.Kind switch
+                    {
+                        CaptureEventKind.DtcSet => $"DTC +{evt.Detail}",
+                        CaptureEventKind.DtcCleared => $"DTC −{evt.Detail}",
+                        CaptureEventKind.BusLost => "Bus Lost",
+                        CaptureEventKind.BusRestored => "Bus Restored",
+                        CaptureEventKind.StopConditionMet => "Stop Cond",
+                        CaptureEventKind.DurationReached => "Max Dur",
+                        _ => evt.Kind.ToString(),
+                    };
+
+                    evtLabel = new TextBlock
+                    {
+                        Classes = { "xs" },
+                        Foreground = new SolidColorBrush(strokeColor),
+                        Text = text,
+                        IsVisible = false,
+                    };
+                    canvas.Children.Add(evtLabel);
+                }
+
+                eventMarkers.Add((evt, evtLine, evtLabel));
+            }
+
             canvas.Children.Add(cursor);
 
             var nameLabel = new TextBlock
@@ -169,7 +228,7 @@ public partial class CaptureReviewPane : UserControl
             });
 
             _lanes.Add(new Lane(
-                signal, canvas, trace, triggerMark, cursor, nameLabel, rangeLabel, samples, min, max));
+                signal, canvas, trace, triggerMark, cursor, nameLabel, rangeLabel, samples, min, max, eventMarkers));
         }
 
         Fit();
@@ -270,6 +329,32 @@ public partial class CaptureReviewPane : UserControl
                 var tx = w * ((0 - _viewStartMs) / span);
                 lane.TriggerMark.StartPoint = new Point(tx, 0);
                 lane.TriggerMark.EndPoint = new Point(tx, h);
+            }
+
+            // Position event marker lines and text badges
+            foreach (var (evt, line, label) in lane.EventMarkers)
+            {
+                var et = _recording.ToTriggerRelative(evt.TimestampMs);
+                var inView = et >= _viewStartMs && et <= _viewEndMs;
+
+                line.IsVisible = inView;
+                if (label is not null)
+                {
+                    label.IsVisible = inView;
+                }
+
+                if (inView)
+                {
+                    var ex = w * ((et - _viewStartMs) / span);
+                    line.StartPoint = new Point(ex, 0);
+                    line.EndPoint = new Point(ex, h);
+
+                    if (label is not null)
+                    {
+                        Canvas.SetLeft(label, Math.Min(ex + 3, w - 80));
+                        Canvas.SetTop(label, 16);
+                    }
+                }
             }
         }
 

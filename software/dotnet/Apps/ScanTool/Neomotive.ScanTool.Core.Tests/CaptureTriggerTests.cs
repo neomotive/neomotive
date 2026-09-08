@@ -123,4 +123,40 @@ public class CaptureTriggerTests
         Assert.False(any.Evaluate(Sample(0, 1000, 200)));
         Assert.True(any.Evaluate(Sample(0, 1500, 200)));
     }
+
+    [Fact]
+    public void All_trigger_requires_all_conditions_satisfied_simultaneously()
+    {
+        var rpmTrigger = new ThresholdTrigger("rpm", ThresholdComparison.Above, 150);
+        var railTrigger = new ThresholdTrigger("rail", ThresholdComparison.Below, 5000);
+        var all = new AllTrigger(rpmTrigger, railTrigger);
+        all.Bind(Signals);
+
+        // RPM rises above 150, but rail pressure condition has not been evaluated yet.
+        Assert.False(all.Evaluate(Sample(0, 100, 200)));
+
+        // Rail pressure arrives and is high (not satisfied).
+        Assert.False(all.Evaluate(Sample(1, 150, 10000)));
+
+        // Rail pressure drops below 5000. Now RPM is still above 150 AND rail is below 5000!
+        Assert.True(all.Evaluate(Sample(1, 200, 3000)));
+    }
+
+    [Fact]
+    public void All_trigger_does_not_fire_if_one_condition_lapses_before_other_meets()
+    {
+        var rpmTrigger = new ThresholdTrigger("rpm", ThresholdComparison.Above, 150);
+        var railTrigger = new ThresholdTrigger("rail", ThresholdComparison.Below, 5000);
+        var all = new AllTrigger(rpmTrigger, railTrigger);
+        all.Bind(Signals);
+
+        // RPM condition met.
+        Assert.False(all.Evaluate(Sample(0, 100, 200)));
+
+        // RPM drops back below 150.
+        Assert.False(all.Evaluate(Sample(0, 150, 50)));
+
+        // Rail pressure now meets condition, but RPM is no longer met.
+        Assert.False(all.Evaluate(Sample(1, 200, 3000)));
+    }
 }

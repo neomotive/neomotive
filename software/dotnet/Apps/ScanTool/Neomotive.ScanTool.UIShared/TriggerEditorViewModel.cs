@@ -34,6 +34,9 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
     private bool _above = true;
     private double _value;
     private int _dwellMs;
+    private string? _triggerSignal2;
+    private bool _above2 = true;
+    private double _value2;
     private double _preTriggerSeconds = 5;
     private double _maxDurationSeconds = 120;
 
@@ -75,6 +78,8 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsManual));
             OnPropertyChanged(nameof(IsThreshold));
             OnPropertyChanged(nameof(IsBusWake));
+            OnPropertyChanged(nameof(IsCompound));
+            OnPropertyChanged(nameof(IsThresholdOrCompound));
             OnPropertyChanged(nameof(Summary));
             RestartLiveRead();
         }
@@ -83,6 +88,10 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
     public bool IsManual => _mode == ProfileTriggerMode.Manual;
 
     public bool IsThreshold => _mode == ProfileTriggerMode.Threshold;
+
+    public bool IsCompound => _mode == ProfileTriggerMode.CompoundThreshold;
+
+    public bool IsThresholdOrCompound => _mode is ProfileTriggerMode.Threshold or ProfileTriggerMode.CompoundThreshold;
 
     public bool IsBusWake => _mode == ProfileTriggerMode.BusWake;
 
@@ -121,6 +130,28 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
         get => _dwellMs;
         set { _dwellMs = value; OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); }
     }
+
+    public string? TriggerSignal2
+    {
+        get => _triggerSignal2;
+        set { _triggerSignal2 = value; OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); }
+    }
+
+    public string TriggerUnit2 => _table.Find(_triggerSignal2)?.Unit ?? string.Empty;
+
+    public bool Above2
+    {
+        get => _above2;
+        set { _above2 = value; OnPropertyChanged(); OnPropertyChanged(nameof(Summary)); }
+    }
+
+    public double Value2
+    {
+        get => _value2;
+        set { _value2 = value; OnPropertyChanged(); OnPropertyChanged(nameof(ValueText2)); OnPropertyChanged(nameof(Summary)); }
+    }
+
+    public string ValueText2 => _value2.ToString("0.###", CultureInfo.InvariantCulture);
 
     public double PreTriggerSeconds
     {
@@ -191,6 +222,13 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
             var start = _mode switch
             {
                 ProfileTriggerMode.BusWake => "Start recording as soon as the ECU responds.",
+                ProfileTriggerMode.CompoundThreshold when !string.IsNullOrEmpty(_triggerSignal) && !string.IsNullOrEmpty(_triggerSignal2) =>
+                    $"Start recording when {Label(_triggerSignal)} "
+                    + $"{(_above ? "rises above" : "falls below")} {_value:0.###} {TriggerUnit}"
+                    + $" AND {Label(_triggerSignal2)} "
+                    + $"{(_above2 ? "rises above" : "falls below")} {_value2:0.###} {TriggerUnit2}"
+                    + (_dwellMs > 0 ? $" and stays there for {_dwellMs} ms." : "."),
+                ProfileTriggerMode.CompoundThreshold => "Choose signals for both conditions.",
                 ProfileTriggerMode.Threshold when !string.IsNullOrEmpty(_triggerSignal) =>
                     $"Start recording when {Label(_triggerSignal)} "
                     + $"{(_above ? "rises above" : "falls below")} {_value:0.###} {TriggerUnit}"
@@ -234,6 +272,9 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
         Above = trigger.Above;
         Value = trigger.Value;
         DwellMs = trigger.DwellMs;
+        TriggerSignal2 = trigger.Signal2 ?? availableSignals.FirstOrDefault();
+        Above2 = trigger.Above2;
+        Value2 = trigger.Value2;
 
         StopEnabled = stop.Enabled;
         StopSignal = stop.Signal ?? availableSignals.FirstOrDefault();
@@ -260,6 +301,9 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
                 Above = _above,
                 Value = _value,
                 DwellMs = _dwellMs,
+                Signal2 = _triggerSignal2,
+                Above2 = _above2,
+                Value2 = _value2,
             },
             new ProfileStop
             {
@@ -304,6 +348,28 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
 
     public void KeypadNegate() => Value = -Value;
 
+    public void KeypadAppend2(string digit)
+    {
+        var text = ValueText2 == "0" ? string.Empty : ValueText2;
+
+        if (digit == "." && text.Contains('.'))
+        {
+            return;
+        }
+
+        SetFromText2(text + digit);
+    }
+
+    public void KeypadBackspace2()
+    {
+        var text = ValueText2;
+        SetFromText2(text.Length > 1 ? text[..^1] : "0");
+    }
+
+    public void KeypadClear2() => Value2 = 0;
+
+    public void KeypadNegate2() => Value2 = -Value2;
+
     /// <summary>Uses the signal's current reading as the threshold, then nudges it.</summary>
     public void UseLiveValue()
     {
@@ -324,6 +390,20 @@ public class TriggerEditorViewModel : INotifyPropertyChanged
         if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
         {
             Value = parsed;
+        }
+    }
+
+    private void SetFromText2(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text == "-")
+        {
+            Value2 = 0;
+            return;
+        }
+
+        if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+        {
+            Value2 = parsed;
         }
     }
 

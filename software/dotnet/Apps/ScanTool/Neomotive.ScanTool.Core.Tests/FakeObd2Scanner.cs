@@ -85,8 +85,11 @@ internal sealed class FakeObd2Scanner : IObd2Scanner
     public Task<string?> ReadEcuNameAsync(CancellationToken ct = default)
         => throw new NotSupportedException();
 
+    public Func<IReadOnlyList<DiagnosticTroubleCode>>? StoredDtcsFunc { get; set; }
+    public IReadOnlyList<DiagnosticTroubleCode> StoredDtcs { get; set; } = Array.Empty<DiagnosticTroubleCode>();
+
     public Task<IReadOnlyList<DiagnosticTroubleCode>> ReadStoredDtcsAsync(CancellationToken ct = default)
-        => throw new NotSupportedException();
+        => Task.FromResult(StoredDtcsFunc is not null ? StoredDtcsFunc() : StoredDtcs);
 
     public Task<IReadOnlyList<DiagnosticTroubleCode>> ReadPendingDtcsAsync(CancellationToken ct = default)
         => throw new NotSupportedException();

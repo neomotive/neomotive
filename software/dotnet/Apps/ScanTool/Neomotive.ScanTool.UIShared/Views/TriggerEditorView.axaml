@@ -13,6 +13,7 @@
                 <TextBlock Classes="label" Text="Start" VerticalAlignment="Center" Margin="0,0,4,0" />
                 <Button Content="Manual"   Classes="tab" Classes.active="{Binding IsManual}"    Click="OnModeManual" />
                 <Button Content="Threshold" Classes="tab" Classes.active="{Binding IsThreshold}" Click="OnModeThreshold" />
+                <Button Content="Compound (AND)" Classes="tab" Classes.active="{Binding IsCompound}" Click="OnModeCompound" />
                 <Button Content="ECU wake" Classes="tab" Classes.active="{Binding IsBusWake}"   Click="OnModeBusWake" />
             </StackPanel>
 
@@ -22,8 +23,8 @@
                 <ScrollViewer Grid.Column="0">
                     <StackPanel Spacing="6" Margin="0,0,10,0">
 
-                        <StackPanel Spacing="6" IsVisible="{Binding IsThreshold}">
-                            <TextBlock Classes="label" Text="Signal" />
+                        <StackPanel Spacing="6" IsVisible="{Binding IsThresholdOrCompound}">
+                            <TextBlock Classes="label" Text="Signal 1" />
                             <ComboBox HorizontalAlignment="Stretch"
                                       ItemsSource="{Binding AvailableSignals}"
                                       SelectedItem="{Binding TriggerSignal}" />
@@ -57,14 +58,32 @@
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel Spacing="6" IsVisible="{Binding !IsThreshold}">
+                        <!-- Secondary Condition (Compound mode) -->
+                        <StackPanel Spacing="6" IsVisible="{Binding IsCompound}">
+                            <TextBlock Classes="label" Text="AND Signal 2" Margin="0,4,0,0" />
+                            <ComboBox HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding AvailableSignals}"
+                                      SelectedItem="{Binding TriggerSignal2}" />
+
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Button Content="Rises above" Classes="tab" Classes.active="{Binding Above2}" Click="OnAbove2" />
+                                <Button Content="Falls below" Classes="tab" Click="OnBelow2" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="6">
+                                <TextBox Grid.Column="0" Text="{Binding Value2}" Watermark="Threshold value" />
+                                <TextBlock Grid.Column="1" Classes="xs dim" VerticalAlignment="Center" Text="{Binding TriggerUnit2}" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Spacing="6" IsVisible="{Binding !IsThresholdOrCompound}">
                             <TextBlock Classes="label" Text="Pre-trigger (s)" />
                             <TextBox Text="{Binding PreTriggerSeconds}" />
                         </StackPanel>
 
                         <TextBlock Classes="label" Text="Stop" Margin="0,8,0,0" />
                         <CheckBox Content="Stop when a signal goes quiet" IsChecked="{Binding StopEnabled}"
-                                  ToolTip.Tip="Ends the capture once the signal has been active and then stays below the floor." />
+                                   ToolTip.Tip="Ends the capture once the signal has been active and then stays below the floor." />
                         <Grid ColumnDefinitions="*, *, *" ColumnSpacing="6" IsVisible="{Binding StopEnabled}">
                             <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
                                       ItemsSource="{Binding AvailableSignals}"
@@ -81,7 +100,7 @@
                 </ScrollViewer>
 
                 <!-- Keypad: text entry on the Pi touch panel is painful -->
-                <Border Grid.Column="1" IsVisible="{Binding IsThreshold}"
+                <Border Grid.Column="1" IsVisible="{Binding IsThresholdOrCompound}"
                         Background="#0E1117" BorderBrush="#1E2530" BorderThickness="1"
                         CornerRadius="4" Padding="6">
                     <StackPanel Spacing="6">
