@@ -7,3 +7,6 @@ obj/
 !software/libs/bin
 ai-ml/models/training/
 software/dotnet/publish/
+
+# Update packages produced by scripts/create-update-package.ps1
+dist/

@@ -1,0 +1,214 @@
+name: Release update package
+
+# Tag-driven releases for the two Pi appliances:
+#   can-scan-v1.1.0  -> ScanTool
+#   can-sim-v1.1.0   -> ModuleSimulator
+#
+# Produces the same artifact as scripts/create-update-package.ps1 does locally,
+# publishes it as a GitHub release asset, and folds its entry into the single
+# version-manifest.json that devices poll. See docs/updates/release-and-update.md.
+
+on:
+  push:
+    tags:
+      - 'can-scan-v*'
+      - 'can-sim-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g. can-scan-v1.1.0). Must already exist.'
+        required: true
+
+permissions:
+  contents: write
+
+# The manifest is read-modify-written, so two tags pushed together would race and
+# the loser's entry would vanish. Serialise every run of this workflow.
+concurrency:
+  group: release-update-package
+  cancel-in-progress: false
+
+env:
+  # Telematics.J1979 / Telematics.Uds are not published to NuGet, so they build
+  # from source. Everything else resolves from nuget.org at 3.0.0-beta.
+  # Prefer a full SHA over a branch name: a branch makes a rebuild of an old tag
+  # pick up newer library code and stop matching what was shipped.
+  MEADOW_FOUNDATION_REF: meadow-3.0
+  # Fixed release whose version-manifest.json asset is the stable URL devices poll.
+  MANIFEST_RELEASE_TAG: updates-latest
+
+jobs:
+  package:
+    # Windows, not ubuntu: create-update-package.ps1 builds its paths with
+    # backslashes, which are literal characters on Linux. linux-arm64 is a
+    # cross-compile target here, exactly as it is on the dev workstation.
+    runs-on: windows-latest
+
+    steps:
+      - name: Resolve tag, target and version
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          case "$TAG" in
+            can-scan-v*) TARGET=scantool  ;;
+            can-sim-v*)  TARGET=simulator ;;
+            *) echo "::error::Tag '$TAG' is not can-scan-v* or can-sim-v*"; exit 1 ;;
+          esac
+          VERSION="${TAG#can-scan-v}"; VERSION="${VERSION#can-sim-v}"
+          # The device compares this against the running assembly version, so a
+          # tag like v1.2-rc would silently never be offered as an update.
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$VERSION' from tag '$TAG' is not MAJOR.MINOR.PATCH"; exit 1
+          fi
+          PKG="neomotive-update-$VERSION-$TARGET-linux-arm64"
+          {
+            echo "tag=$TAG"
+            echo "target=$TARGET"
+            echo "version=$VERSION"
+            echo "package=$PKG"
+            echo "key=$TARGET-linux-arm64"
+          } >> "$GITHUB_OUTPUT"
+          echo "Building $TARGET $VERSION -> $PKG.zip"
+
+      # Both checkouts land under $GITHUB_WORKSPACE so that neomotive/ and
+      # wilderness/ are siblings — the layout the ..\..\..\..\..\..\wilderness\
+      # ProjectReferences in the csproj files expect.
+      - name: Checkout neomotive
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.meta.outputs.tag }}
+          path: neomotive
+
+      - name: Checkout Meadow.Foundation (Telematics.J1979 / Telematics.Uds)
+        uses: actions/checkout@v4
+        with:
+          repository: WildernessLabs/Meadow.Foundation
+          ref: ${{ env.MEADOW_FOUNDATION_REF }}
+          path: wilderness/Meadow.Foundation
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('neomotive/software/dotnet/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Build update package
+        shell: pwsh
+        working-directory: neomotive/software/dotnet
+        run: |
+          ./scripts/create-update-package.ps1 `
+            -Target ${{ steps.meta.outputs.target }} `
+            -Platform linux-arm64 `
+            -Version ${{ steps.meta.outputs.version }} `
+            -OutputDir "$env:GITHUB_WORKSPACE/dist"
+
+      # pwsh rather than bash for anything touching zips, hashes or JSON: git-bash
+      # on the Windows runner does not ship unzip, and jq is not guaranteed there.
+      - name: Verify package contents
+        shell: pwsh
+        working-directory: dist
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $zip = "${{ steps.meta.outputs.package }}.zip"
+          if (-not (Test-Path $zip)) { throw "$zip not produced" }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+          try {
+            $entry = $archive.GetEntry('update.json')
+            if (-not $entry) { throw "update.json missing from $zip" }
+            $reader = New-Object System.IO.StreamReader($entry.Open())
+            $manifest = $reader.ReadToEnd() | ConvertFrom-Json
+            $reader.Dispose()
+          } finally { $archive.Dispose() }
+
+          # update.json must carry the version the tag asked for — the applicator
+          # trusts it, and a mismatch would ship as the wrong version.
+          if ($manifest.version -ne '${{ steps.meta.outputs.version }}') {
+            throw "update.json says $($manifest.version), tag says ${{ steps.meta.outputs.version }}"
+          }
+          if ($manifest.files.Count -lt 1) { throw "update.json lists no files" }
+          Write-Host "$zip  $($manifest.files.Count) files  v$($manifest.version)"
+
+      - name: Publish release
+        shell: bash
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          PKG: ${{ steps.meta.outputs.package }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$REPO" --title "$TAG" --generate-notes
+          gh release upload "$TAG" "$PKG.zip" --repo "$REPO" --clobber
+
+      # Devices poll one fixed URL. Each release merges its own entry into that
+      # manifest rather than replacing it, so the other target's entry survives.
+      - name: Merge entry into the published version manifest
+        shell: pwsh
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo        = '${{ github.repository }}'
+          $tag         = '${{ steps.meta.outputs.tag }}'
+          $pkg         = '${{ steps.meta.outputs.package }}'
+          $key         = '${{ steps.meta.outputs.key }}'
+          $version     = '${{ steps.meta.outputs.version }}'
+          $manifestTag = '${{ env.MANIFEST_RELEASE_TAG }}'
+
+          gh release view $manifestTag --repo $repo *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $manifestTag --repo $repo --title 'Update manifest (rolling)' `
+              --notes 'Rolling pointer devices poll for updates. Managed by .github/workflows/release.yml - do not edit by hand.'
+            if ($LASTEXITCODE -ne 0) { throw 'could not create manifest release' }
+          }
+
+          # Start from whatever is published so the other target's entry survives.
+          Remove-Item version-manifest.json -ErrorAction SilentlyContinue
+          gh release download $manifestTag --repo $repo -p version-manifest.json -D . *> $null
+          $manifest = if (Test-Path version-manifest.json) {
+            $raw = (Get-Content version-manifest.json -Raw).Trim()
+            if ($raw) { $raw | ConvertFrom-Json -AsHashtable } else { @{} }
+          } else { @{} }
+
+          # The hash the device verifies the download against — recomputed from the
+          # artifact just uploaded, never carried over from the local script's output.
+          $manifest[$key] = [ordered]@{
+            version = $version
+            url     = "https://github.com/$repo/releases/download/$tag/$pkg.zip"
+            sha256  = (Get-FileHash "$pkg.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content version-manifest.json -Encoding utf8
+          Get-Content version-manifest.json
+
+          gh release upload $manifestTag version-manifest.json --repo $repo --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'manifest upload failed' }
+
+      - name: Summary
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+          MANIFEST_TAG: ${{ env.MANIFEST_RELEASE_TAG }}
+        run: |
+          {
+            echo "### ${{ steps.meta.outputs.target }} ${{ steps.meta.outputs.version }} released"
+            echo ""
+            echo "Devices pointed at this URL will pick it up on the next check:"
+            echo ""
+            echo '```'
+            echo "https://github.com/$REPO/releases/download/$MANIFEST_TAG/version-manifest.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
