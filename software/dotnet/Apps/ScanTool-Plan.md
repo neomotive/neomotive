@@ -285,9 +285,16 @@ supervises rather than `exec`s, and `publish-scantool-pi.ps1` deploys into the s
 workstation deploy remains the bootstrap path — a device on pre-update software has no updater to
 invoke — but field updates no longer need one.
 
+**USB on ScanTool (2026-09-09):** the appliance image auto-mounts nothing, and
+`HasRemovableDrive()` accepts only `/media/usb`, so USB updates were inert on that device.
+`scripts/pi/setup-usb-updates.sh` installs the udev rule and mount helper; it must run with the
+read-only overlay lifted or it lands in RAM. `Neomotive.Update.Tests` covers the version gate
+and hash verification.
+
 **Remaining:**
 - Hardening: HTTPS + package signing for cloud distribution
 - Automated health-check rollback (currently manual via slot swap)
+- Verify the ScanTool USB path against real hardware — never exercised on a device
 
 ---
 

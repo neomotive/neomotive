@@ -44,7 +44,15 @@ The zip is written to `dist/` and is ready to copy to USB.
 
 ## Step 2 — Insert the USB drive
 
-Insert the drive into any USB port on the Pi while the app is running. The Pi mounts USB drives under `/media/pi/<label>/`.
+Insert the drive into any USB port on the Pi while the app is running. A udev rule
+mounts it read-only at **`/media/usb`** — that exact path matters:
+`UsbUpdateSource.HasRemovableDrive()` checks `/proc/mounts` for it and returns
+before scanning anywhere else, so a drive auto-mounted somewhere like
+`/media/pi/<label>/` is never looked at.
+
+The rule comes from `setup-autostart.sh` on the simulator and from
+`setup-usb-updates.sh` on the ScanTool appliance. If nothing happens when you
+insert a drive, check that first: `findmnt /media/usb`.
 
 Within ~5 seconds the Config tab → SOFTWARE UPDATES section shows:
 

@@ -6,4 +6,11 @@
     <RootNamespace>Neomotive.Update</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- IsNewer/Normalize are the version gate every update passes through. They
+         are internal because nothing outside the library should call them, but
+         they are exactly what needs test coverage. -->
+    <InternalsVisibleTo Include="Neomotive.Update.Tests" />
+  </ItemGroup>
+
 </Project>

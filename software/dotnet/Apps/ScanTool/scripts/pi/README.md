@@ -130,6 +130,38 @@ ls -d /data            # writable partition mounted
 > If boot logs complain about a duplicate `vc4-kms-v3d` overlay, the stock
 > `config.txt` already loads it — remove ours from `hardware_overlays`.
 
+## USB update support (one-time)
+
+`UsbUpdateSource.HasRemovableDrive()` tests `/proc/mounts` for `/media/usb` and
+returns before scanning anything else, and this image has no udisks2 and no
+desktop session — so nothing mounts a stick and inserting one does nothing.
+`setup-usb-updates.sh` installs the udev rule and mount helper that fix that.
+
+The rootfs is a read-only overlay, so it has to go on with the overlay lifted or
+it lives in RAM until the next reboot:
+
+```powershell
+scp Apps/ScanTool/scripts/pi/neomotive-usb-mount.sh `
+    Apps/ScanTool/scripts/pi/setup-usb-updates.sh pi@pi-appliance.local:/tmp/
+```
+
+```bash
+ssh -t pi@pi-appliance.local
+sudo raspi-config nonint disable_overlayfs && sudo reboot
+# reconnect
+sudo chmod +x /tmp/setup-usb-updates.sh && sudo /tmp/setup-usb-updates.sh
+sudo raspi-config nonint enable_overlayfs && sudo reboot
+```
+
+The script refuses to run if `/usr/local/bin` is not writable, so a forgotten
+overlay fails loudly instead of silently installing into RAM. Verify with a stick
+inserted: `findmnt /media/usb` and `journalctl -t neomotive-usb-mount`.
+
+`neomotive-usb-mount.sh` is the same helper the simulator installs from
+`setup-autostart.sh`. Two copies, one per device image — keep them in step.
+
+Network updates need none of this: they default to the GitHub release manifest.
+
 ## Build & deploy
 
 ```powershell

@@ -855,7 +855,22 @@ already flagged. CI clones the remote, so it stays broken until those land on `m
 produced no release (the R2 failure) — remote tag deletion was blocked, so the fixed builds
 went out as the next patch instead.
 
+- [x] **R7** ScanTool USB updates. `HasRemovableDrive()` only accepts `/media/usb` in
+  `/proc/mounts`, and the appliance image has no udisks2 or desktop session — so a stick was
+  never even scanned. Added `scripts/pi/neomotive-usb-mount.sh` (same helper the simulator
+  installs) and `scripts/pi/setup-usb-updates.sh`, which installs it plus the udev rule. The
+  rootfs is a read-only overlay, so the installer refuses to run unless `/usr/local/bin` is
+  writable — a forgotten `disable_overlayfs` would otherwise install into RAM and look fine
+  until the next reboot.
+- [x] **R8** `.gitattributes` pins `*.sh` to LF. These scripts are scp'd straight from the
+  working tree; a CRLF checkout gives "bad interpreter" on the device.
+- [x] **R9** Fixed `docs/updates/update-usb-pi.md`, which claimed drives mount at
+  `/media/pi/<label>/` — a path the `HasRemovableDrive()` gate rejects.
+- [x] **R10** `Neomotive.Update.Tests` (39 tests, in the ScanTool slnx). Covers `Normalize`
+  and `IsNewer` (including the R5 git-sha regression), `UpdateService` manifest defaulting and
+  version normalization, and `UpdatePackage` hash verification — that a mismatch throws *and*
+  deletes staging, since the applicator promotes whatever staging holds.
+
 **Not done:** neither device was reachable this session (pi-appliance powered off; the
 simulator at 192.168.4.31 refused key auth for `pi`), so nothing was verified on hardware.
-No test project covers `Neomotive.Update` — R5 and R6 are the kind of bug a few unit tests
-around `IsNewer`/`Normalize` would have caught.
+R7 in particular is untested against a real stick.

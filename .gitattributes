@@ -1,0 +1,4 @@
+# Shell scripts are scp'd straight from the working tree to Linux devices.
+# A CRLF checkout on Windows makes them fail with "bad interpreter", so pin LF
+# regardless of the local core.autocrlf setting.
+*.sh text eol=lf
