@@ -258,6 +258,13 @@ a `did,name` CSV) into the ScanTool config directory, and `Export` writes the me
 - Simulator: Updates section in `ConfigView`; same `UpdateService` wiring in Desktop + RaspberryPi
 - Pi scripts: `xinitrc` launches `app-current/simulator`; `setup-autostart.sh` creates slot dirs; `deployment.md` updated
 - `create-update-package.ps1` — publishes self-contained, hashes files, writes `update.json`, zips, updates `version-manifest.json`
+- CI releases (2026-09-09): `.github/workflows/release.yml` turns a `can-scan-vX.Y.Z` /
+  `can-sim-vX.Y.Z` tag into a published package and merges its entry into a single rolling
+  `updates-latest/version-manifest.json`. Devices poll that one URL forever.
+- Internet-by-default (2026-09-09): `UpdateService.DefaultManifestUrl` points at that manifest,
+  so a stock device updates from GitHub with no per-device config. `updateServerUrl` in
+  `neomotive.config.json` is an override for bench testing against a local server.
+- Updates screen shows the installed version and the manifest URL it will query.
 
 **Package format:**
 ```

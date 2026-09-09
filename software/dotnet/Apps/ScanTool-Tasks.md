@@ -734,22 +734,128 @@ the zip is hash-verified end to end, but the hashes come from that manifest.
 
 ---
 
-## Group AA — Network status line on the Updates tab (2026-09-09)
+## Group AA — Tag-driven release CI (2026-09-09)
+
+Releases were a local PowerShell script on one workstation, which does not scale and makes a release
+unreproducible by anyone else. The blocker was never the packaging step — it was that the build
+depended on ~60 sibling clones under `F:\repos\wilderness`, several on branches that existed only on
+that disk.
+
+- [x] **AA1** Meadow dependencies moved from `ProjectReference` into `wilderness\` to `PackageReference`
+  at `3.0.0-beta` across 6 csprojs in the release path. Renames worth knowing: `Meadow.Core` ships as
+  the **`Meadow`** package in 3.0, and `Meadow.Foundation.Core` as **`Meadow.Foundation`**.
+  `Meadow.Avalonia` already pins Avalonia 12.0.4, matching ours.
+- [x] **AA2** `Telematics.J1979` / `Telematics.Uds` are not published to NuGet, so they stay source
+  references; CI clones `Meadow.Foundation` alone for them. Both were verified to compile against the
+  published `Meadow.Contracts 3.0.0-beta`, so their in-repo `ProjectReference` to the sibling Contracts
+  checkout was switched to a package reference — otherwise consumers bind two copies of Contracts, one
+  from source and one resolved transitively from NuGet.
+- [x] **AA3** `Meadow.Foundation/Source/Directory.Packages.props` guarded its import of the sibling
+  Contracts repo with `Exists()` and now sets `ManagePackageVersionsCentrally` itself plus a
+  `PackageVersion` for Meadow.Contracts, so the repo builds standalone in CI.
+- [x] **AA4** `.github/workflows/release.yml` — triggers on `can-scan-v*` / `can-sim-v*`, derives target
+  and version from the tag, checks out neomotive and Meadow.Foundation as siblings so the relative
+  ProjectReference paths resolve, packages, verifies `update.json` matches the tag, and publishes.
+  Runs on `windows-latest`: `create-update-package.ps1` builds paths with backslashes, which are
+  literal characters on Linux. Zip/hash/JSON steps are pwsh, not bash — git-bash on the Windows runner
+  ships no `unzip` and no guaranteed `jq`.
+- [x] **AA5** Devices poll one permanent URL: the `version-manifest.json` asset of a rolling
+  `updates-latest` release. Each tag merges only its own `{target}-linux-arm64` key, so releasing one
+  app never un-publishes the other. A concurrency group serialises runs so two tags cannot race the
+  shared manifest. Repo is public, so devices download unauthenticated.
+- [x] **AA6** Verified: full package build from NuGet refs (280 files, `update.json` v-matched,
+  `app/scantool` present), manifest merge round-trip keeps both keys, tag parser rejects `can-scan-v1.2`
+  and `v1.0.0`, 173 ScanTool.Core tests green.
+
+**Blocked until pushed:** the three `Meadow.Foundation` edits in AA2/AA3 are uncommitted locally. CI
+clones the remote, so it will fail with NU1008 until they land on `meadow-3.0`.
+
+**Left on source references deliberately:** `InputBoardTest` (uses `PushButton.ConfirmationDelay`,
+which exists in Foundation source but not in the published 3.0.0-beta package). Not in the release path.
+`SignCamera.Pi` was also on this list until Group AC retargeted it to net10.0.
+
+
+---
+
+## Group AB — Network status line on the Updates tab (2026-09-09)
 
 The Updates tab asks the user to press "Check for Updates" but told them nothing about whether the
 device was on a network at all, so a failed check was indistinguishable from an unplugged cable. Both
 apps now carry a shared status line at the bottom of that tab.
 
-- [x] **AA1** `Shared/Neomotive.UI.Styles/Controls/NetworkStatusViewModel.cs` — polls
+- [x] **AB1** `Shared/Neomotive.UI.Styles/Controls/NetworkStatusViewModel.cs` — polls
   `NetworkInterface.GetAllNetworkInterfaces()` every 5s. Three states: `Connected` (link up with a
   routable IPv4), `NoAddress` (link up, no lease or only 169.254.x.x), `Disconnected` (no non-loopback
   link). Prefers wired over Wi-Fi when both are up; exposes hostname, IP, and `IsWireless`.
-- [x] **AA2** `Shared/Neomotive.UI.Styles/Controls/NetworkStatusBar.axaml` — icon (RJ45 plug or Wi-Fi
+- [x] **AB2** `Shared/Neomotive.UI.Styles/Controls/NetworkStatusBar.axaml` — icon (RJ45 plug or Wi-Fi
   arcs, slashed when disconnected), hostname, IP when assigned, and the state spelled out. Colour is
   green/amber/red via Avalonia conditional classes. Self-contained: it sets its own DataContext, so a
   host just places `<controls:NetworkStatusBar />`. Polling starts/stops with visual-tree attachment.
-- [x] **AA3** Both `UpdatesView.axaml` files restructured to `Grid RowDefinitions="*, Auto"` with the
+- [x] **AB3** Both `UpdatesView.axaml` files restructured to `Grid RowDefinitions="*, Auto"` with the
   existing content in a `ScrollViewer` and the bar docked full-width at the bottom.
 
 **Touch-first:** the state text is always visible — the Pi has no hover, so the icon colour is never
 the only carrier of meaning.
+
+## Group AC — Floating Meadow versions and SignCamera on net10.0 (2026-09-09)
+
+Every Meadow `PackageReference` was pinned at `3.0.0-beta`, so each Meadow release meant hand-editing
+eleven csproj files.
+
+- [x] **AC1** All Meadow `PackageReference` versions floated to `3.*-*` across ModuleSimulator
+  (`InputBoardTest`, Desktop, RaspberryPi), ScanTool (Desktop, RaspberryPi), `Neomotive.Can.Hardware`,
+  `SignCamera.Pi`, and `Neomotive.Core`. J1979/UDS are unaffected — they come in as ProjectReferences
+  to the wilderness checkout, never as packages.
+- [x] **AC2** `Meadow.Foundation/Source/Directory.Packages.props` (wilderness): the central
+  `Meadow.Contracts` pin floated to `3.*-*`, which required
+  `<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>` — CPM rejects a
+  floating `PackageVersion` without it (NU1011).
+- [x] **AC3** SignCamera retargeted net8.0 → net10.0: all four app projects plus the three libraries
+  only it consumes (`Neomotive.Camera.USB`, `Neomotive.Camera.VideoFile`, `Neomotive.SpeedLimit`).
+  This cleared the pre-existing NU1201 break against the net10.0 `Neomotive.Core`.
+- [x] **AC4** OpenCvSharp4 aligned at `4.13.0.20260602` everywhere. The bump to net10.0 let SignCamera
+  finally resolve `Neomotive.Core`, which wanted 4.13 while the SignCamera projects and camera
+  libraries asked for 4.10 — a downgrade (NU1605) that the framework mismatch had been hiding.
+
+**Verified:** ScanTool Pi + Desktop, ModuleSimulator Pi + Desktop, and all four SignCamera projects
+build at 0 errors. `Neomotive.TransferCase.Core` was left on net8.0 / `Meadow.Foundation 2.4.0` — no
+SignCamera project references it.
+
+**Still uncommitted in wilderness:** AC2 adds to the local-only `Meadow.Foundation` edits that Group AA
+already flagged. CI clones the remote, so it stays broken until those land on `meadow-3.0`.
+
+---
+
+## Group R — CI releases and internet updates
+
+- [x] **R1** `.github/workflows/release.yml` — tag-driven release. `can-scan-vX.Y.Z` /
+  `can-sim-vX.Y.Z` build the linux-arm64 package via `scripts/create-update-package.ps1`,
+  publish the zip to that tag's release, and merge the `{target}-linux-arm64` entry into the
+  rolling `updates-latest/version-manifest.json`. Windows runner (the script's paths are
+  backslashed); concurrency group serialises runs so the shared manifest cannot race.
+- [x] **R2** CI checkout set widened to four wilderness repos. Building Telematics.J1979/Uds
+  from source needs `Meadow.Contracts` (imported by Meadow.Foundation's
+  `Directory.Packages.props`, referenced by Foundation.Core and both drivers) plus
+  `Meadow.Logging` and `Meadow.Units`. All four at `MEADOW_REF` (`meadow-3.0`). The first
+  tagged runs (`can-scan-v1.1.0`, `can-sim-v1.3.0`) failed on MSB4019 for exactly this.
+- [x] **R3** `UpdateService.DefaultManifestUrl` — devices check the GitHub manifest with no
+  configuration. `neomotive.config.json`'s `updateServerUrl` is now only an override, never
+  the on switch.
+- [x] **R4** Updates screen leads with the installed version (`CurrentVersion`) and the source
+  URL; button relabelled "Check Internet for Updates". Both ScanTool and ModuleSimulator.
+- [x] **R5** **Bug:** `UsbUpdateSource.IsNewer` fed `AssemblyInformationalVersion` straight to
+  `Version.TryParse`. .NET 8+ appends `+<git sha>` for any build inside a git repo — every CI
+  build — so the parse failed and the device would have refused *every* update. Added
+  `Normalize()`; `UpdateService` normalizes once at construction.
+- [x] **R6** **Bug:** `NetworkUpdateSource` swallowed unreachable-host, timeout,
+  malformed-JSON, download and hash-mismatch failures into `null`, which the UI rendered as
+  "You are up to date." These throw now; `UpdateService` already converts to `Failed`.
+
+**Shipped:** `can-sim-v1.3.1`, `can-scan-v1.1.1`. The `-v1.1.0` / `-v1.3.0` tags exist but
+produced no release (the R2 failure) — remote tag deletion was blocked, so the fixed builds
+went out as the next patch instead.
+
+**Not done:** neither device was reachable this session (pi-appliance powered off; the
+simulator at 192.168.4.31 refused key auth for `pi`), so nothing was verified on hardware.
+No test project covers `Neomotive.Update` — R5 and R6 are the kind of bug a few unit tests
+around `IsNewer`/`Normalize` would have caught.
