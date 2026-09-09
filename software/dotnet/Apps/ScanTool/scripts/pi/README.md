@@ -12,7 +12,7 @@ panel and a Waveshare dual-MCP2515 CAN HAT.
 | CAN | PCAN USB | `WaveshareDualCanHat` → CAN0 (MCP2515 over SPI0) |
 | Rendering | Win32 window | **Avalonia DRM/KMS** — no X server |
 | Lifetime | `IClassicDesktopStyleApplicationLifetime` (MainWindow) | `ISingleViewApplicationLifetime` (MainView) |
-| Updates | `UpdateService` A/B slots + USB watcher | rsync a new payload to `/data/app` |
+| Updates | `UpdateService` A/B slots + USB watcher | same — A/B slots under `/data/app`, see [release-and-update.md](../../../docs/updates/release-and-update.md) |
 
 The UI itself is unchanged: both hosts render the same `ScanToolView` from
 `Neomotive.ScanTool.UIShared`, authored at 800×480 and wrapped in a `Viewbox`.
@@ -140,14 +140,19 @@ ls -d /data            # writable partition mounted
 
 The payload lands in `publish\scantool-pi\` and contains:
 
-- `scantool` — self-contained single-file linux-arm64 binary
+- `app-current\scantool` — self-contained single-file linux-arm64 binary, in its
+  A/B slot so an in-app update can swap slots without touching the running file
 - `run` — the appliance entrypoint `app-launch` execs
-- `neomotive.config.json`
+- `neomotive.config.json.default` — seed for the device-local config
 
 `-Deploy` packs the payload into a single `.tar.gz`, `scp`s it to `/tmp`, then
 extracts it into `/data/app`, sets the exec bit on `run`, and restarts
 `app.service`. Two password prompts (one per connection); pass
 `-TargetHost pi@192.168.4.41` to bypass mDNS.
+
+The config is staged as `.default` and copied to `neomotive.config.json` only if
+that file is absent, so a deploy never resets a device's `updateServerUrl`. The
+deploy also removes any pre-A/B binary left loose at `/data/app/scantool`.
 
 It uses **native Windows OpenSSH** (`scp`/`ssh` in `C:\Windows\System32\OpenSSH`)
 and the built-in `tar.exe` — no git-bash, no WSL, no rsync.
@@ -169,7 +174,7 @@ ELF file (it infers the bit from content: `#!` reads as 755, ELF as 644). So
 neither `run` nor `scantool` can be made executable on the Windows side.
 
 Both are therefore fixed **on the device**: the deploy step chmods `run`, and
-`run` chmods `scantool` before exec'ing it. If you ever copy the payload by hand,
+`run` chmods `scantool` before launching it. If you ever copy the payload by hand,
 `chmod +x /data/app/run` is the one step you must not skip — `app-launch` looks
 for an executable `run` and silently does nothing without it.
 

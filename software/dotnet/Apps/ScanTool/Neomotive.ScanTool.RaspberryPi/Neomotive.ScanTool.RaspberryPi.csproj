@@ -18,10 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\implementations\linux\Meadow.Linux\Meadow.Linux.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.Mcp2515\Driver\ICs.CAN.Mcp2515.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Logging\Source\Meadow.Logging.LogProviders\Driver\Meadow.Logging.LogProviders.csproj" />
+    <PackageReference Include="Meadow.Avalonia" Version="3.*-*" />
+    <PackageReference Include="Meadow.Linux" Version="3.*-*" />
+    <PackageReference Include="Meadow.Foundation.ICs.CAN.Mcp2515" Version="3.*-*" />
+    <PackageReference Include="Meadow.Logging.LogProviders" Version="3.*-*" />
     <ProjectReference Include="..\..\Shared\Neomotive.Can.Hardware\Neomotive.Can.Hardware.csproj" />
     <ProjectReference Include="..\Neomotive.ScanTool.UIShared\Neomotive.ScanTool.UIShared.csproj" />
   </ItemGroup>

@@ -11,6 +11,7 @@ using Meadow.Logging;
 using Neomotive.Can.Hardware;
 using Neomotive.ScanTool.Core;
 using Neomotive.ScanTool.UI.Views;
+using Neomotive.Update;
 using Neomotive.Vin.Contracts;
 using Neomotive.Vin.Core;
 using Neomotive.Vin.Data;
@@ -19,6 +20,8 @@ using Neomotive.Vin.Http;
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Neomotive.ScanTool.UI;
@@ -31,6 +34,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
     // assigned later from MeadowInitialize once the CAN bus is known.
     private ScanToolView? _rootView;
     private WaveshareDualCanHat? _hat;
+    private UpdateService? _updateService;
 
     public override void Initialize()
     {
@@ -48,9 +52,18 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
             Resolver.Log.AddProvider(new UdpLogger());
         Resolver.Log.LogLevel = LogLevel.Trace;
 
-        // Under the Pi Appliance Kit the app lives at /data/app, which is the
-        // only writable location on the device.
-        var baseDir = AppContext.BaseDirectory;
+        // Under the Pi Appliance Kit the payload lives under /data/app, which is
+        // the only writable location on the device. The binary itself runs from
+        // the A/B slot /data/app/app-current, so baseDir — the root that holds
+        // app-current/, app-previous/, config/, data/ and update-state.json — is
+        // one level up. Older payloads ran straight out of /data/app; fall back
+        // to that so a device that has not been migrated still starts.
+        var appDir = AppContext.BaseDirectory;
+        var baseDir = Path.GetFileName(appDir.TrimEnd(Path.DirectorySeparatorChar))
+                          .Equals("app-current", StringComparison.OrdinalIgnoreCase)
+            ? Path.GetDirectoryName(appDir.TrimEnd(Path.DirectorySeparatorChar))!
+            : appDir;
+
         Directory.CreateDirectory(Path.Combine(baseDir, "data"));
         Directory.CreateDirectory(Path.Combine(baseDir, "config"));
 
@@ -110,9 +123,19 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
             new NhtsaClient(new HttpClient { BaseAddress = vinOpts.NhtsaBaseAddress }),
             vinOpts);
 
-        // No UpdateService on the appliance: updates are delivered by rsyncing a
-        // new payload into /data/app (see scripts/pi/README.md), not A/B slots.
-        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder)
+        // Updates: A/B slots under baseDir, same model as the simulator. The USB
+        // watcher polls for a neomotive-update*.zip on removable media; the
+        // network source is only live once neomotive.config.json names a server.
+        var currentVersion = typeof(App).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "0.0.0";
+
+        _updateService = new UpdateService("scantool", currentVersion, baseDir);
+        _updateService.AcknowledgeStartup();
+        _updateService.Configure(LoadUpdateServerUrl(baseDir));
+        _updateService.StartUsbWatcher();
+
+        var vm = new MainWindowViewModel(scanner, loggingBus, vinDecoder, _updateService)
         {
             // baseDir is /data/app on the appliance, so this lands captures inside the only
             // writable location on the device.
@@ -130,6 +153,29 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         });
 
         return base.MeadowInitialize();
+    }
+
+    // Device-local, and deliberately outside app-current/ so an update never
+    // overwrites the server this device was pointed at. Null (the shipped
+    // default) leaves the network source unconfigured — "Check for Updates"
+    // then reports no server rather than failing a download.
+    private static string? LoadUpdateServerUrl(string baseDir)
+    {
+        var path = Path.Combine(baseDir, "neomotive.config.json");
+        if (!File.Exists(path)) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            return doc.RootElement.TryGetProperty("updateServerUrl", out var el)
+                   && el.ValueKind == JsonValueKind.String
+                ? el.GetString()
+                : null;
+        }
+        catch (JsonException ex)
+        {
+            Resolver.Log.Warn($"Ignoring malformed neomotive.config.json: {ex.Message}");
+            return null;
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()

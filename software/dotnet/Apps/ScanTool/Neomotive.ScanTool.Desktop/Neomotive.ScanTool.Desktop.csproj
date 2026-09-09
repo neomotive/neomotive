@@ -20,8 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Neomotive.ScanTool.UIShared\Neomotive.ScanTool.UIShared.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\implementations\windows\Meadow.Windows\Meadow.Windows.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj" />
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.PCanBasic\Driver\ICs.CAN.PCanBasic.csproj" />
+    <PackageReference Include="Meadow.Windows" Version="3.*-*" />
+    <PackageReference Include="Meadow.Avalonia" Version="3.*-*" />
+    <PackageReference Include="Meadow.Foundation.ICs.CAN.PCanBasic" Version="3.*-*" />
   </ItemGroup>
 </Project>

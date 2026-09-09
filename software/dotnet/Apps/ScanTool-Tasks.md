@@ -696,3 +696,60 @@ because delivery is asynchronous; a loopback bus does not. Subscribe first, then
 **Known, not fixed:** `IsoTp.Encode` numbers the first consecutive frame `0x20` instead of `0x21`.
 Our client ignores sequence numbers so the bench passes, but a third-party scan tool would reject
 the frame.
+
+## Group Z — In-app network updates on the ScanTool appliance (2026-09-09)
+
+The Updates tab shipped on both devices, but only the simulator could use it: `ScanTool.RaspberryPi`
+passed no `UpdateService` to the VM, so `CanCheckUpdate` was false and "Check for Updates" was a
+permanently disabled button. Deliberate at the time — the appliance was deployed by pushing a whole
+payload from a workstation — but it left the tab lying about what it could do.
+
+- [x] **Z1** `Neomotive.ScanTool.RaspberryPi/App.axaml.cs` constructs `UpdateService("scantool", …)`,
+  acknowledges startup, configures the network source from `neomotive.config.json` and starts the USB
+  watcher — mirroring the simulator head. `baseDir` resolves one level up when the binary runs from
+  `app-current/`, falling back to `AppContext.BaseDirectory` so an unmigrated device still starts.
+  No csproj change: `UIShared` already referenced `Neomotive.Update`.
+- [x] **Z2** A/B layout under `/data/app` (the rootfs is a read-only overlay, so `/opt/neomotive` is
+  not writable). `scripts/pi/run` resolves `app-current/scantool`, and `publish-scantool-pi.ps1`
+  publishes into the slot, seeds `neomotive.config.json` only when absent (a deploy used to reset
+  every device's `updateServerUrl` to null) and removes the stale pre-A/B binary.
+- [x] **Z3** Restart protocol. `UpdateService.SelfRestart` used `Process.Start(Environment.ProcessPath)`,
+  which after the swap points into `app-previous`, and on the Pi orphans the child into a session with
+  no display — so the "app restarts automatically" the docs promised never happened on either device.
+  Replaced with `Environment.Exit(42)` (`UpdateService.RestartExitCode`); both launchers now supervise
+  in a loop and relaunch on that code, passing any other exit through unchanged.
+- [x] **Z4** Simulator `.xinitrc` given the same loop — it `exec`d the app, so a self-restart ended the
+  X session and left a black screen until someone power-cycled the Pi.
+- [x] **Z5** `docs/updates/release-and-update.md` — the release and update process end to end: on-device
+  layout, both delivery paths, cutting and serving a release, the version-must-be-higher rule, the
+  bootstrap hop for devices predating the updater, and a troubleshooting table.
+
+**Bootstrap constraint (not a bug):** network update is a property of the *running* build. Devices on
+older software must take one manual deploy — `publish-scantool-pi.ps1 -Deploy`, or a copy into
+`/opt/neomotive/app-current` plus the new `.xinitrc` — before they can self-update.
+
+**Not fixed:** no automatic health-check rollback. A package that starts and crashes stays current;
+recovery is a manual slot swap. The version manifest is unsigned, so plain HTTP trusts the network —
+the zip is hash-verified end to end, but the hashes come from that manifest.
+
+---
+
+## Group AA — Network status line on the Updates tab (2026-09-09)
+
+The Updates tab asks the user to press "Check for Updates" but told them nothing about whether the
+device was on a network at all, so a failed check was indistinguishable from an unplugged cable. Both
+apps now carry a shared status line at the bottom of that tab.
+
+- [x] **AA1** `Shared/Neomotive.UI.Styles/Controls/NetworkStatusViewModel.cs` — polls
+  `NetworkInterface.GetAllNetworkInterfaces()` every 5s. Three states: `Connected` (link up with a
+  routable IPv4), `NoAddress` (link up, no lease or only 169.254.x.x), `Disconnected` (no non-loopback
+  link). Prefers wired over Wi-Fi when both are up; exposes hostname, IP, and `IsWireless`.
+- [x] **AA2** `Shared/Neomotive.UI.Styles/Controls/NetworkStatusBar.axaml` — icon (RJ45 plug or Wi-Fi
+  arcs, slashed when disconnected), hostname, IP when assigned, and the state spelled out. Colour is
+  green/amber/red via Avalonia conditional classes. Self-contained: it sets its own DataContext, so a
+  host just places `<controls:NetworkStatusBar />`. Polling starts/stops with visual-tree attachment.
+- [x] **AA3** Both `UpdatesView.axaml` files restructured to `Grid RowDefinitions="*, Auto"` with the
+  existing content in a `ScrollViewer` and the bar docked full-width at the bottom.
+
+**Touch-first:** the state text is always visible — the Pi has no hover, so the icon colour is never
+the only carrier of meaning.

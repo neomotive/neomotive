@@ -19,4 +19,13 @@ unclutter -idle 0 -root &
 # The device isn't always present at the moment X starts during early boot.
 until [ -e /dev/spidev0.0 ]; do sleep 0.2; done
 
-exec /opt/neomotive/app-current/simulator > /tmp/simulator.log 2>&1
+# Supervise rather than exec. After an in-app update the app has already swapped
+# the A/B slots and exits 42 to ask for a relaunch; exec would end the X session
+# instead, leaving a black screen until someone power-cycles the Pi. Looping here
+# keeps X alive and starts the newly promoted app-current binary. Any other exit
+# code is the app's own and ends the session as before.
+while :; do
+    /opt/neomotive/app-current/simulator >> /tmp/simulator.log 2>&1 && rc=0 || rc=$?
+    [ "$rc" -eq 42 ] || exit "$rc"
+    echo "xinitrc: restarting after update" >> /tmp/simulator.log
+done

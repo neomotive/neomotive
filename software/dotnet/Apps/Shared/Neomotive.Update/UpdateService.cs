@@ -171,18 +171,21 @@ public sealed class UpdateService : IDisposable
     /// </summary>
     public void AcknowledgeStartup() => _applicator.ClearPendingState();
 
+    /// <summary>
+    /// Exit code the launcher watches for. Both Pi launchers (ScanTool's `run`
+    /// and the simulator's .xinitrc) supervise the app in a loop and relaunch on
+    /// this code; anything else is treated as the app's own exit and passed on.
+    /// </summary>
+    public const int RestartExitCode = 42;
+
     private static void SelfRestart()
     {
-        var exe = Environment.ProcessPath
-            ?? System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-        if (exe != null)
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe)
-            {
-                UseShellExecute = true
-            });
-        }
-        Environment.Exit(0);
+        // Deliberately not Process.Start: the slot swap has already happened, so
+        // Environment.ProcessPath now points into app-previous, and a child
+        // spawned from a dying process on the Pi is orphaned into a session with
+        // no display. Exiting with an agreed code lets the launcher — which
+        // still owns the tty/DRM handle — start the new binary cleanly.
+        Environment.Exit(RestartExitCode);
     }
 
     public void Dispose()

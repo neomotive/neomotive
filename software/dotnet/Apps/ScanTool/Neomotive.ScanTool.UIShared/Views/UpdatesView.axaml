@@ -3,9 +3,12 @@
              xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
              x:Class="Neomotive.ScanTool.UI.Views.UpdatesView"
              x:DataType="local:MainWindowViewModel"
-             Padding="20,16">
+             xmlns:controls="clr-namespace:Neomotive.UI.Controls;assembly=Neomotive.UI.Styles">
 
-    <StackPanel Spacing="16">
+    <Grid RowDefinitions="*, Auto">
+
+      <ScrollViewer Grid.Row="0">
+        <StackPanel Spacing="16" Margin="20,16">
 
         <TextBlock Classes="heading" Text="SOFTWARE UPDATES" />
 
@@ -40,6 +43,12 @@
                 IsEnabled="{Binding CanApplyUsbUpdate}"
                 Click="OnApplyUsbUpdate" />
 
-    </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Network status: connection state, hostname, and IP when assigned -->
+      <controls:NetworkStatusBar Grid.Row="1" />
+
+    </Grid>
 
 </UserControl>

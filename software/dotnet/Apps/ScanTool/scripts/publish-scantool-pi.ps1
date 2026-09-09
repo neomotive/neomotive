@@ -13,6 +13,10 @@ $Dotnet     = "F:\repos\neomotive\software\dotnet"
 $ScanTool   = "$Dotnet\Apps\ScanTool"
 $Project    = "$ScanTool\Neomotive.ScanTool.RaspberryPi\Neomotive.ScanTool.RaspberryPi.csproj"
 $OutDir     = "$Dotnet\publish\scantool-pi"
+# The binary lives in the A/B slot app-current/; `run` and the device-local
+# config sit alongside it at the payload root so an in-app slot swap never
+# touches them. See docs/updates/release-and-update.md.
+$SlotDir    = "$OutDir\app-current"
 $PiAssets   = "$ScanTool\scripts\pi"
 $RemoteDir  = "/data/app"
 
@@ -57,7 +61,7 @@ dotnet publish $Project `
   -p:PublishReadyToRun=true `
   -p:PublishTrimmed=false `
   -m:1 `
-  -o $OutDir
+  -o $SlotDir
 if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
 
 # The appliance launcher requires an executable named exactly `run`. Write it
@@ -67,9 +71,12 @@ Write-Host "==> Staging appliance entrypoint..."
 $runText = (Get-Content "$PiAssets\run" -Raw) -replace "`r`n", "`n"
 [System.IO.File]::WriteAllText("$OutDir\run", $runText, (New-Object System.Text.UTF8Encoding $false))
 
-Copy-Item "$PiAssets\neomotive.config.json" "$OutDir\neomotive.config.json"
+# Staged as .default: the live neomotive.config.json holds the device's update
+# server URL, and the deploy untars over the top without deleting. Shipping the
+# real name would reset every device's updateServerUrl to null on each deploy.
+Copy-Item "$PiAssets\neomotive.config.json" "$OutDir\neomotive.config.json.default"
 
-if (-not (Test-Path "$OutDir\scantool")) { throw "Expected single-file binary $OutDir\scantool not found" }
+if (-not (Test-Path "$SlotDir\scantool")) { throw "Expected single-file binary $SlotDir\scantool not found" }
 
 # NOTE: no chmod here. NTFS carries no POSIX mode bits, and git-bash's chmod is a
 # silent no-op on an ELF file. Both exec bits are set remotely after extraction.
@@ -119,16 +126,24 @@ try {
     # chmod runs here because NTFS carried no mode bits; `run` then chmods the
     # scantool binary itself. sudo gets its tty from ssh -t, and caches the
     # credential across both calls in this one session.
-    $expected = (Get-Item "$OutDir\scantool").Length
+    # A device deployed before A/B slots has the old binary loose in /data/app.
+    # Leaving it there is not cosmetic: `run` prefers app-current/ but the stale
+    # ~150MB file stays on a small SD card forever, and anyone reading the
+    # directory cannot tell which binary is live. Remove it once the new slot is
+    # extracted and verified.
+    $expected = (Get-Item "$SlotDir\scantool").Length
     $remote = @(
         "sudo systemctl stop app.service",
         "mkdir -p $RemoteDir",
         "tar xzf /tmp/scantool-deploy.tgz -C $RemoteDir",
         "rm -f /tmp/scantool-deploy.tgz",
         "chmod +x $RemoteDir/run",
+        # First deploy on a device seeds the config; later ones leave the URL alone.
+        "if [ ! -f $RemoteDir/neomotive.config.json ]; then cp $RemoteDir/neomotive.config.json.default $RemoteDir/neomotive.config.json; fi",
         # Fail loudly here rather than as a boot loop the operator has to decode.
-        "actual=`$(stat -c%s $RemoteDir/scantool)",
+        "actual=`$(stat -c%s $RemoteDir/app-current/scantool)",
         "if [ `"`$actual`" != `"$expected`" ]; then echo `"TRUNCATED: `$actual != $expected`"; exit 1; fi",
+        "rm -f $RemoteDir/scantool",
         "sudo systemctl start app.service"
     ) -join " && "
 

@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Neomotive.UI.Controls"
+             x:Class="Neomotive.UI.Controls.NetworkStatusBar"
+             x:DataType="controls:NetworkStatusViewModel">
+
+    <!-- Colours are literal rather than StaticResource so this control renders
+         identically in every host, including ones that have not merged
+         Styles.axaml. They match the shared palette. -->
+    <UserControl.Styles>
+        <Style Selector="Path.net-icon">
+            <Setter Property="Fill" Value="#E06060" />
+        </Style>
+        <Style Selector="Path.net-icon.no-address">
+            <Setter Property="Fill" Value="#D4A050" />
+        </Style>
+        <Style Selector="Path.net-icon.connected">
+            <Setter Property="Fill" Value="#6DBF67" />
+        </Style>
+
+        <Style Selector="Path.net-stroke">
+            <Setter Property="Stroke" Value="#E06060" />
+        </Style>
+        <Style Selector="Path.net-stroke.no-address">
+            <Setter Property="Stroke" Value="#D4A050" />
+        </Style>
+        <Style Selector="Path.net-stroke.connected">
+            <Setter Property="Stroke" Value="#6DBF67" />
+        </Style>
+
+        <Style Selector="TextBlock.net-state">
+            <Setter Property="Foreground" Value="#E06060" />
+        </Style>
+        <Style Selector="TextBlock.net-state.no-address">
+            <Setter Property="Foreground" Value="#D4A050" />
+        </Style>
+        <Style Selector="TextBlock.net-state.connected">
+            <Setter Property="Foreground" Value="#6DBF67" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="#161A20" BorderBrush="#2E3440" BorderThickness="0,1,0,0" Padding="12,7">
+        <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+
+            <!-- Connection icon: the shape says wired vs Wi-Fi, the colour says state -->
+            <Canvas Width="16" Height="16" VerticalAlignment="Center">
+
+                <!-- Wi-Fi: three arcs plus the emitter dot -->
+                <Path Classes="net-stroke"
+                      Classes.connected="{Binding IsConnected}"
+                      Classes.no-address="{Binding IsNoAddress}"
+                      IsVisible="{Binding IsWireless}"
+                      StrokeThickness="1.6"
+                      StrokeLineCap="Round"
+                      Data="M1.5,6.2 A9.5,9.5 0 0 1 14.5,6.2 M4,9 A6,6 0 0 1 12,9 M6.4,11.7 A2.6,2.6 0 0 1 9.6,11.7" />
+                <Path Classes="net-icon"
+                      Classes.connected="{Binding IsConnected}"
+                      Classes.no-address="{Binding IsNoAddress}"
+                      IsVisible="{Binding IsWireless}"
+                      Data="M8,12.4 A1.2,1.2 0 1 1 7.99,12.4 Z" />
+
+                <!-- Wired: an RJ45 plug -->
+                <Path Classes="net-icon"
+                      Classes.connected="{Binding IsConnected}"
+                      Classes.no-address="{Binding IsNoAddress}"
+                      IsVisible="{Binding IsWired}"
+                      Data="M6,1.5 H10 V4.5 H12 V12 A1.5,1.5 0 0 1 10.5,13.5 H5.5 A1.5,1.5 0 0 1 4,12 V4.5 H6 Z" />
+
+                <!-- Slash: only when there is no link at all -->
+                <Path IsVisible="{Binding IsDisconnected}"
+                      Stroke="#E06060"
+                      StrokeThickness="1.8"
+                      StrokeLineCap="Round"
+                      Data="M2,14 L14,2" />
+            </Canvas>
+
+            <TextBlock Text="{Binding HostName}"
+                       FontSize="11"
+                       Foreground="#C8CDD6"
+                       VerticalAlignment="Center" />
+
+            <TextBlock Text="·" FontSize="11" Foreground="#556878" VerticalAlignment="Center"
+                       IsVisible="{Binding HasAddress}" />
+
+            <TextBlock Text="{Binding IpAddress}"
+                       FontSize="11"
+                       FontFamily="monospace"
+                       Foreground="#88C0D0"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding HasAddress}" />
+
+            <TextBlock Text="·" FontSize="11" Foreground="#556878" VerticalAlignment="Center" />
+
+            <!-- The state is always spelled out: the Pi is touch-only, so colour
+                 can never be the sole carrier of meaning. -->
+            <TextBlock Text="{Binding StateText}"
+                       Classes="net-state"
+                       Classes.connected="{Binding IsConnected}"
+                       Classes.no-address="{Binding IsNoAddress}"
+                       FontSize="11"
+                       VerticalAlignment="Center" />
+
+        </StackPanel>
+    </Border>
+
+</UserControl>

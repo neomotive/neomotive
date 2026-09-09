@@ -52,6 +52,15 @@ Extract from `ModuleSimulator.UIShared/SharedStyles.axaml` into a standalone Ava
 
 The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles` and add its own local overrides.
 
+**Shared controls** (`Controls/`) also live here — Avalonia `UserControl`s that both apps drop in as-is:
+
+- `NetworkStatusBar` + `NetworkStatusViewModel` — the one-line network summary shown at the bottom of
+  the Updates tab in both apps: connection icon (RJ45 plug or Wi-Fi arcs, slashed when there is no
+  link), hostname, IPv4 address when one is assigned, and the state in words. It polls
+  `NetworkInterface` every 5s while attached to the visual tree and supplies its own DataContext, so
+  hosts need no bindings. Colours are literal (not `StaticResource`) so it renders correctly even in a
+  host that has not merged `Styles.axaml`.
+
 ---
 
 ## Project Descriptions
@@ -93,7 +102,7 @@ The simulator's `SharedStyles.axaml` is refactored to merge `Neomotive.UI.Styles
 - **Renders via Avalonia's DRM/KMS backend** (`Avalonia.LinuxFramebuffer`, `StartLinuxDrm`) — no
   X server. That means a **single-view lifetime**: `App` sets `MainView` to the shared
   `ScanToolView` in a `Viewbox` rather than a `MainWindow`
-- No `UpdateService` — the Pi Appliance Kit layout replaces A/B slots (see below)
+- `UpdateService` over A/B slots rooted at `/data/app` (see Phase 5)
 
 ---
 
@@ -259,18 +268,19 @@ neomotive-update-{version}-{target}-{platform}.zip
 ```
 
 **Windows behavior:** Update staged while app is running; applied on next restart (can't replace running EXE).
-**Pi behavior:** Update applied immediately; app self-restarts.
+**Pi behavior:** Update applied immediately; the app exits 42 and its launcher starts the newly
+promoted slot. The app cannot relaunch itself — after the swap its own path points into
+`app-previous`, and a child spawned from a dying process loses the display.
+
+**ScanTool on Pi (2026-09-09):** now wired, reversing the earlier "not applicable" call. The A/B
+root moved under `/data` (`/data/app/app-current`, the rootfs being a read-only overlay), `run`
+supervises rather than `exec`s, and `publish-scantool-pi.ps1` deploys into the slot. The
+workstation deploy remains the bootstrap path — a device on pre-update software has no updater to
+invoke — but field updates no longer need one.
 
 **Remaining:**
 - Hardening: HTTPS + package signing for cloud distribution
 - Automated health-check rollback (currently manual via slot swap)
-
-**Not applicable to ScanTool on Pi (deliberate):** `Neomotive.ScanTool.RaspberryPi` wires no
-`UpdateService`. The Pi Appliance Kit owns that concern — the whole payload is rsynced into
-`/data/app` and `app.service` restarts it, which supersedes A/B slots and the USB watcher.
-Revisit only if ScanTool needs field updates without a workstation; the A/B code would then
-have to move under `/data` (the rootfs is a read-only overlay, so `/opt/neomotive` is not
-writable).
 
 ---
 

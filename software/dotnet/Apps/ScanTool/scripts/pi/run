@@ -41,8 +41,39 @@ if [ -f "$APP_DIR/local.env" ]; then
     . "$APP_DIR/local.env"
 fi
 
+# ── A/B slot resolution ──────────────────────────────────────────────────────
+# The binary runs from $APP_DIR/app-current so an in-app update can swap slots
+# atomically (current→previous, staging→current) without touching the running
+# file. Pre-A/B payloads put the binary directly in $APP_DIR; keep starting
+# those so a device that has not been migrated still boots.
+if [ -f "$APP_DIR/app-current/scantool" ]; then
+    BIN="$APP_DIR/app-current/scantool"
+elif [ -f "$APP_DIR/scantool" ]; then
+    BIN="$APP_DIR/scantool"
+else
+    echo "run: no scantool binary in $APP_DIR/app-current or $APP_DIR" >&2
+    exit 1
+fi
+
 # Defensive: install-app.sh only chmods `run`, so if the payload was rsynced
 # from a filesystem without POSIX modes the binary can arrive non-executable.
-[ -x "$APP_DIR/scantool" ] || chmod +x "$APP_DIR/scantool"
+[ -x "$BIN" ] || chmod +x "$BIN"
 
-exec "$APP_DIR/scantool" "$@"
+# ── Supervise, don't exec ────────────────────────────────────────────────────
+# After an update the app swaps slots and exits 42 to ask for a relaunch. exec
+# would replace this shell and there would be nothing left to start the new
+# binary, so loop instead and re-resolve $BIN each pass — the file that was
+# app-current a moment ago is app-previous now. Any other exit code is the
+# app's own, and is passed through to app.service unchanged.
+while :; do
+    # `&& rc=0 || rc=$?` rather than a bare call: set -e is suspended on the
+    # left of ||, so a non-zero exit reaches the check instead of killing us.
+    "$BIN" "$@" && rc=0 || rc=$?
+    [ "$rc" -eq 42 ] || exit "$rc"
+
+    if [ -f "$APP_DIR/app-current/scantool" ]; then
+        BIN="$APP_DIR/app-current/scantool"
+    fi
+    [ -x "$BIN" ] || chmod +x "$BIN"
+    echo "run: restarting after update -> $BIN" >&2
+done
