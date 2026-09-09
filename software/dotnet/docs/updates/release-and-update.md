@@ -21,7 +21,7 @@ in an A/B slot:
 ├── app-staging/               ← extracted + hash-checked, deleted after the swap
 ├── config/                    ← UDS catalog overlays etc. — survives updates
 ├── data/                      ← captures, settings — survives updates
-├── neomotive.config.json      ← device-local; holds updateServerUrl
+├── neomotive.config.json      ← device-local; optional updateServerUrl override
 ├── local.env                  ← device-local env overrides (ScanTool only)
 └── update-state.json          ← pending-version marker
 ```
@@ -50,10 +50,10 @@ says "staged — restart to apply."
 
 | | Network | USB |
 |---|---|---|
-| Trigger | operator taps **Check for Updates** | drive inserted, polled every 5 s |
+| Trigger | operator taps **Check Internet for Updates** | drive inserted, polled every 5 s |
 | Source | `version-manifest.json` over HTTP | `neomotive-update*.zip` on removable media |
-| Configured by | `updateServerUrl` in `neomotive.config.json` | nothing — always on |
-| Off switch | leave `updateServerUrl` null | — |
+| Configured by | nothing — defaults to the GitHub manifest | nothing — always on |
+| Override | `updateServerUrl` in `neomotive.config.json` | — |
 
 Both converge on the same extract → verify → swap → restart path.
 
@@ -77,7 +77,9 @@ The workflow derives target and version from the tag, builds the package, verifi
 entry into the manifest devices poll. The tag is the only version input — the csproj
 `<Version>` stays 1.0.0 and is overridden at publish time.
 
-**Devices point at one fixed URL, forever:**
+**Devices ship pointed at one fixed URL, forever** — it is the default compiled into
+`UpdateService.DefaultManifestUrl`, so a stock device checks the internet with no
+configuration at all:
 
 ```
 https://github.com/neomotive/neomotive/releases/download/updates-latest/version-manifest.json
@@ -99,14 +101,23 @@ than racing the shared manifest.
 
 ### Dependencies in CI
 
-Everything Meadow resolves from nuget.org at `3.0.0-beta`, except **Telematics.J1979**
+Everything Meadow resolves from nuget.org at `3.0.1-beta` (the app csprojs float on
+`3.*-*`), except **Telematics.J1979**
 and **Telematics.Uds**, which are not published. The workflow checks out
 `WildernessLabs/Meadow.Foundation` into a sibling `wilderness/` directory so the
 existing relative `ProjectReference` paths resolve, and builds those two from source.
 
-`MEADOW_FOUNDATION_REF` at the top of the workflow selects the ref. It defaults to the
-`meadow-3.0` branch; pin a full SHA when you want a rebuild of an old tag to produce
-what it originally shipped.
+Building those two from source pulls in three more repos, because the references
+between them are relative paths that assume everything is a sibling under
+`wilderness/`: **Meadow.Contracts** (imported by Meadow.Foundation's
+`Directory.Packages.props`, and referenced by Foundation.Core and both Telematics
+drivers), and **Meadow.Logging** and **Meadow.Units**, which Meadow.Contracts
+references. Meadow.Units points back into the Foundation checkout, so the set is
+closed at those four.
+
+`MEADOW_REF` at the top of the workflow selects the ref for all four. It defaults to
+the `meadow-3.0` branch; pin a full SHA when you want a rebuild of an old tag to
+produce what it originally shipped.
 
 ---
 
@@ -175,6 +186,9 @@ but the manifest that carries those hashes is not signed, so plain HTTP trusts
 the network.
 
 ### Step 4 — Point the devices at it
+
+Only needed to *override* the built-in GitHub manifest — for a bench test against a
+local server, say. A stock device already checks GitHub and needs none of this.
 
 Once per device, in `neomotive.config.json` at the **payload root** (not inside
 `app-current/`, so deploys and updates never overwrite it):
@@ -249,7 +263,8 @@ journalctl -u app.service -f
 
 | Symptom | Cause |
 |---|---|
-| "No update server configured." | `updateServerUrl` is null, or the app has not restarted since it was set |
+| "Could not reach the update server: …" | device is offline, or DNS/proxy is blocking github.com |
+| "Update server timed out." | manifest host unreachable — the check no longer reports this as "up to date" |
 | "No update available" with a newer package published | manifest key is not `{target}-{platform}`, or the version is not strictly higher |
 | Check fails silently, no download | manifest unreachable, malformed JSON, or the zip's SHA256 does not match the manifest |
 | "SHA256 mismatch for …" | zip was rebuilt or truncated after the manifest was written — repackage both together |

@@ -30,10 +30,18 @@ concurrency:
 
 env:
   # Telematics.J1979 / Telematics.Uds are not published to NuGet, so they build
-  # from source. Everything else resolves from nuget.org at 3.0.0-beta.
+  # from source. Everything else resolves from nuget.org at 3.0.1-beta.
   # Prefer a full SHA over a branch name: a branch makes a rebuild of an old tag
   # pick up newer library code and stop matching what was shipped.
-  MEADOW_FOUNDATION_REF: meadow-3.0
+  #
+  # Building those two from source drags in three more repos, all of which must
+  # be siblings under wilderness/ because the references between them are
+  # relative paths: Meadow.Foundation/Source/Directory.Packages.props imports
+  # Meadow.Contracts', Foundation.Core and the Telematics drivers reference
+  # Meadow.Contracts, and Meadow.Contracts references Meadow.Logging and
+  # Meadow.Units. Meadow.Units points back into the Foundation checkout, so the
+  # set is closed at these four.
+  MEADOW_REF: meadow-3.0
   # Fixed release whose version-manifest.json asset is the stable URL devices poll.
   MANIFEST_RELEASE_TAG: updates-latest
 
@@ -85,8 +93,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: WildernessLabs/Meadow.Foundation
-          ref: ${{ env.MEADOW_FOUNDATION_REF }}
+          ref: ${{ env.MEADOW_REF }}
           path: wilderness/Meadow.Foundation
+
+      - name: Checkout Meadow.Contracts
+        uses: actions/checkout@v4
+        with:
+          repository: WildernessLabs/Meadow.Contracts
+          ref: ${{ env.MEADOW_REF }}
+          path: wilderness/Meadow.Contracts
+
+      - name: Checkout Meadow.Logging
+        uses: actions/checkout@v4
+        with:
+          repository: WildernessLabs/Meadow.Logging
+          ref: ${{ env.MEADOW_REF }}
+          path: wilderness/Meadow.Logging
+
+      - name: Checkout Meadow.Units
+        uses: actions/checkout@v4
+        with:
+          repository: WildernessLabs/Meadow.Units
+          ref: ${{ env.MEADOW_REF }}
+          path: wilderness/Meadow.Units
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

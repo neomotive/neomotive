@@ -150,9 +150,28 @@ public sealed class UsbUpdateSource : IUpdateSource
 
     internal static bool IsNewer(string candidate, string current)
     {
-        return Version.TryParse(candidate, out var c)
-            && Version.TryParse(current, out var cur)
+        return Version.TryParse(Normalize(candidate), out var c)
+            && Version.TryParse(Normalize(current), out var cur)
             && c > cur;
+    }
+
+    /// <summary>
+    /// Strips SemVer build metadata and pre-release tags so a version string is
+    /// parseable by <see cref="Version"/>. The running version comes from
+    /// AssemblyInformationalVersion, which .NET 8+ suffixes with "+&lt;git sha&gt;"
+    /// whenever the build happens inside a git repo — exactly what CI does. Left
+    /// intact that suffix fails every TryParse, and the device would silently
+    /// refuse every update it was ever offered.
+    /// </summary>
+    internal static string Normalize(string version)
+    {
+        if (string.IsNullOrWhiteSpace(version)) return string.Empty;
+        var cut = version.AsSpan();
+        var plus = cut.IndexOf('+');
+        if (plus >= 0) cut = cut[..plus];
+        var dash = cut.IndexOf('-');
+        if (dash >= 0) cut = cut[..dash];
+        return cut.Trim().ToString();
     }
 
     private static string CurrentPlatform() =>

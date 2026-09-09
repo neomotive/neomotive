@@ -25,19 +25,40 @@ public sealed class UpdateService : IDisposable
     public event Action<int>? UsbMultipleUpdatesFound;
     public event Action? UsbNoUpdateOnDrive;
 
+    /// <summary>
+    /// Where a device checks when nothing local overrides it: the rolling manifest
+    /// the release workflow republishes on every tag. The repo is public, so this
+    /// needs no credentials, and a stock device updates from the internet with no
+    /// per-device configuration at all.
+    /// </summary>
+    public const string DefaultManifestUrl =
+        "https://github.com/neomotive/neomotive/releases/download/updates-latest/version-manifest.json";
+
     public UpdateService(string appId, string currentVersion, string baseDir)
     {
         _appId = appId;
-        _currentVersion = currentVersion;
+        // Normalized here so the version this compares against and the version the
+        // Updates screen shows are the same clean MAJOR.MINOR.PATCH string.
+        _currentVersion = UsbUpdateSource.Normalize(currentVersion);
         _applicator = new UpdateApplicator(baseDir);
     }
 
+    /// <summary>The running version, as shown on the Updates screen.</summary>
+    public string CurrentVersion => _currentVersion;
+
+    /// <summary>The manifest endpoint currently in use.</summary>
+    public string ManifestUrl { get; private set; } = DefaultManifestUrl;
+
+    /// <summary>
+    /// Points the network source at <paramref name="networkUrl"/>, or at
+    /// <see cref="DefaultManifestUrl"/> when nothing is supplied. A device only
+    /// needs neomotive.config.json to override the default — never to enable it.
+    /// </summary>
     public void Configure(string? networkUrl)
     {
         _network?.Dispose();
-        _network = string.IsNullOrWhiteSpace(networkUrl)
-            ? null
-            : new NetworkUpdateSource(networkUrl);
+        ManifestUrl = string.IsNullOrWhiteSpace(networkUrl) ? DefaultManifestUrl : networkUrl.Trim();
+        _network = new NetworkUpdateSource(ManifestUrl);
     }
 
     public event Action<string>? StatusChanged;

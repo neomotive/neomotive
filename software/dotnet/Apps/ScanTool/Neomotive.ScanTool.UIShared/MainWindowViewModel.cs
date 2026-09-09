@@ -410,6 +410,12 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
     public bool CanCheckUpdate => !_isCheckingUpdate && _updateService != null;
 
+    /// <summary>The running version, for the Updates screen.</summary>
+    public string CurrentVersion => _updateService?.CurrentVersion ?? "unknown";
+
+    /// <summary>Where "Check for Updates" looks — the GitHub manifest unless overridden.</summary>
+    public string UpdateSourceUrl => _updateService?.ManifestUrl ?? "not configured";
+
     public async Task CheckForUpdatesAsync()
     {
         if (_updateService == null || _isCheckingUpdate) return;

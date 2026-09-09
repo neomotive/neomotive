@@ -18,17 +18,28 @@ public sealed class NetworkUpdateSource(string versionManifestUrl) : IUpdateSour
     {
         var key = $"{appId}-{CurrentPlatform()}";
 
+        // A swallowed failure here would surface to the operator as "You are up to
+        // date", which is the one thing it definitely does not mean. Let these
+        // throw: UpdateService turns them into a Failed result with the reason.
         VersionManifestEntry? entry;
         try
         {
             var json = await _http.GetStringAsync(versionManifestUrl, ct);
             var all = JsonSerializer.Deserialize<Dictionary<string, VersionManifestEntry>>(json);
             if (all == null || !all.TryGetValue(key, out entry))
-                return null;
+                return null;   // Genuinely nothing published for this device.
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        catch (HttpRequestException ex)
         {
-            return null;
+            throw new InvalidOperationException($"Could not reach the update server: {ex.Message}", ex);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new InvalidOperationException("Update server timed out.");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Update server returned malformed JSON: {ex.Message}", ex);
         }
 
         if (!UsbUpdateSource.IsNewer(entry.Version, currentVersion))
@@ -43,10 +54,10 @@ public sealed class NetworkUpdateSource(string versionManifestUrl) : IUpdateSour
             await using var fs = File.Create(tmpPath);
             await response.Content.CopyToAsync(fs, ct);
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             TryDelete(tmpPath);
-            return null;
+            throw new InvalidOperationException($"Download of v{entry.Version} failed: {ex.Message}", ex);
         }
 
         // Verify the zip itself (whole-file hash from version manifest)
@@ -56,7 +67,8 @@ public sealed class NetworkUpdateSource(string versionManifestUrl) : IUpdateSour
             if (!string.Equals(actual, entry.Sha256, StringComparison.OrdinalIgnoreCase))
             {
                 TryDelete(tmpPath);
-                return null;
+                throw new InvalidOperationException(
+                    $"SHA256 mismatch on the v{entry.Version} download — the package was not applied.");
             }
         }
 

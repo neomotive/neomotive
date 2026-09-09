@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
@@ -125,7 +125,8 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
         // Updates: A/B slots under baseDir, same model as the simulator. The USB
         // watcher polls for a neomotive-update*.zip on removable media; the
-        // network source is only live once neomotive.config.json names a server.
+        // network source defaults to the GitHub release manifest, and neomotive.config.json
+        // only needs to exist to point this device somewhere else.
         var currentVersion = typeof(App).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
             ?.InformationalVersion ?? "0.0.0";
@@ -157,8 +158,8 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
     // Device-local, and deliberately outside app-current/ so an update never
     // overwrites the server this device was pointed at. Null (the shipped
-    // default) leaves the network source unconfigured — "Check for Updates"
-    // then reports no server rather than failing a download.
+    // default) means "use UpdateService.DefaultManifestUrl" — the GitHub release
+    // manifest — so a stock device checks the internet with no config at all.
     private static string? LoadUpdateServerUrl(string baseDir)
     {
         var path = Path.Combine(baseDir, "neomotive.config.json");

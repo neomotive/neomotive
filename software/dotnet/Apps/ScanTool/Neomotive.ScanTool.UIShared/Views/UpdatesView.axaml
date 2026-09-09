@@ -12,6 +12,17 @@
 
         <TextBlock Classes="heading" Text="SOFTWARE UPDATES" />
 
+        <!-- Installed version. First thing the operator needs when deciding
+             whether a check is even worth making. -->
+        <Border Background="#1A1E24" BorderBrush="#2E3440" BorderThickness="1" Padding="14,10">
+            <StackPanel Spacing="4">
+                <TextBlock Text="INSTALLED VERSION" FontSize="10" LetterSpacing="2" Foreground="#7A8494" />
+                <TextBlock Text="{Binding CurrentVersion, StringFormat='v{0}'}"
+                           FontSize="22" FontWeight="SemiBold"
+                           Foreground="{StaticResource BrushFgDefault}" />
+            </StackPanel>
+        </Border>
+
         <!-- Status area -->
         <Border Background="#1A1E24" BorderBrush="#2E3440" BorderThickness="1" Padding="14,10">
             <TextBlock Text="{Binding UpdateStatus}"
@@ -19,11 +30,16 @@
                        Foreground="{StaticResource BrushFgDefault}" />
         </Border>
 
-        <!-- Network check button -->
-        <Button Content="Check for Updates"
+        <!-- Network check button. Goes straight to the GitHub release manifest
+             unless neomotive.config.json overrides the URL. -->
+        <Button Content="Check Internet for Updates"
                 Classes="action-sm"
                 IsEnabled="{Binding CanCheckUpdate}"
                 Click="OnCheckForUpdates" />
+
+        <TextBlock Text="{Binding UpdateSourceUrl}"
+                   FontSize="10" Foreground="#5C6675"
+                   TextWrapping="Wrap" />
 
         <!-- Divider -->
         <Rectangle Height="1" Fill="#2E3440" Margin="0,4,0,0" />
