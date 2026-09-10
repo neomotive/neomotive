@@ -91,8 +91,14 @@ public class SignalPickerViewModel : INotifyPropertyChanged
         }
 
         _openedWith = _selected.ToArray();
-        SearchText = string.Empty;
-        ShowSelectedOnly = false;
+
+        // Reset the filters through the fields, not the properties. Each setter rebuilds, so
+        // assigning them here cost three full list builds per open on top of the one below.
+        _searchText = string.Empty;
+        _showSelectedOnly = false;
+        OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(ShowSelectedOnly));
+
         IsOpen = true;
 
         Rebuild();

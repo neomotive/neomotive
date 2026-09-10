@@ -1068,19 +1068,19 @@ real package on a stick, installed) is still unexercised; only the mount is prov
 ScanTool has not been redeployed since these launcher changes, and is still on the 1.1.2
 staged in Group T.
 
-## Group V — Settings page (2026-09-10)
+## Group AD — Settings page (2026-09-10)
 
-- [x] **V1** `AppSettings` — operator preferences as JSON at `{DataDirectory}/settings.json`,
+- [x] **AD1** `AppSettings` — operator preferences as JSON at `{DataDirectory}/settings.json`,
   deliberately not in `neomotive.config.json`. That file is deployment configuration written by
   the installer; this one is written by the operator at runtime and has to survive an update,
   which is what `data/` is for. A corrupt or unreadable file falls back to defaults rather than
   stopping the tool from starting.
-- [x] **V2** `SettingsViewModel` + `SettingsView`, reached from a gear icon at the right end of
+- [x] **AD2** `SettingsViewModel` + `SettingsView`, reached from a gear icon at the right end of
   the tab bar. Right-aligned and apart from the tabs: Settings is not a diagnostic view, and
   appending it to the tab run would push the row past the 800 px panel. Every change writes the
   file immediately — the appliance is powered down by pulling the plug, so there is no shutdown
   hook to trust and no "apply" step to hang a save off. A failed write shows on the page.
-- [x] **V3** **Show tooltips** setting, off by default. Implemented as a single
+- [x] **AD3** **Show tooltips** setting, off by default. Implemented as a single
   `ToolTip.ServiceEnabled` binding on the `ScanToolView` root: that attached property inherits
   down the visual tree (verified against Avalonia 12.0.4 — `Inherits=True`, default `True`), so
   one binding gates every tooltip in the app, modals included, no matter what any individual
@@ -1099,4 +1099,25 @@ staged in Group T.
 **Not verified on hardware:** the settings round-trip has not been exercised on a device — that
 `settings.json` is written to `/data`, survives a restart, and survives an update. Nor has the
 gear been tapped on the panel, or a tooltip seen once the setting is on.
+
+## Group AE — Signal picker open latency (2026-09-10)
+
+- **AE1 — Virtualize the results list.** `SignalPickerView` drew its ~110 rows through a bare
+  `ItemsControl` inside a `ScrollViewer`. `ItemsControl` does not virtualize, so every row —
+  a `Button` plus a five-cell `Grid` — was realized, measured and arranged the moment the
+  overlay became visible: on the order of a thousand controls in a single layout pass. Barely
+  noticeable on the desktop, several seconds on the Pi. The `ScrollViewer` now lives inside the
+  control's own `ControlTemplate` with an `ItemsPresenter`, and the items panel is a
+  `VirtualizingStackPanel`. The outer `ScrollViewer` had to go: it hands the panel infinite
+  height, which defeats virtualization silently — the list still works, it just realizes
+  everything, which is exactly the bug.
+
+- **AE2 — Stop rebuilding the list three times per open.** `Open()` assigned `SearchText` and
+  `ShowSelectedOnly` through their properties, each of whose setters calls `Rebuild()`, then
+  called `Rebuild()` again. Four builds per open, three of them thrown away. The reset now goes
+  through the backing fields and raises the change notifications directly.
+
+**Not verified on hardware.** The improvement is measured only by reasoning about the control
+count; the actual open time on the panel is untested, as is scrolling feel with virtualization
+on (row heights vary slightly, so the scrollbar thumb may resize as the operator scrolls).
 

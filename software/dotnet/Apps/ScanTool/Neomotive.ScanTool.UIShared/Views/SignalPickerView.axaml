@@ -40,36 +40,52 @@
 
             <!-- Results -->
             <Border Grid.Row="2" Background="#0E1117" BorderBrush="#1E2530" BorderThickness="0,1,0,1">
-                <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding Results}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="local:SignalItem">
-                                <!-- The systems list is a column, not a tooltip. It is the only
-                                     thing the tip carried that the row did not already show, and
-                                     on a touch panel a per-row tooltip is both unreachable and,
-                                     when touch does fire it, drawn over the neighbouring rows.
-                                     Capped width so it can never crowd out the name. -->
-                                <Button Classes="pidrow" HorizontalAlignment="Stretch"
-                                        Click="OnToggleSignal" Tag="{Binding}"
-                                        ToolTip.Tip="{Binding DetailText}">
-                                    <Grid ColumnDefinitions="18, 52, *, Auto, Auto" ColumnSpacing="6">
-                                        <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
-                                        <!-- PID leads: techs usually arrive knowing the number. -->
-                                        <TextBlock Grid.Column="1" Classes="xs"
-                                                   FontFamily="Consolas,Menlo,monospace"
-                                                   Foreground="{StaticResource BrushFgSubtle}"
-                                                   Text="{Binding ShortAddressText}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="3" Classes="xs dim" MaxWidth="120"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   VerticalAlignment="Center" Text="{Binding SystemsText}" />
-                                        <TextBlock Grid.Column="4" Classes="xs dim" Text="{Binding Unit}" />
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- Virtualized on purpose. A bare ItemsControl realizes every row up front:
+                     the standard table is ~110 signals, each row a Button plus a five-cell Grid,
+                     so opening the picker built and laid out a thousand-odd controls in one pass.
+                     That is imperceptible on the desktop and several seconds on the Pi. The
+                     template below moves the ScrollViewer inside the control — an outer one hands
+                     the panel infinite height, which silently defeats virtualization. -->
+                <ItemsControl ItemsSource="{Binding Results}">
+                    <ItemsControl.Template>
+                        <ControlTemplate>
+                            <ScrollViewer>
+                                <ItemsPresenter />
+                            </ScrollViewer>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:SignalItem">
+                            <!-- The systems list is a column, not a tooltip. It is the only
+                                 thing the tip carried that the row did not already show, and
+                                 on a touch panel a per-row tooltip is both unreachable and,
+                                 when touch does fire it, drawn over the neighbouring rows.
+                                 Capped width so it can never crowd out the name. -->
+                            <Button Classes="pidrow" HorizontalAlignment="Stretch"
+                                    Click="OnToggleSignal" Tag="{Binding}"
+                                    ToolTip.Tip="{Binding DetailText}">
+                                <Grid ColumnDefinitions="18, 52, *, Auto, Auto" ColumnSpacing="6">
+                                    <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
+                                    <!-- PID leads: techs usually arrive knowing the number. -->
+                                    <TextBlock Grid.Column="1" Classes="xs"
+                                               FontFamily="Consolas,Menlo,monospace"
+                                               Foreground="{StaticResource BrushFgSubtle}"
+                                               Text="{Binding ShortAddressText}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="3" Classes="xs dim" MaxWidth="120"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" Text="{Binding SystemsText}" />
+                                    <TextBlock Grid.Column="4" Classes="xs dim" Text="{Binding Unit}" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </Border>
 
             <!-- Footer -->
