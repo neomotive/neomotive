@@ -434,6 +434,15 @@ crank in about four samples. Capture needs its own high-rate path.
     0-655,350 kPa so it can express any common-rail system; drawn against that, a real
     35,000 kPa trace is a flat line on the bottom and the rise rate — the entire point of the
     capture — is invisible.
+  - **Signals that recorded nothing still get a lane**, labelled "no data — ECU did not
+    respond". They used to be dropped silently, so a five-signal capture where three PIDs went
+    unanswered rendered as two lanes and read as a UI bug rather than as a bus finding.
+  - **Lane visibility chips** above the lanes, one per signal, tap to switch a lane off. Five
+    90 px lanes do not fit the appliance viewport at once, and the only prior remedy was
+    scrolling. Each chip spells out the signal name — the panel is touch-only, so no meaning
+    may live in a hover — and carries on/off in its swatch fill and text colour. Hidden lanes
+    skip redraw and drop out of the cursor readout; the strip hides itself for a single-signal
+    capture.
   - `ShowCapture()` calls `StopPolling()` first: the 2 Hz live-data loop and the capture loop
     must not contend for the bus.
   - Manual trigger stays live alongside the threshold via `AnyTrigger`, so the operator can
@@ -932,7 +941,8 @@ both in how the package was built.
 
 - [x] **T1** Root cause A — mixed source and NuGet Meadow. `Neomotive.ScanTool.Core`,
   `Neomotive.Uds` and `Neomotive.ControlModule` `ProjectReference`d `Telematics.J1979` /
-  `Telematics.Uds` from `F:epos\wilderness`, and those two projects `ProjectReference`
+  `Telematics.Uds` from `F:
+epos\wilderness`, and those two projects `ProjectReference`
   `Meadow.Contracts` from source. `Meadow.Contracts.csproj` sets no `<Version>` on `meadow-3.0`,
   so it compiled as **1.0.0.0** — while the Meadow NuGet packages (3.0.1-beta) bind to
   **3.0.1.0**. The .NET resolver will roll a version *forward* but never *back*, so the load

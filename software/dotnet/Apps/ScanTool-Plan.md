@@ -209,6 +209,9 @@ What remains is bench and vehicle verification, which needs hardware:
   stall auto-stop behave on the wire as they do in tests
 - Confirm captures land in `/data` on the Pi and survive an update
 - Verify the 260 px capture sidebar is usable on the Pi's 800×480 panel
+- Verify the review pane's lane visibility chips are tappable on the panel, and that a capture
+  where the ECU answers only some of the selected PIDs now shows the unanswered ones as
+  "no data" lanes rather than omitting them
 
 ### Phase 4 — UDS Support
 

@@ -4,7 +4,7 @@
              x:Class="Neomotive.ScanTool.UI.Views.CaptureReviewPane"
              x:DataType="local:CaptureViewModel">
 
-    <Grid RowDefinitions="Auto, *, Auto">
+    <Grid RowDefinitions="Auto, Auto, *, Auto">
 
         <!-- Cursor readout -->
         <Border Grid.Row="0" Background="#141820" Padding="8,4"
@@ -17,13 +17,23 @@
             </Grid>
         </Border>
 
+        <!-- Lane visibility chips, built in code: one per captured signal. Five signals of
+             90 px lanes do not fit the appliance screen at once, so each lane can be switched
+             off to give the ones under investigation the whole viewport. -->
+        <Border Grid.Row="1" Name="LaneTogglesHost" Background="#141820" Padding="6,4"
+                BorderBrush="#1E2530" BorderThickness="0,0,0,1" IsVisible="False">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Name="LaneToggles" Orientation="Horizontal" Spacing="6" />
+            </ScrollViewer>
+        </Border>
+
         <!-- Lanes are built in code: one per captured signal -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel Name="LanesHost" Spacing="0" />
         </ScrollViewer>
 
         <!-- View controls -->
-        <Border Grid.Row="2" Background="#141820" Padding="6,4"
+        <Border Grid.Row="3" Background="#141820" Padding="6,4"
                 BorderBrush="#1E2530" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <Button Content="Fit"     Click="OnFit" />

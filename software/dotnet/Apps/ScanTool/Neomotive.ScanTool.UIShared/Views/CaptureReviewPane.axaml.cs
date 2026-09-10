@@ -48,7 +48,13 @@ public partial class CaptureReviewPane : UserControl
         IReadOnlyList<CaptureSample> Samples,
         double Min,
         double Max,
-        List<(CaptureEvent Event, Line MarkerLine, TextBlock? Label)> EventMarkers);
+        List<(CaptureEvent Event, Line MarkerLine, TextBlock? Label)> EventMarkers,
+        Border Container,
+        bool HasData)
+    {
+        /// <summary>Lanes switched off from the chip strip keep their data but stop drawing.</summary>
+        public bool IsShown => Container.IsVisible;
+    }
 
     protected override void OnDataContextChanged(EventArgs e)
     {
@@ -82,7 +88,11 @@ public partial class CaptureReviewPane : UserControl
     private void Rebuild()
     {
         var host = this.FindControl<StackPanel>("LanesHost")!;
+        var chips = this.FindControl<StackPanel>("LaneToggles")!;
+        var chipsHost = this.FindControl<Border>("LaneTogglesHost")!;
         host.Children.Clear();
+        chips.Children.Clear();
+        chipsHost.IsVisible = false;
         _lanes.Clear();
 
         _recording = _vm?.LoadedRecording;
@@ -100,13 +110,14 @@ public partial class CaptureReviewPane : UserControl
             var signal = signals[i];
             var samples = _recording.Samples.Where(s => s.SignalIndex == signal.Index).ToArray();
 
-            if (samples.Length == 0)
-            {
-                continue;
-            }
-
-            var (min, max) = DataRange(samples);
-            var color = Color.Parse(LaneColors[i % LaneColors.Length]);
+            // A signal the ECU never answered used to be dropped from the review entirely, which
+            // reads as "I only asked for two signals" rather than "three PIDs went unanswered".
+            // Draw it as an empty lane instead, so the gap is visible and attributable.
+            var hasData = samples.Length > 0;
+            var (min, max) = hasData ? DataRange(samples) : (0d, 1d);
+            var color = hasData
+                ? Color.Parse(LaneColors[i % LaneColors.Length])
+                : Color.Parse("#5A6472");
 
             var trace = new Polyline
             {
@@ -207,7 +218,7 @@ public partial class CaptureReviewPane : UserControl
             var rangeLabel = new TextBlock
             {
                 Classes = { "xs", "dim" },
-                Text = $"{min:G4} – {max:G4}",
+                Text = hasData ? $"{min:G4} – {max:G4}" : "no data — ECU did not respond",
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 2, 4, 0),
@@ -218,18 +229,26 @@ public partial class CaptureReviewPane : UserControl
             grid.Children.Add(nameLabel);
             grid.Children.Add(rangeLabel);
 
-            host.Children.Add(new Border
+            var container = new Border
             {
                 Height = 90,
                 Background = new SolidColorBrush(Color.Parse("#0E1117")),
                 BorderBrush = new SolidColorBrush(Color.Parse("#1E2530")),
                 BorderThickness = new Thickness(0, 0, 0, 1),
                 Child = grid,
-            });
+            };
 
-            _lanes.Add(new Lane(
-                signal, canvas, trace, triggerMark, cursor, nameLabel, rangeLabel, samples, min, max, eventMarkers));
+            host.Children.Add(container);
+
+            var lane = new Lane(
+                signal, canvas, trace, triggerMark, cursor, nameLabel, rangeLabel, samples, min, max,
+                eventMarkers, container, hasData);
+
+            _lanes.Add(lane);
+            chips.Children.Add(BuildChip(lane, color));
         }
+
+        chipsHost.IsVisible = _lanes.Count > 1;
 
         Fit();
     }
@@ -240,6 +259,73 @@ public partial class CaptureReviewPane : UserControl
     /// system; drawn against that, a real 35,000 kPa trace is a flat line along the bottom and the
     /// rise-rate — the whole point of the capture — is invisible.
     /// </summary>
+    /// <summary>
+    /// One tappable chip per lane. The signal name is always spelled out on the chip — the
+    /// appliance is touch-only, so there is no hover to explain an icon — and on/off state is
+    /// carried by the swatch fill and the text colour beside it.
+    /// </summary>
+    private Border BuildChip(Lane lane, Color color)
+    {
+        var brush = new SolidColorBrush(color);
+
+        var swatch = new Border
+        {
+            Width = 12,
+            Height = 12,
+            CornerRadius = new CornerRadius(2),
+            BorderBrush = brush,
+            BorderThickness = new Thickness(2),
+            Background = brush,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var label = new TextBlock
+        {
+            Classes = { "xs" },
+            Text = lane.HasData ? lane.Signal.Name : $"{lane.Signal.Name} (no data)",
+            Foreground = brush,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var chip = new Border
+        {
+            MinHeight = 40,
+            MinWidth = 44,
+            Padding = new Thickness(10, 6),
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(Color.Parse("#1A2030")),
+            BorderBrush = brush,
+            BorderThickness = new Thickness(2),
+            Cursor = new Avalonia.Input.Cursor(StandardCursorType.Hand),
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Children = { swatch, label },
+            },
+        };
+
+        chip.PointerPressed += (_, _) =>
+        {
+            var showing = !lane.IsShown;
+            lane.Container.IsVisible = showing;
+
+            swatch.Background = showing ? brush : Brushes.Transparent;
+            label.Foreground = showing ? brush : new SolidColorBrush(Color.Parse("#5A6472"));
+            chip.Background = new SolidColorBrush(Color.Parse(showing ? "#1A2030" : "#0E1117"));
+            chip.BorderBrush = showing ? brush : new SolidColorBrush(Color.Parse("#2A3240"));
+
+            if (!showing)
+            {
+                lane.Cursor.IsVisible = false;
+            }
+
+            Redraw();
+        };
+
+        return chip;
+    }
+
     private static (double Min, double Max) DataRange(IReadOnlyList<CaptureSample> samples)
     {
         var min = samples.Min(s => s.Value);
@@ -290,6 +376,11 @@ public partial class CaptureReviewPane : UserControl
 
         foreach (var lane in _lanes)
         {
+            if (!lane.IsShown)
+            {
+                continue;
+            }
+
             var w = lane.Canvas.Bounds.Width;
             var h = lane.Canvas.Bounds.Height;
 
@@ -384,7 +475,14 @@ public partial class CaptureReviewPane : UserControl
             return;
         }
 
-        var first = _lanes[0];
+        var first = _lanes.FirstOrDefault(l => l.IsShown);
+
+        if (first is null)
+        {
+            HideCursor();
+            return;
+        }
+
         var pos = e.GetPosition(first.Canvas);
         var w = first.Canvas.Bounds.Width;
 
@@ -401,6 +499,12 @@ public partial class CaptureReviewPane : UserControl
 
         foreach (var lane in _lanes)
         {
+            if (!lane.IsShown)
+            {
+                lane.Cursor.IsVisible = false;
+                continue;
+            }
+
             lane.Cursor.IsVisible = true;
             lane.Cursor.StartPoint = new Point(pos.X, 0);
             lane.Cursor.EndPoint = new Point(pos.X, lane.Canvas.Bounds.Height);
