@@ -304,10 +304,20 @@ invoke — but field updates no longer need one.
 read-only overlay lifted or it lands in RAM. `Neomotive.Update.Tests` covers the version gate
 and hash verification.
 
+**Simulator on the appliance kit (2026-09-10):** both apps now deploy the same way — `/data/app`,
+A/B slots, one executable `run`. The simulator needed two things the ScanTool did not, both
+consequences of `app.service` running with `ProtectSystem=strict`: a writable `/tmp` for the X
+socket (a `PrivateTmp=yes` drop-in, installed by `scripts/pi/setup-appliance.sh`) and an Xorg
+logfile off `/var/log`. `xorg.conf` ships in the payload and is passed with `-config` rather than
+installed to the read-only `/etc/X11`, so it updates with the app. `publish-simulator-pi.ps1`
+mirrors the ScanTool deploy. Full bring-up from a blank SD card is in
+`docs/commissioning-a-pi.md`. Group U in ScanTool-Tasks.md; unverified on hardware.
+
 **Remaining:**
 - Hardening: HTTPS + package signing for cloud distribution
 - Automated health-check rollback (currently manual via slot swap)
 - Verify the ScanTool USB path against real hardware — never exercised on a device
+- Run `setup-appliance.sh` on the simulator device and confirm X starts under `PrivateTmp`
 
 ---
 

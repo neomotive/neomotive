@@ -10,3 +10,4 @@
 run          text eol=lf
 xinitrc      text eol=lf
 bash_profile text eol=lf
+xorg.conf    text eol=lf

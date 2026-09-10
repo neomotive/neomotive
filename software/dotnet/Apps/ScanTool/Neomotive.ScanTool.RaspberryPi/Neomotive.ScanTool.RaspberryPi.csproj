@@ -7,6 +7,20 @@
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
     <AssemblyName>scantool</AssemblyName>
     <Version>1.0.0</Version>
+
+    <!-- Release version, set by create-update-package.ps1.
+         Deliberately NOT plain -p:Version on the publish command line: a
+         command-line property is a GLOBAL property, so it flows into every
+         ProjectReference too - including the Meadow libraries this repo builds
+         from source (Contracts, Logging, Units, Telematics.*). Those got stamped
+         with the app's version while the NuGet Meadow packages still bound to
+         Meadow.Contracts 3.0.1.0, and the device crash-looped on startup with
+         "Could not load file or assembly 'Meadow.Contracts, Version=3.0.1.0'".
+         A uniquely named property propagates just as widely but only this
+         project reads it, so the Meadow projects keep their own versions. -->
+    <Version Condition="'$(NeomotivePackageVersion)' != ''">$(NeomotivePackageVersion)</Version>
+    <AssemblyVersion Condition="'$(NeomotivePackageVersion)' != ''">$(NeomotivePackageVersion)</AssemblyVersion>
+    <FileVersion Condition="'$(NeomotivePackageVersion)' != ''">$(NeomotivePackageVersion)</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -28,20 +28,6 @@ concurrency:
   group: release-update-package
   cancel-in-progress: false
 
-env:
-  # Telematics.J1979 / Telematics.Uds are not published to NuGet, so they build
-  # from source. Everything else resolves from nuget.org at 3.0.1-beta.
-  # Prefer a full SHA over a branch name: a branch makes a rebuild of an old tag
-  # pick up newer library code and stop matching what was shipped.
-  #
-  # Building those two from source drags in three more repos, all of which must
-  # be siblings under wilderness/ because the references between them are
-  # relative paths: Meadow.Foundation/Source/Directory.Packages.props imports
-  # Meadow.Contracts', Foundation.Core and the Telematics drivers reference
-  # Meadow.Contracts, and Meadow.Contracts references Meadow.Logging and
-  # Meadow.Units. Meadow.Units points back into the Foundation checkout, so the
-  # set is closed at these four.
-  MEADOW_REF: meadow-3.0
   # Fixed release whose version-manifest.json asset is the stable URL devices poll.
   MANIFEST_RELEASE_TAG: updates-latest
 
@@ -80,42 +66,26 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Building $TARGET $VERSION -> $PKG.zip"
 
-      # Both checkouts land under $GITHUB_WORKSPACE so that neomotive/ and
-      # wilderness/ are siblings — the layout the ..\..\..\..\..\..\wilderness\
-      # ProjectReferences in the csproj files expect.
+      # Only neomotive is checked out. Every Meadow dependency comes from
+      # nuget.org at 3.*-*, Telematics.J1979 and Telematics.Uds included — they
+      # are published as Meadow.Foundation.Telematics.* at 3.0.1-beta. Nothing is
+      # built from source, so there are no sibling repos to lay out.
+      #
+      # This used to check out four WildernessLabs repos and build them. That is
+      # what produced the broken 1.1.1 package: the source-built Meadow.Contracts
+      # has no <Version> on meadow-3.0 and so compiled as 1.0.0.0 (and as 1.1.1
+      # once -p:Version leaked into it as a global property), while the Meadow
+      # NuGet assemblies bind to Meadow.Contracts 3.0.1.0. The device installed
+      # the update and then crash-looped on every start.
       - name: Checkout neomotive
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.meta.outputs.tag }}
           path: neomotive
 
-      - name: Checkout Meadow.Foundation (Telematics.J1979 / Telematics.Uds)
-        uses: actions/checkout@v4
-        with:
-          repository: WildernessLabs/Meadow.Foundation
-          ref: ${{ env.MEADOW_REF }}
-          path: wilderness/Meadow.Foundation
 
-      - name: Checkout Meadow.Contracts
-        uses: actions/checkout@v4
-        with:
-          repository: WildernessLabs/Meadow.Contracts
-          ref: ${{ env.MEADOW_REF }}
-          path: wilderness/Meadow.Contracts
 
-      - name: Checkout Meadow.Logging
-        uses: actions/checkout@v4
-        with:
-          repository: WildernessLabs/Meadow.Logging
-          ref: ${{ env.MEADOW_REF }}
-          path: wilderness/Meadow.Logging
 
-      - name: Checkout Meadow.Units
-        uses: actions/checkout@v4
-        with:
-          repository: WildernessLabs/Meadow.Units
-          ref: ${{ env.MEADOW_REF }}
-          path: wilderness/Meadow.Units
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

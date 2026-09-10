@@ -76,4 +76,29 @@ else
     exit 1
 fi
 
-exec xinit "$XINITRC" -- :0 vt1 -keeptty -nolisten tcp
+# xinit exec's the client directly, so it must carry the exec bit. Zip archives
+# extracted by the updater do not reliably preserve modes, and NTFS carried none
+# to begin with — without this a packaged xinitrc gives "Permission denied" and X
+# comes up with no client at all.
+[ -x "$XINITRC" ] || chmod +x "$XINITRC"
+
+# ── X server arguments ───────────────────────────────────────────────────────
+# -logfile: Xorg defaults to /var/log/Xorg.0.log, which ProtectSystem=strict
+#   mounts read-only. Without this the server exits before it ever opens the
+#   display and the screen just stays black.
+# -config: keeps /etc/X11/xorg.conf off the read-only rootfs — the modesetting
+#   stanza ships in the payload instead, so it updates with the app. Xorg only
+#   honours an absolute -config path when it runs as root, which it does here:
+#   app.service sets no User=. Omitted when the file is absent, since
+#   autodetection finds modesetting on the Pi anyway; it just probes for longer.
+XORGCONF="$APP_DIR/app-current/launcher/xorg.conf"
+[ -f "$XORGCONF" ] || XORGCONF="$APP_DIR/xorg.conf"
+
+set -- :0 vt1 -keeptty -nolisten tcp -logfile "$TMPDIR/Xorg.0.log"
+# `if` rather than `[ ... ] && set --`, matching the local.env block above: an
+# AND-list whose test fails is easy to misread as fatal under set -e.
+if [ -f "$XORGCONF" ]; then
+    set -- "$@" -config "$XORGCONF"
+fi
+
+exec xinit "$XINITRC" -- "$@"

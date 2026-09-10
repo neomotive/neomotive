@@ -8,7 +8,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Wilderness = "F:\repos\wilderness"
 $Dotnet     = "F:\repos\neomotive\software\dotnet"
 $ScanTool   = "$Dotnet\Apps\ScanTool"
 $Project    = "$ScanTool\Neomotive.ScanTool.RaspberryPi\Neomotive.ScanTool.RaspberryPi.csproj"
@@ -31,23 +30,12 @@ function Assert-Tool($name, $hint) {
     return $cmd.Source
 }
 
-# Force-rebuild wilderness dependencies so their output timestamps reflect
-# today's source. When dotnet publish then evaluates the Pi project, MSBuild
-# will see these DLLs as already up-to-date and copy them into the publish
-# output without re-running incremental (stale) builds.
-# -m:1 because these projects share obj/ state and race under parallel builds.
-Write-Host "==> Rebuilding wilderness dependencies (forced)..."
-
-$deps = @(
-    "$Wilderness\Meadow.Core\Source\Meadow.Core\Meadow.Core.csproj",
-    "$Wilderness\Meadow.Core\Source\ui\Meadow.Avalonia\Meadow.Avalonia.csproj",
-    "$Wilderness\Meadow.Core\Source\implementations\linux\Meadow.Linux\Meadow.Linux.csproj",
-    "$Wilderness\Meadow.Foundation\Source\Meadow.Foundation.Peripherals\ICs.CAN.Mcp2515\Driver\ICs.CAN.Mcp2515.csproj"
-)
-foreach ($dep in $deps) {
-    dotnet build --no-incremental -m:1 $dep
-    if ($LASTEXITCODE -ne 0) { throw "Failed to build $dep" }
-}
+# No source builds. Every Meadow dependency is a PackageReference at 3.*-* from
+# nuget.org, Telematics.J1979 and Telematics.Uds included. This script used to
+# force-rebuild four wilderness repos first; that is what produced the 1.1.1
+# package that crash-looped the device, because a source-built Meadow.Contracts
+# has no <Version> on meadow-3.0 and compiles as 1.0.0.0 while the Meadow NuGet
+# assemblies bind to 3.0.1.0.
 
 Write-Host "==> Publishing ScanTool for linux-arm64..."
 
@@ -70,6 +58,12 @@ Write-Host "==> Staging appliance entrypoint..."
 
 $runText = (Get-Content "$PiAssets\run" -Raw) -replace "`r`n", "`n"
 [System.IO.File]::WriteAllText("$OutDir\run", $runText, (New-Object System.Text.UTF8Encoding $false))
+
+# A copy inside the slot too, so an OTA update can fix the launcher: $APP_DIR/run
+# sits outside the A/B slots and an update package only ever replaces
+# app-current/, so without this a launcher fix would need SSH on every device.
+$LauncherDir = New-Item -ItemType Directory -Force "$SlotDir\launcher"
+[System.IO.File]::WriteAllText((Join-Path $LauncherDir "run"), $runText, (New-Object System.Text.UTF8Encoding $false))
 
 # Staged as .default: the live neomotive.config.json holds the device's update
 # server URL, and the deploy untars over the top without deleting. Shipping the

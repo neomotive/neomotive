@@ -922,9 +922,98 @@ that one fact, and it is why the update path tested fine over SSH and failed fro
   and `app-previous` alone; `data/` survives a slot promotion. Suite: 48 in
   `Neomotive.Update.Tests`, 256 across the solution.
 
+---
+
+## Group T — The 1.1.1 package bricked the ScanTool
+
+Tapping "check for updates" installed 1.1.1 and the device then crash-looped 6,936 times on
+`Could not load file or assembly 'Meadow.Contracts, Version=3.0.1.0'`. Two independent causes,
+both in how the package was built.
+
+- [x] **T1** Root cause A — mixed source and NuGet Meadow. `Neomotive.ScanTool.Core`,
+  `Neomotive.Uds` and `Neomotive.ControlModule` `ProjectReference`d `Telematics.J1979` /
+  `Telematics.Uds` from `F:epos\wilderness`, and those two projects `ProjectReference`
+  `Meadow.Contracts` from source. `Meadow.Contracts.csproj` sets no `<Version>` on `meadow-3.0`,
+  so it compiled as **1.0.0.0** — while the Meadow NuGet packages (3.0.1-beta) bind to
+  **3.0.1.0**. The .NET resolver will roll a version *forward* but never *back*, so the load
+  failed. **Fixed** by referencing `Meadow.Foundation.Telematics.J1979` / `.Uds` at `3.*-*`:
+  they *are* published at 3.0.1-beta. Nothing Meadow is built from source now, so the whole
+  class of mismatch is gone. The wilderness repos were not modified.
+- [x] **T2** Root cause B — `-p:Version` is a **global** MSBuild property, so
+  `dotnet publish -p:Version=1.1.1` stamped every project in the graph, the source-built Meadow
+  libraries included (deps.json showed `Meadow.Contracts/1.1.1`). Now
+  `-p:NeomotivePackageVersion`, which only the four app csproj files read.
+- [x] **T3** Guard in `create-update-package.ps1`: the build **fails** if any Meadow assembly in
+  the publish output is below 3.x, or if the app assembly does not carry the requested version.
+  A package that cannot start is worse than no package. This guard caught T1 immediately after
+  T2 was fixed — without it the second broken package would have shipped too.
+- [x] **T4** CI simplified: the four `WildernessLabs/*` checkout steps and `MEADOW_REF` are gone.
+  Only neomotive is checked out.
+- [x] **T5** Why the Aug 5 build survived: it was a single-file publish, which bundles a
+  self-consistent set. The directory publish the packager produces exposed the mismatch.
+- [x] **T6** Broken auto-run had a *separate* cause: a hand-started `./scantool` (PID 2353,
+  `session-1.scope`, parent `-bash`) had been holding DRM master for 4h26m, so every
+  `app.service` attempt died with `drmModeSetCrtc failed` even after the slot was rolled back.
+  Killed it; the service recovered on its own `Restart=always` cycle.
+- [x] **T7** Device restored and 1.1.2 staged: `app-current` = the verified 1.1.2 build (277
+  files), `/data/app/run` bootstrapped to the packaged launcher (TMPDIR + handoff),
+  `/data/app/scantool` (Aug 5) kept as rollback, `data/` and `config/` untouched. Verified on the
+  device that 1.1.2 loads every assembly and reaches DRM init — it fails only on
+  `drmModeSetCrtc`, which is the running service holding the display.
+
+**Not done:** the final `sudo systemctl restart app.service` needs root and the device has no
+NOPASSWD rule, so the switch to 1.1.2 is waiting on that one command. No release tag has been cut
+for 1.1.2 — the package tested on the device was built locally.
+
 **Not done:** none of Group S is verified on hardware — the handoff and fallback were exercised
 against a simulated `/data/app` tree locally, not on a device. The ScanTool at `pi-appliance.local`
 is still staged on 1.1.1 awaiting `sudo systemctl restart app.service`, and the simulator update
 was stopped mid-promotion (slots untouched; `app-staging` verified at 276/276). USB support (R7)
 remains untested against a real stick, and `setup-usb-updates.sh` still needs a run on-device
 with the overlay lifted.
+
+---
+
+## Group U — Simulator on the Pi Appliance Kit + commissioning doc
+
+The simulator's `run`/`xinitrc` were already appliance-aware from Group S, but nothing on the
+device side was: no publish script, no way to get an X server onto an image that ships none, and
+two `ProtectSystem=strict` failures that only bite an X11 app.
+
+- [x] **U1** `run` passes `-logfile "$TMPDIR/Xorg.0.log"`. Xorg defaults to `/var/log/Xorg.0.log`,
+  which `ProtectSystem=strict` mounts read-only — the server exits before opening the display and
+  the only symptom is a black screen.
+- [x] **U2** `run` passes `-config` pointing at a payload-supplied `xorg.conf`, so the modesetting
+  stanza never has to be installed onto the read-only rootfs at `/etc/X11`. Xorg honours an
+  absolute `-config` path only when running as root; `app.service` sets no `User=`, so it does.
+- [x] **U3** `scripts/pi/setup-appliance.sh` — one-time device prep: X packages
+  (`xserver-xorg-core`, `xserver-xorg-input-libinput`, `xinit`, `x11-xserver-utils`, `xfonts-base`,
+  `unclutter`) plus the GL/input/font libs, the `PrivateTmp` drop-in (U4), and the USB auto-mount
+  rule. Refuses to run while the overlay is on, so a forgotten lift fails loudly instead of
+  installing into RAM.
+- [x] **U4** `app.service.d/10-simulator-x11.conf` sets `PrivateTmp=yes`. `ProtectSystem=strict`
+  makes `/tmp` read-only, and the X server must create `/tmp/.X11-unix/X0` or it dies immediately.
+  A private tmpfs fixes X without opening the real `/tmp`; the app's own temp stays on `/data`
+  because `run` exports `TMPDIR=$APP_DIR/.tmp`, so a 150 MB download never lands in RAM.
+- [x] **U5** `scripts/publish-simulator-pi.ps1` — mirrors the ScanTool script (single-file
+  linux-arm64, tar over scp, stop-extract-start, truncation check). Also stages
+  `app-current/launcher/{run,xinitrc,xorg.conf}` so a launcher fix can ride an OTA update.
+- [x] **U6** `scripts/pi/neomotive.config.json` seed, staged as `.default` on deploy so a device's
+  `updateServerUrl` is never reset.
+- [x] **U7** `create-update-package.ps1` bundles `xorg.conf` alongside `run`/`xinitrc` for the
+  simulator target.
+- [x] **U8** `publish-scantool-pi.ps1` no longer force-rebuilds the four wilderness repos — every
+  Meadow dependency is a NuGet `PackageReference` at `3.*-*` after Group T, and rebuilding source
+  Meadow is exactly what produced the 1.1.1 brick.
+- [x] **U9** `publish-scantool-pi.ps1` now also stages `app-current/launcher/run`, matching what an
+  OTA package ships, so a dev deploy and a released package leave the device in the same shape.
+- [x] **U10** `docs/commissioning-a-pi.md` — flash to running app, both targets: image, boot-partition
+  edits, identity, device prep, deploy, verify, update URL, `local.env`, troubleshooting table.
+- [x] **U11** `Apps/ModuleSimulator/scripts/pi/README.md` — the simulator-specific detail
+  (X-vs-DRM, the two `ProtectSystem` failures, why the launcher is bundled twice).
+- [x] **U12** `.gitattributes` pins `xorg.conf` to LF.
+
+**Not done:** none of Group U is verified on hardware. `setup-appliance.sh` has not been run on
+`neomotive-sim.local`, so the `PrivateTmp` fix and the `-logfile`/`-config` arguments are reasoned
+from `app.service` and the Xorg manual, not observed. The simulator device is still mid-update from
+Group S (slots untouched, `app-staging` verified 276/276).

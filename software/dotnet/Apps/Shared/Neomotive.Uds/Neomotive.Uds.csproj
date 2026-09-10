@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.Uds\Driver\Telematics.Uds.csproj" />
+    <PackageReference Include="Meadow.Foundation.Telematics.Uds" Version="3.*-*" />
     <ProjectReference Include="..\Neomotive.Obd2\Neomotive.Obd2.csproj" />
   </ItemGroup>
 </Project>

@@ -69,17 +69,64 @@ New-Item -ItemType Directory -Force $PublishDir | Out-Null
 # ── Publish ───────────────────────────────────────────────────────────────────
 
 Write-Host "Publishing..." -ForegroundColor Yellow
+# NeomotivePackageVersion, not Version/AssemblyVersion/FileVersion. A property on
+# the command line is a GLOBAL property: MSBuild flows it into every project in
+# the graph, ProjectReferences included. This repo builds Meadow.Contracts,
+# Meadow.Logging, Meadow.Units and Telematics.* from source, so -p:Version=1.1.1
+# stamped THOSE with 1.1.1 too — while the Meadow NuGet packages still bound to
+# Meadow.Contracts 3.0.1.0. The 1.1.1 package installed and then crash-looped the
+# device with "Could not load file or assembly 'Meadow.Contracts, Version=3.0.1.0'".
+# The app csproj reads this property; the Meadow projects ignore it.
 dotnet publish $ProjectPath `
     --configuration Release `
     --runtime $Rid `
     --self-contained true `
     --output $PublishDir `
-    -p:Version=$Version `
-    -p:AssemblyVersion=$Version `
-    -p:FileVersion=$Version
+    -p:NeomotivePackageVersion=$Version
 
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed (exit $LASTEXITCODE)" }
 Write-Host "Publish complete." -ForegroundColor Green
+
+# ── Guard: the Meadow libraries must keep their own versions ──────────────────
+# The 1.1.1 ScanTool package shipped with Meadow.Contracts stamped 1.1.1, so the
+# NuGet Meadow assemblies — which bind to Meadow.Contracts 3.0.1.0 — could not
+# load it. The device installed the update and then crash-looped on every start,
+# which on an appliance with no console looks exactly like a bricked box. Fail
+# the build here instead: a package that cannot start is worse than no package.
+
+Write-Host "Verifying Meadow assembly versions..." -ForegroundColor Yellow
+
+$MeadowLibs = @("Meadow.Contracts", "Meadow.Logging", "Meadow.Units", "Meadow")
+$VersionErrors = @()
+
+foreach ($lib in $MeadowLibs) {
+    $dll = Join-Path $PublishDir "$lib.dll"
+    if (-not (Test-Path $dll)) { continue }
+
+    $asmVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dll).Version
+    if ($asmVersion.Major -lt 3) {
+        $VersionErrors += "  $lib.dll is $asmVersion (expected 3.x)"
+    }
+}
+
+if ($VersionErrors.Count -gt 0) {
+    Write-Host "Meadow assemblies were stamped with the app's version:" -ForegroundColor Red
+    $VersionErrors | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+    throw "Meadow assembly version check failed. A command-line -p:Version is a global " +
+          "MSBuild property and flows into the source-built Meadow ProjectReferences. " +
+          "Pass -p:NeomotivePackageVersion instead, which only the app project reads."
+}
+
+$AppAsm = Join-Path $PublishDir "$(if ($Target -eq 'scantool') { 'scantool' } else { 'simulator' }).dll"
+if (Test-Path $AppAsm) {
+    $appVersion = [System.Reflection.AssemblyName]::GetAssemblyName($AppAsm).Version
+    # The device compares this against the manifest; if the stamp silently failed
+    # to apply, the update would install and then never be recognised as newer.
+    if ("$($appVersion.Major).$($appVersion.Minor).$($appVersion.Build)" -ne $Version) {
+        throw "App assembly is version $appVersion but the package is $Version — the version stamp did not apply."
+    }
+    Write-Host "  app assembly $appVersion, Meadow assemblies 3.x — OK" -ForegroundColor Green
+}
 
 # ── Bundle the Pi launcher scripts ────────────────────────────────────────────
 # The device's entrypoint ($APP_DIR/run) sits outside the A/B slots, so an update
@@ -89,6 +136,10 @@ Write-Host "Publish complete." -ForegroundColor Green
 #
 # LF endings are written explicitly: these are extensionless, and a CRLF shebang
 # makes app.service fail with "bad interpreter: /bin/sh^M".
+#
+# xorg.conf rides along for the simulator so the modesetting stanza does not
+# have to be installed onto the read-only rootfs at /etc/X11 — `run` hands it
+# to the X server with -config.
 
 if ($Platform -eq "linux-arm64") {
     $ScriptsDir = switch ($Target) {
@@ -97,7 +148,7 @@ if ($Platform -eq "linux-arm64") {
     }
     $LauncherFiles = switch ($Target) {
         "scantool"  { @("run") }
-        "simulator" { @("run", "xinitrc") }
+        "simulator" { @("run", "xinitrc", "xorg.conf") }
     }
 
     $LauncherDir = Join-Path $PublishDir "launcher"
