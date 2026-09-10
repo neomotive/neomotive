@@ -28,6 +28,7 @@ concurrency:
   group: release-update-package
   cancel-in-progress: false
 
+env:
   # Fixed release whose version-manifest.json asset is the stable URL devices poll.
   MANIFEST_RELEASE_TAG: updates-latest
 
