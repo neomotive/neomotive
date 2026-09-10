@@ -1,10 +1,14 @@
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Meadow;
 using Meadow.Avalonia;
 using Meadow.Hardware;
 using Neomotive.Can.Hardware;
 using Neomotive.ModuleSimulator.UI;
+using Neomotive.ModuleSimulator.UI.Views;
 using Neomotive.Update;
 using System;
 using System.IO;
@@ -81,14 +85,42 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            Resolver.Log.LogLevel = Meadow.Logging.LogLevel.Trace;
+        Resolver.Log.LogLevel = Meadow.Logging.LogLevel.Trace;
 
-            _mainVm = new MainWindowViewModel(null, "Connecting to hardware...", _updateService);
-            desktop.MainWindow = new MainWindow(_mainVm);
-            _ = WireInputsAsync();
+        _mainVm = new MainWindowViewModel(null, "Connecting to hardware...", _updateService);
+
+        // DRM/KMS uses a single-view lifetime, so the root is SimulatorView — the
+        // same 800x480 control MainWindow hosts on the desktop — rather than a
+        // Window. Letterbox rather than stretch if the panel reports a different
+        // mode than the 800x480 the views are authored against.
+        var root = new Viewbox
+        {
+            Stretch = Stretch.Uniform,
+            Child = new SimulatorView { Width = 800, Height = 480, DataContext = _mainVm },
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            singleView.MainView = root;
         }
+        else if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            // Only hit when running this project on a dev box for layout checks.
+            desktop.MainWindow = new Window
+            {
+                Title = "Neomotive Module Simulator",
+                Width = 800,
+                Height = 480,
+                // Qualified: Meadow.Color is also in scope here.
+                Background = new SolidColorBrush(Avalonia.Media.Color.Parse("#111418")),
+                Content = root
+            };
+        }
+
+        _ = WireInputsAsync();
+
         base.OnFrameworkInitializationCompleted();
     }
 

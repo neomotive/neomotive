@@ -26,6 +26,9 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.0.4" />
     <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
+    <!-- StartLinuxDrm lives here: the simulator renders to DRM/KMS like the
+         ScanTool, with no X server on the appliance image. -->
+    <PackageReference Include="Avalonia.LinuxFramebuffer" Version="12.0.4" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.4" />
   </ItemGroup>

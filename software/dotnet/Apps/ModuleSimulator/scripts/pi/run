@@ -1,20 +1,20 @@
 #!/bin/sh
 # Pi Appliance Kit entrypoint for the ModuleSimulator. app-launch cd's here and
-# exec's this file; install it with the kit's install-app.sh, which rsyncs this
-# whole directory to /data/app.
+# exec's this file.
 #
-# The classic Raspberry Pi OS deployment does NOT use this file — there the Pi
-# autologs in on tty1 and ~/.bash_profile calls startx, which runs ~/.xinitrc.
-# Both paths end up in the same xinitrc, which owns the supervise loop.
+# Identical in shape to the ScanTool's: both heads render to DRM/KMS, so there
+# is no X server, no xinit chain and no xinitrc supervise loop. Keep the two in
+# step — a fix to one almost always belongs in the other.
 #
 # The rootfs is a read-only overlay; /data is the only writable mount, and
-# app.service sets ProtectSystem=strict + ProtectHome=yes, so every path .NET
-# wants to write must be redirected under the app directory.
+# app.service sets ProtectHome=yes, so every path .NET wants to write must be
+# redirected under the app directory.
 set -e
 
-# Normally this file IS $APP_DIR/run. When it is the packaged copy handed off to
-# from app-current/launcher/run, the outer launcher passes the real app root
-# through NEOMOTIVE_APP_DIR — deriving it from $0 there would point at launcher/.
+# Normally this file IS $APP_DIR/run, so its own directory is the app root. When
+# it is the packaged copy (see the handoff below) it lives two levels down at
+# app-current/launcher/run, and the outer launcher passes the real root through
+# NEOMOTIVE_APP_DIR — deriving it from $0 there would point at launcher/.
 if [ -n "${NEOMOTIVE_APP_DIR:-}" ]; then
     APP_DIR="$NEOMOTIVE_APP_DIR"
 else
@@ -22,11 +22,17 @@ else
 fi
 export NEOMOTIVE_APP_DIR="$APP_DIR"
 
-# Hand off to the packaged launcher when the promoted slot ships one, so a
-# launcher fix can ride along with an update instead of needing SSH on every
-# device. Guarded hard: a bad launcher on a read-only appliance is a brick with
-# no console, so delegate only to a file the shell can actually parse, and fall
-# through to the logic below on any doubt.
+# ── Hand off to the packaged launcher ────────────────────────────────────────
+# This file sits at $APP_DIR/run, OUTSIDE the A/B slots, so an update package —
+# which only ever replaces app-current/ — can never change it. Without a handoff
+# every launcher fix would need SSH or a USB stick on every device forever.
+#
+# So: if the promoted slot ships its own launcher, run that instead. The guards
+# matter more than the feature — a bad launcher on a read-only appliance is a
+# brick with no console. Delegate only to a readable file that the shell can
+# actually parse, and fall through to the logic below on any doubt.
+# NEOMOTIVE_LAUNCHER_DELEGATED stops a packaged launcher that re-execs from
+# looping forever.
 PACKAGED="$APP_DIR/app-current/launcher/run"
 if [ -z "${NEOMOTIVE_LAUNCHER_DELEGATED:-}" ] && [ -r "$PACKAGED" ]; then
     if sh -n "$PACKAGED" 2>/dev/null; then
@@ -36,69 +42,86 @@ if [ -z "${NEOMOTIVE_LAUNCHER_DELEGATED:-}" ] && [ -r "$PACKAGED" ]; then
     fi
     echo "run: $PACKAGED failed a syntax check — using the built-in launcher" >&2
 fi
+
 export HOME="$APP_DIR"
 export DOTNET_BUNDLE_EXTRACT_BASE_DIR="$APP_DIR/.dotnet-extract"
 export XDG_RUNTIME_DIR="$APP_DIR/.runtime"
+export DOTNET_EnableWriteXorExecute=0
+export DOTNET_gcServer=0
+
+# app.service sets ProtectSystem=strict with ReadWritePaths=/data, which mounts
+# EVERYTHING outside /data read-only in this unit's namespace — /tmp included.
+# .NET's Path.GetTempPath() honours TMPDIR, so point it at the writable partition;
+# without this anything that touches temp (zip extraction, X11, the updater's
+# download) dies with "Access to the path '/tmp/...' is denied".
 export TMPDIR="$APP_DIR/.tmp"
 export TMP="$TMPDIR"
 export TEMP="$TMPDIR"
-export DOTNET_EnableWriteXorExecute=0
-export DOTNET_gcServer=0
 
 mkdir -p "$DOTNET_BUNDLE_EXTRACT_BASE_DIR" "$XDG_RUNTIME_DIR" "$TMPDIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
-# The updater's A/B directories, so a device that has only ever been rsynced by
-# install-app.sh still has somewhere to stage and download.
+# The updater's A/B directories. Created here as well as in-app so a device that
+# has only ever been rsynced by install-app.sh still has somewhere to stage.
 mkdir -p "$APP_DIR/data" "$APP_DIR/config" "$APP_DIR/app-downloads"
 
-# Device-local overrides. `run` is part of the payload and every deploy
-# overwrites it, so put settings in local.env — that file is not in the payload
-# and survives an upgrade. See ScanTool/scripts/pi/run for the same convention.
+# ── Device-local overrides ───────────────────────────────────────────────────
+# Do NOT uncomment settings in this file to change a device: `run` is part of the
+# payload and every deploy overwrites it, so edits here are silently reverted.
+#
+# Put them in $APP_DIR/local.env instead. That file is not in the payload, and
+# the deploy extracts over the top without deleting, so it survives upgrades:
+#
+#   ssh pi@neomotive-sim.local 'cat >> /data/app/local.env' <<'EOF'
+#   export SIMULATOR_CAN_CHANNEL=1
+#   EOF
+#   ssh -t pi@neomotive-sim.local 'sudo systemctl restart app.service'
+#
+# Recognized variables:
+#   SIMULATOR_CAN_CHANNEL   CAN HAT channel: 0 (default) or 1
+#   SIMULATOR_DRM_CARD      e.g. /dev/dri/card1 if the panel is not on the default
+#   SIMULATOR_DRM_SCALING   e.g. 1.0
+#   SIMULATOR_UDP_LOG       1 to also ship Meadow logs off-box over UDP
+#
+# `if` rather than `[ -f ] && .` because set -e would treat the false test as a
+# fatal error when the file is absent — i.e. on every normal device.
 if [ -f "$APP_DIR/local.env" ]; then
     . "$APP_DIR/local.env"
 fi
 
-# The simulator is a windowed Avalonia app, so unlike the ScanTool (DRM/KMS, no
-# X) it needs an X server. app.service has no controlling tty, so start X here
-# rather than relying on startx's tty detection. xinit exec's xinitrc as the
-# client and exits when it does — including with 42, which the loop inside
-# xinitrc consumes, so a self-update never tears down X.
-# Prefer the xinitrc from the promoted slot: it holds the supervise loop, so it
-# has to stay in step with the binary it restarts. Fall back to the deployed copy
-# at $APP_DIR/xinitrc for a device installed before launchers were packaged.
-if [ -f "$APP_DIR/app-current/launcher/xinitrc" ]; then
-    XINITRC="$APP_DIR/app-current/launcher/xinitrc"
-elif [ -f "$APP_DIR/xinitrc" ]; then
-    XINITRC="$APP_DIR/xinitrc"
+# ── A/B slot resolution ──────────────────────────────────────────────────────
+# The binary runs from $APP_DIR/app-current so an in-app update can swap slots
+# atomically (current→previous, staging→current) without touching the running
+# file. Pre-A/B payloads put the binary directly in $APP_DIR; keep starting
+# those so a device that has not been migrated still boots.
+if [ -f "$APP_DIR/app-current/simulator" ]; then
+    BIN="$APP_DIR/app-current/simulator"
+elif [ -f "$APP_DIR/simulator" ]; then
+    BIN="$APP_DIR/simulator"
 else
-    echo "run: no xinitrc in $APP_DIR/app-current/launcher or $APP_DIR" >&2
+    echo "run: no simulator binary in $APP_DIR/app-current or $APP_DIR" >&2
     exit 1
 fi
 
-# xinit exec's the client directly, so it must carry the exec bit. Zip archives
-# extracted by the updater do not reliably preserve modes, and NTFS carried none
-# to begin with — without this a packaged xinitrc gives "Permission denied" and X
-# comes up with no client at all.
-[ -x "$XINITRC" ] || chmod +x "$XINITRC"
+# Defensive: install-app.sh only chmods `run`, so if the payload was rsynced
+# from a filesystem without POSIX modes the binary can arrive non-executable.
+[ -x "$BIN" ] || chmod +x "$BIN"
 
-# ── X server arguments ───────────────────────────────────────────────────────
-# -logfile: Xorg defaults to /var/log/Xorg.0.log, which ProtectSystem=strict
-#   mounts read-only. Without this the server exits before it ever opens the
-#   display and the screen just stays black.
-# -config: keeps /etc/X11/xorg.conf off the read-only rootfs — the modesetting
-#   stanza ships in the payload instead, so it updates with the app. Xorg only
-#   honours an absolute -config path when it runs as root, which it does here:
-#   app.service sets no User=. Omitted when the file is absent, since
-#   autodetection finds modesetting on the Pi anyway; it just probes for longer.
-XORGCONF="$APP_DIR/app-current/launcher/xorg.conf"
-[ -f "$XORGCONF" ] || XORGCONF="$APP_DIR/xorg.conf"
+# ── Supervise, don't exec ────────────────────────────────────────────────────
+# After an update the app swaps slots and exits 42 to ask for a relaunch. exec
+# would replace this shell and there would be nothing left to start the new
+# binary, so loop instead and re-resolve $BIN each pass — the file that was
+# app-current a moment ago is app-previous now. Any other exit code is the
+# app's own, and is passed through to app.service unchanged.
+while :; do
+    # `&& rc=0 || rc=$?` rather than a bare call: set -e is suspended on the
+    # left of ||, so a non-zero exit reaches the check instead of killing us.
+    "$BIN" "$@" && rc=0 || rc=$?
+    [ "$rc" -eq 42 ] || exit "$rc"
 
-set -- :0 vt1 -keeptty -nolisten tcp -logfile "$TMPDIR/Xorg.0.log"
-# `if` rather than `[ ... ] && set --`, matching the local.env block above: an
-# AND-list whose test fails is easy to misread as fatal under set -e.
-if [ -f "$XORGCONF" ]; then
-    set -- "$@" -config "$XORGCONF"
-fi
-
-exec xinit "$XINITRC" -- "$@"
+    if [ -f "$APP_DIR/app-current/simulator" ]; then
+        BIN="$APP_DIR/app-current/simulator"
+    fi
+    [ -x "$BIN" ] || chmod +x "$BIN"
+    echo "run: restarting after update -> $BIN" >&2
+done

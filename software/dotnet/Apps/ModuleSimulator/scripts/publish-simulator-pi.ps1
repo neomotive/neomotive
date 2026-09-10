@@ -1,9 +1,9 @@
 # Publishes Neomotive.ModuleSimulator.RaspberryPi as a self-contained linux-arm64
 # payload laid out for the Pi Appliance Kit (/data/app/run).
 #
-# Mirrors Apps/ScanTool/scripts/publish-scantool-pi.ps1 — the only real
-# difference is the X server: the simulator is a windowed Avalonia app, so the
-# payload carries an xinitrc and an xorg.conf beside `run`. See scripts/pi/README.md.
+# Deliberately a near-copy of Apps/ScanTool/scripts/publish-scantool-pi.ps1: both
+# heads render to DRM/KMS and deploy the same shape, so the two scripts differ
+# only in project, binary name and default host. See scripts/pi/README.md.
 [CmdletBinding()]
 param(
     [string]$TargetHost = "pi@neomotive-sim.local",
@@ -48,22 +48,18 @@ dotnet publish $Project `
   -o $SlotDir
 if ($LASTEXITCODE -ne 0) { throw "Publish failed" }
 
-# The appliance launcher requires an executable named exactly `run`. These are
-# written with LF endings — CRLF makes the kernel reject the #! line ("bad
-# interpreter"), and app.service then restarts it forever with no visible cause.
+# The appliance launcher requires an executable named exactly `run`. Written with
+# LF endings — CRLF makes the kernel reject the #! line ("bad interpreter"), and
+# app.service then restarts it forever with no visible cause.
 Write-Host "==> Staging appliance entrypoint..."
 
-foreach ($name in @("run", "xinitrc", "xorg.conf")) {
-    $text = (Get-Content "$PiAssets\$name" -Raw) -replace "`r`n", "`n"
-    [System.IO.File]::WriteAllText("$OutDir\$name", $text, (New-Object System.Text.UTF8Encoding $false))
-}
+$runText = (Get-Content "$PiAssets\run" -Raw) -replace "`r`n", "`n"
+[System.IO.File]::WriteAllText("$OutDir\run", $runText, (New-Object System.Text.UTF8Encoding $false))
 
 # Also inside the slot, so an OTA update can fix the launcher. $APP_DIR/run hands
 # off to app-current/launcher/run when it is present and parses.
 $LauncherDir = New-Item -ItemType Directory -Force "$SlotDir\launcher"
-foreach ($name in @("run", "xinitrc", "xorg.conf")) {
-    Copy-Item "$OutDir\$name" (Join-Path $LauncherDir $name)
-}
+[System.IO.File]::WriteAllText((Join-Path $LauncherDir "run"), $runText, (New-Object System.Text.UTF8Encoding $false))
 
 # Staged as .default: the live neomotive.config.json holds the device's update
 # server URL, and the deploy untars over the top without deleting. Shipping the
@@ -120,7 +116,7 @@ try {
         "mkdir -p $RemoteDir",
         "tar xzf /tmp/simulator-deploy.tgz -C $RemoteDir",
         "rm -f /tmp/simulator-deploy.tgz",
-        "chmod +x $RemoteDir/run $RemoteDir/xinitrc",
+        "chmod +x $RemoteDir/run",
         # First deploy on a device seeds the config; later ones leave the URL alone.
         "if [ ! -f $RemoteDir/neomotive.config.json ]; then cp $RemoteDir/neomotive.config.json.default $RemoteDir/neomotive.config.json; fi",
         # Fail loudly here rather than as a boot loop the operator has to decode.

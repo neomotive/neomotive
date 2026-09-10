@@ -1,0 +1,19 @@
+# Mounts a USB stick at /media/usb for the Neomotive update scanner.
+#
+# udev pulls this in with ENV{SYSTEMD_WANTS} rather than mounting from a RUN
+# rule, because a udev worker has a private mount namespace and its mounts are
+# either refused outright ("permission denied") or invisible to the rest of the
+# system. systemd runs this in the host namespace, so the app can see the mount.
+#
+# BindsTo makes removal automatic: when the stick is pulled, dev-sda1.device
+# goes away, systemd stops this unit and ExecStop unmounts. No remove rule needed.
+[Unit]
+Description=Mount USB %I at /media/usb (Neomotive updates)
+BindsTo=dev-%i.device
+After=dev-%i.device
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/neomotive-usb-mount add %i
+ExecStop=/usr/local/bin/neomotive-usb-mount remove %i

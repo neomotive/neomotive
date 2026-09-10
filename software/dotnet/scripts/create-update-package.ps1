@@ -136,10 +136,6 @@ if (Test-Path $AppAsm) {
 #
 # LF endings are written explicitly: these are extensionless, and a CRLF shebang
 # makes app.service fail with "bad interpreter: /bin/sh^M".
-#
-# xorg.conf rides along for the simulator so the modesetting stanza does not
-# have to be installed onto the read-only rootfs at /etc/X11 — `run` hands it
-# to the X server with -config.
 
 if ($Platform -eq "linux-arm64") {
     $ScriptsDir = switch ($Target) {
@@ -148,7 +144,7 @@ if ($Platform -eq "linux-arm64") {
     }
     $LauncherFiles = switch ($Target) {
         "scantool"  { @("run") }
-        "simulator" { @("run", "xinitrc", "xorg.conf") }
+        "simulator" { @("run") }
     }
 
     $LauncherDir = Join-Path $PublishDir "launcher"

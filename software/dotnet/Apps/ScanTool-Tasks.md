@@ -974,46 +974,65 @@ with the overlay lifted.
 
 ---
 
-## Group U — Simulator on the Pi Appliance Kit + commissioning doc
+## Group U — Both appliances stand the UI up the same way
 
-The simulator's `run`/`xinitrc` were already appliance-aware from Group S, but nothing on the
-device side was: no publish script, no way to get an X server onto an image that ships none, and
-two `ProtectSystem=strict` failures that only bite an X11 app.
+Started as "make the simulator work on the appliance kit with X". Ended as "delete X":
+the simulator's `MainWindow` only ever wrapped a single `SimulatorView`, exactly like the
+ScanTool's, so the whole X apparatus was buying nothing.
 
-- [x] **U1** `run` passes `-logfile "$TMPDIR/Xorg.0.log"`. Xorg defaults to `/var/log/Xorg.0.log`,
-  which `ProtectSystem=strict` mounts read-only — the server exits before opening the display and
-  the only symptom is a black screen.
-- [x] **U2** `run` passes `-config` pointing at a payload-supplied `xorg.conf`, so the modesetting
-  stanza never has to be installed onto the read-only rootfs at `/etc/X11`. Xorg honours an
-  absolute `-config` path only when running as root; `app.service` sets no `User=`, so it does.
-- [x] **U3** `scripts/pi/setup-appliance.sh` — one-time device prep: X packages
-  (`xserver-xorg-core`, `xserver-xorg-input-libinput`, `xinit`, `x11-xserver-utils`, `xfonts-base`,
-  `unclutter`) plus the GL/input/font libs, the `PrivateTmp` drop-in (U4), and the USB auto-mount
-  rule. Refuses to run while the overlay is on, so a forgotten lift fails loudly instead of
-  installing into RAM.
-- [x] **U4** `app.service.d/10-simulator-x11.conf` sets `PrivateTmp=yes`. `ProtectSystem=strict`
-  makes `/tmp` read-only, and the X server must create `/tmp/.X11-unix/X0` or it dies immediately.
-  A private tmpfs fixes X without opening the real `/tmp`; the app's own temp stays on `/data`
-  because `run` exports `TMPDIR=$APP_DIR/.tmp`, so a 150 MB download never lands in RAM.
-- [x] **U5** `scripts/publish-simulator-pi.ps1` — mirrors the ScanTool script (single-file
-  linux-arm64, tar over scp, stop-extract-start, truncation check). Also stages
-  `app-current/launcher/{run,xinitrc,xorg.conf}` so a launcher fix can ride an OTA update.
-- [x] **U6** `scripts/pi/neomotive.config.json` seed, staged as `.default` on deploy so a device's
-  `updateServerUrl` is never reset.
-- [x] **U7** `create-update-package.ps1` bundles `xorg.conf` alongside `run`/`xinitrc` for the
-  simulator target.
-- [x] **U8** `publish-scantool-pi.ps1` no longer force-rebuilds the four wilderness repos — every
-  Meadow dependency is a NuGet `PackageReference` at `3.*-*` after Group T, and rebuilding source
-  Meadow is exactly what produced the 1.1.1 brick.
-- [x] **U9** `publish-scantool-pi.ps1` now also stages `app-current/launcher/run`, matching what an
-  OTA package ships, so a dev deploy and a released package leave the device in the same shape.
-- [x] **U10** `docs/commissioning-a-pi.md` — flash to running app, both targets: image, boot-partition
-  edits, identity, device prep, deploy, verify, update URL, `local.env`, troubleshooting table.
-- [x] **U11** `Apps/ModuleSimulator/scripts/pi/README.md` — the simulator-specific detail
-  (X-vs-DRM, the two `ProtectSystem` failures, why the launcher is bundled twice).
-- [x] **U12** `.gitattributes` pins `xorg.conf` to LF.
+- [x] **U1** `Program.cs`: `UseX11()` + `StartWithClassicDesktopLifetime` → `UseSkia()` +
+  `UseHarfBuzz()` + `StartLinuxDrm(args, card, scaling)`. HarfBuzz must be explicit —
+  `UsePlatformDetect` is what normally wires text shaping, and it would drag X11 back in.
+- [x] **U2** `App.OnFrameworkInitializationCompleted` sets `MainView` on the single-view
+  lifetime (`SimulatorView` in a `Viewbox`, letterboxed), keeping the `Window` branch for
+  dev-box layout checks. Added `Avalonia.LinuxFramebuffer`.
+- [x] **U3** Deleted `xinitrc`, `xorg.conf`, `bash_profile`, `setup-autostart.sh`,
+  `neomotive-splash.service`, `deployment.md`. The classic `/opt/neomotive` autologin→startx
+  path is gone; the device it described is now an appliance-kit unit.
+- [x] **U4** Simulator `run` is now the ScanTool's `run`, modulo binary name and the
+  `SIMULATOR_*` env prefix. Supervise loop (exit 42) back in `run` where it belongs.
+- [x] **U5** `setup-usb-updates.sh` is byte-identical between the two apps; the
+  simulator-only `setup-appliance.sh` (X packages + `PrivateTmp` drop-in) is deleted — with
+  no X server there is no `/tmp/.X11-unix` to create, so `ProtectSystem=strict` needs no
+  exception at all.
+- [x] **U6** `scripts/publish-simulator-pi.ps1` — near-copy of the ScanTool script; stages
+  `app-current/launcher/run` so a launcher fix rides an OTA update.
+- [x] **U7** `scripts/pi/neomotive.config.json` seed, staged as `.default` on deploy so a
+  device's `updateServerUrl` is never reset.
+- [x] **U8** `publish-scantool-pi.ps1` no longer force-rebuilds the four wilderness repos —
+  everything Meadow is a NuGet `PackageReference` at `3.*-*` after Group T — and now also
+  stages `app-current/launcher/run`.
+- [x] **U9** `docs/commissioning-a-pi.md` — one path, both devices.
+- [x] **U10** `Apps/ModuleSimulator/scripts/pi/README.md` rewritten around the shared design.
 
-**Not done:** none of Group U is verified on hardware. `setup-appliance.sh` has not been run on
-`neomotive-sim.local`, so the `PrivateTmp` fix and the `-logfile`/`-config` arguments are reasoned
-from `app.service` and the Xorg manual, not observed. The simulator device is still mid-update from
-Group S (slots untouched, `app-staging` verified 276/276).
+### USB updates never worked on either device
+
+R7 was written and shipped but had never been exercised against a real stick. It could not
+have worked:
+
+- [x] **U11** **udev cannot mount.** The `RUN+="/usr/local/bin/neomotive-usb-mount add %k"`
+  rule fired correctly, but a udev worker runs in a private mount namespace: the mount fails
+  with a bare `mount: /media/usb: permission denied`, and where it succeeds it is invisible to
+  every other process. Replaced with `ENV{SYSTEMD_WANTS}+="neomotive-usb-mount@%k.service"`
+  and a `BindsTo=dev-%i.device` template unit, so systemd mounts in the host namespace and
+  `ExecStop` unmounts when the stick is pulled. No remove rule needed.
+- [x] **U12** `logger` was called without `-t`, so it tagged with the calling user and the
+  documented `journalctl -t neomotive-usb-mount` returned "no entries" even on runs that
+  worked. Now `logger -t`.
+- [x] **U13** `/sbin/udevadm settle` — wrong path on Bookworm (`/usr/bin/udevadm`), and
+  calling `settle` from inside a udev event is a self-deadlock anyway. Removed; the systemd
+  unit already orders after the device.
+- [x] **U14** Every mount attempt ended `|| true` and then logged "mounted" unconditionally,
+  so a stick that never mounted still reported success. Now logs the real error and exits
+  non-zero.
+
+**Verified on `neomotive-sim.local`:** service active, `NRestarts=0`, no X server process,
+CAN0 up, input board up, Avalonia rendering through DRM. A vfat stick mounts at `/media/usb`
+on insert, and `/proc/<app pid>/mountinfo` confirms the running app sees it **through**
+`ProtectSystem=strict` — the propagation question that made the systemd approach necessary.
+
+**Not done:** nobody has looked at the panel — "renders through DRM" here means the process
+holds the device and reports no error, not that the UI was seen. USB *update* end-to-end (a
+real package on a stick, installed) is still unexercised; only the mount is proven. The
+ScanTool has not been redeployed since these launcher changes, and is still on the 1.1.2
+staged in Group T.

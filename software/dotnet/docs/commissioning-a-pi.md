@@ -3,8 +3,11 @@
 End-to-end bring-up of a Neomotive appliance, from a blank SD card to the app
 running on boot. Covers both apps — the **ScanTool** and the **ModuleSimulator**.
 
-Steps marked **ScanTool** or **Simulator** apply to only that app; everything
-else applies to both. Budget about 45 minutes, most of it waiting on reboots.
+**The two devices are commissioned identically.** Both render with Avalonia
+DRM/KMS, both live at `/data/app`, both use the same `run` and the same device
+prep script. The only differences are which payload you deploy, the hostname, and
+the `SCANTOOL_*` vs `SIMULATOR_*` environment prefixes. Budget about 30 minutes,
+most of it waiting on reboots.
 
 ---
 
@@ -20,17 +23,18 @@ else applies to both. Budget about 45 minutes, most of it waiting on reboots.
 | Network | Ethernet for bring-up. WiFi works but is one more variable |
 | Workstation | Windows with the .NET 10 SDK and the OpenSSH client (`scp`/`ssh` in `C:\Windows\System32\OpenSSH`) |
 
-The two apps differ in exactly one meaningful way at commissioning time — the
-graphics path:
+What differs between the two:
 
 | | ScanTool | ModuleSimulator |
 |---|---|---|
-| Rendering | Avalonia DRM/KMS, straight to `/dev/dri/card*` | Avalonia X11 |
-| Display stack needed | none | `xserver-xorg-core`, `xinit`, no window manager |
-| Device prep script | `setup-usb-updates.sh` | `setup-appliance.sh` |
-| Default hostname | `pi-appliance` | rename to `neomotive-sim` (§4) |
+| Payload | `publish-scantool-pi.ps1` | `publish-simulator-pi.ps1` |
+| Hostname | `pi-appliance` | rename to `neomotive-sim` (§4) |
+| Env prefix | `SCANTOOL_*` | `SIMULATOR_*` |
 
-Everything else — image, `/data/app` layout, deploy, updates — is identical.
+Everything else — image, display stack, `/data/app` layout, device prep, deploy,
+updates — is the same. Neither needs an X server: `Avalonia`'s DRM/KMS backend
+renders straight to `/dev/dri/card*`, so `app.service` starts `run`, `run` starts
+the binary, and that is the whole graphics path.
 
 ---
 
@@ -110,7 +114,7 @@ Sanity checks:
 ```bash
 ls -d /data              # writable partition mounted
 ls /dev/spidev0.0        # SPI present, no kernel CS
-ls /dev/dri/card*        # DRM device present  (the ScanTool needs this)
+ls /dev/dri/card*        # DRM device present  (both apps render through it)
 df -h /                  # ~1 GB free on root, for the apt installs in section 4/5
 ```
 
@@ -129,6 +133,13 @@ sudo raspi-config nonint disable_overlayfs && sudo reboot
 # reconnect — the rootfs is now writable
 sudo passwd pi
 sudo hostnamectl set-hostname neomotive-sim     # Simulator; ScanTool keeps pi-appliance
+
+# hostnamectl does NOT update /etc/hosts. Without this every sudo prints
+# "sudo: unable to resolve host neomotive-sim: Name or service not known"
+# and pauses while it times out resolving.
+sudo sed -i 's/^127\.0\.1\.1.*/127.0.1.1	neomotive-sim/' /etc/hosts
+grep -q '^127\.0\.1\.1' /etc/hosts || echo -e '127.0.1.1	neomotive-sim' | sudo tee -a /etc/hosts
+
 sudo raspi-config nonint enable_overlayfs && sudo reboot
 ```
 
@@ -138,19 +149,23 @@ this per device.
 
 ---
 
-## 5. One-time device prep
+## 5. One-time device prep — USB updates
 
-Both apps need something installed on the read-only rootfs, so both go through
-the same lift → install → restore cycle. The scripts refuse to run while the
-overlay is on, so a forgotten step fails loudly instead of silently installing
-into RAM and evaporating at the next reboot.
+Every device gets this. `UsbUpdateSource.HasRemovableDrive()` tests `/proc/mounts`
+for `/media/usb` and bails before scanning anything else, and this image has no
+udisks2 and no desktop session, so without it inserting a stick does nothing at
+all. (Network updates need none of it, but there is no reason to skip it.)
 
-### ScanTool
+It installs onto the read-only rootfs, so the overlay has to be down. The script
+refuses to run otherwise, so a forgotten lift fails loudly instead of silently
+installing into RAM and evaporating at the next reboot.
 
-USB update support only. Network updates need none of this.
+The same three files exist under both apps and are byte-identical — take them
+from whichever app you are deploying:
 
 ```powershell
 scp Apps/ScanTool/scripts/pi/neomotive-usb-mount.sh `
+    Apps/ScanTool/scripts/pi/neomotive-usb-mount@.service `
     Apps/ScanTool/scripts/pi/setup-usb-updates.sh pi@pi-appliance.local:/tmp/
 ```
 
@@ -162,44 +177,34 @@ sudo chmod +x /tmp/setup-usb-updates.sh && sudo /tmp/setup-usb-updates.sh
 sudo raspi-config nonint enable_overlayfs && sudo reboot
 ```
 
-If the image predates the GUI-on-DRM packages in the kit's
-`optimizations.yaml`, install them in the same window:
+If the image predates the GUI-on-DRM packages in the kit's `optimizations.yaml`,
+install them in the same overlay-lifted window — both apps need them:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y libgl1-mesa-dri libegl1 libgles2 libinput10 libfontconfig1
 ```
 
-### Simulator
+### Why a systemd unit and not a udev `RUN` rule
 
-X server, a systemd drop-in, and USB update support — one script does all three.
+The udev rule does **not** mount. It pulls in `neomotive-usb-mount@%k.service`
+with `ENV{SYSTEMD_WANTS}`, and systemd does the mount.
 
-```powershell
-scp Apps/ModuleSimulator/scripts/pi/neomotive-usb-mount.sh `
-    Apps/ModuleSimulator/scripts/pi/setup-appliance.sh pi@neomotive-sim.local:/tmp/
-```
+A udev worker runs in a private mount namespace. Mounting from `RUN+=` fails on
+this image with a bare `mount: /media/usb: permission denied`, and on the systemd
+versions where it succeeds the mount is invisible to every other process —
+including the app. Both failure modes look identical from the app's side
+(`/media/usb` never appears).
 
-```bash
-ssh -t pi@neomotive-sim.local
-sudo raspi-config nonint disable_overlayfs && sudo reboot
-# reconnect
-sudo chmod +x /tmp/setup-appliance.sh && sudo /tmp/setup-appliance.sh
-sudo raspi-config nonint enable_overlayfs && sudo reboot
-```
+The unit is `BindsTo=dev-%i.device`, so pulling the stick stops it and `ExecStop`
+unmounts. No remove rule is needed.
 
-**Why the drop-in matters.** `app.service` runs with `ProtectSystem=strict`,
-which mounts everything read-only except `/data` — `/tmp` included. The X server
-must create `/tmp/.X11-unix/X0` or it exits before the display ever opens, and
-the symptom is a black screen with a service restarting every 2 seconds. The
-drop-in sets `PrivateTmp=yes`, giving the unit a private writable tmpfs `/tmp`.
-The app's own temp files still land on `/data` — `run` exports
-`TMPDIR=$APP_DIR/.tmp` — so a 150 MB update download never goes to RAM.
-
-Verify after the final reboot:
+Verify with a stick inserted:
 
 ```bash
-systemctl cat app.service | grep PrivateTmp    # PrivateTmp=yes
-which Xorg xinit
+findmnt /media/usb
+journalctl -t neomotive-usb-mount
+systemctl status 'neomotive-usb-mount@*'
 ```
 
 ---
@@ -233,7 +238,6 @@ The resulting layout:
 ```
 /data/app/
 ├─ run                     # entrypoint — must be executable
-├─ xinitrc, xorg.conf      # Simulator only
 ├─ neomotive.config.json   # device-local; holds updateServerUrl
 ├─ local.env               # device-local overrides (§9) — not in the payload
 ├─ app-current/            # active A/B slot: the binary + launcher/
@@ -277,8 +281,7 @@ ssh pi@<host> 'journalctl -u app.service -f'
 The panel should show the app within a few seconds of the service starting. Then
 check in the UI: **Settings → Updates** shows the running version.
 
-journald is volatile on this image — nothing survives a reboot. For the
-simulator, X server failures are in `/data/app/.tmp/Xorg.0.log`.
+journald is volatile on this image — nothing survives a reboot.
 
 Then reboot once and confirm it comes back on its own. That is the real
 acceptance test: `app.service` is `Restart=always`, so a device that only works
@@ -343,10 +346,10 @@ Recognised by the ScanTool:
 | `bad interpreter: /bin/sh^M` | `run` was copied with CRLF endings |
 | Restarting every 2 s, no UI | App crashes on start — `journalctl -u app.service -n 50` |
 | `Could not load file or assembly 'Meadow.Contracts'` | Package built against source-built Meadow. Rebuild; `create-update-package.ps1` now fails the build rather than shipping it |
-| `drmModeSetCrtc failed` (ScanTool) | Something else holds DRM master — usually a hand-started binary left over from an SSH session. Find it with `ps -ef \| grep scantool` and kill it |
-| Black screen, X exits at once (Simulator) | `PrivateTmp` drop-in missing, or installed with the overlay on. Read `/data/app/.tmp/Xorg.0.log` |
+| `drmModeSetCrtc failed` | Something else holds DRM master — usually a hand-started binary left over from an SSH session. Find it with `ps -ef \| grep -E 'scantool\|simulator'` and kill it |
 | Changes vanish after reboot | They were written to the read-only rootfs with the overlay on. Only `/data` persists |
-| USB stick does nothing | Device prep not run, or run with the overlay on |
+| USB stick does nothing | Device prep not run, or run with the overlay on. Check `journalctl -t neomotive-usb-mount` |
+| `sudo: unable to resolve host` | `/etc/hosts` was not updated with the new hostname (§4) |
 | CAN init fails, CS in use | `dtoverlay=spi0-0cs` missing from `config.txt` |
 | `apt` fails, read-only filesystem | Lift the overlay first (§4) |
 | Out of space on `/` during apt | The 1 GB headroom is granted on first boot only; an already-flashed device cannot gain it retroactively. Reflash |
