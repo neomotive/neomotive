@@ -1,0 +1,84 @@
+name: CI
+
+# Build and test only. Nothing here publishes anything — releases are
+# tag-driven and live in release.yml, which fires on can-scan-v* / can-sim-v*.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('software/dotnet/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # neomotive.slnx cannot be built here. Its /_refs/ folder and a couple of
+      # app projects (InputBoardTest, SignCamera.Pi) reference the sibling
+      # WildernessLabs repos by relative path, and those are not checked out —
+      # nor should they be. Everything below resolves Meadow from nuget.org at
+      # 3.*-*, exactly as the release build does. See the long note in
+      # release.yml about what building Meadow from source did to 1.1.1.
+      - name: Build shipping app projects
+        working-directory: software/dotnet
+        run: |
+          set -euo pipefail
+          for proj in \
+            Apps/ScanTool/Neomotive.ScanTool.RaspberryPi/Neomotive.ScanTool.RaspberryPi.csproj \
+            Apps/ScanTool/Neomotive.ScanTool.Desktop/Neomotive.ScanTool.Desktop.csproj \
+            Apps/ModuleSimulator/Neomotive.ModuleSimulator.RaspberryPi/Neomotive.ModuleSimulator.RaspberryPi.csproj \
+            Apps/ModuleSimulator/Neomotive.ModuleSimulator.Desktop/Neomotive.ModuleSimulator.Desktop.csproj
+          do
+            echo "::group::$proj"
+            dotnet build "$proj" --configuration Release
+            echo "::endgroup::"
+          done
+
+      # Globbed rather than listed so a new test project is picked up without
+      # anyone having to remember to edit this file.
+      - name: Test
+        working-directory: software/dotnet
+        run: |
+          set -euo pipefail
+          mapfile -t projects < <(find Apps Libraries -name '*.Tests.csproj' | sort)
+          if [ ${#projects[@]} -eq 0 ]; then
+            echo "::error::No test projects found — the glob is wrong"; exit 1
+          fi
+          printf 'Found %d test project(s):\n' "${#projects[@]}"
+          printf '  %s\n' "${projects[@]}"
+          for proj in "${projects[@]}"; do
+            echo "::group::$proj"
+            dotnet test "$proj" --configuration Release --logger 'trx;LogFileName=results.trx'
+            echo "::endgroup::"
+          done
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: software/dotnet/**/TestResults/*.trx
+          if-no-files-found: warn
