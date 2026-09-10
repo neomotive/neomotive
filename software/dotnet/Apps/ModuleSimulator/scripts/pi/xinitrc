@@ -1,5 +1,27 @@
 #!/bin/bash
-# ~/.xinitrc — started by startx, no window manager so no title bar / border offset
+# ~/.xinitrc — started by startx (classic image) or by the appliance-kit `run`
+# entrypoint. No window manager, so no title bar / border offset.
+
+# Where the A/B slots live. /data/app is the Pi Appliance Kit layout, where the
+# rootfs is read-only and /data is the only writable mount; /opt/neomotive is the
+# classic Raspberry Pi OS layout. NEOMOTIVE_APP_DIR (exported by `run`) wins.
+if [ -n "${NEOMOTIVE_APP_DIR:-}" ]; then
+    APP_DIR="$NEOMOTIVE_APP_DIR"
+elif [ -d /data/app/app-current ]; then
+    APP_DIR=/data/app
+else
+    APP_DIR=/opt/neomotive
+fi
+
+# Everything .NET writes must land under APP_DIR: on the appliance, app.service
+# runs with ProtectSystem=strict + ReadWritePaths=/data, so /tmp and $HOME are
+# read-only and Path.GetTempPath() (which honours TMPDIR) would otherwise fail.
+export TMPDIR="${TMPDIR:-$APP_DIR/.tmp}"
+export TMP="$TMPDIR"
+export TEMP="$TMPDIR"
+mkdir -p "$TMPDIR" 2>/dev/null || true
+
+LOG="$TMPDIR/simulator.log"
 
 # Disable screensaver, display power management, and screen blanking
 xset s off
@@ -13,11 +35,28 @@ unclutter -idle 0 -root &
 # Show splash on root window immediately — covers the black screen while .NET starts.
 # Avalonia's fullscreen window will cover it once the app is ready.
 # Install with: sudo apt install feh
-[ -f /opt/neomotive/splash.png ] && feh --bg-fill /opt/neomotive/splash.png
+[ -f "$APP_DIR/splash.png" ] && feh --bg-fill "$APP_DIR/splash.png"
 
 # Wait for SPI to be ready — MCP3004 ADC and GPIO inputs depend on it.
 # The device isn't always present at the moment X starts during early boot.
 until [ -e /dev/spidev0.0 ]; do sleep 0.2; done
+
+# Resolve the binary out of the A/B slot. Pre-A/B deployments put it directly in
+# APP_DIR; keep starting those so an unmigrated device still boots.
+resolve_bin() {
+    if [ -x "$APP_DIR/app-current/simulator" ]; then
+        BIN="$APP_DIR/app-current/simulator"
+    elif [ -f "$APP_DIR/app-current/simulator" ]; then
+        chmod +x "$APP_DIR/app-current/simulator" && BIN="$APP_DIR/app-current/simulator"
+    elif [ -f "$APP_DIR/simulator" ]; then
+        chmod +x "$APP_DIR/simulator" 2>/dev/null
+        BIN="$APP_DIR/simulator"
+    else
+        echo "xinitrc: no simulator binary in $APP_DIR/app-current or $APP_DIR" >> "$LOG"
+        exit 1
+    fi
+}
+resolve_bin
 
 # Supervise rather than exec. After an in-app update the app has already swapped
 # the A/B slots and exits 42 to ask for a relaunch; exec would end the X session
@@ -25,7 +64,8 @@ until [ -e /dev/spidev0.0 ]; do sleep 0.2; done
 # keeps X alive and starts the newly promoted app-current binary. Any other exit
 # code is the app's own and ends the session as before.
 while :; do
-    /opt/neomotive/app-current/simulator >> /tmp/simulator.log 2>&1 && rc=0 || rc=$?
+    "$BIN" >> "$LOG" 2>&1 && rc=0 || rc=$?
     [ "$rc" -eq 42 ] || exit "$rc"
-    echo "xinitrc: restarting after update" >> /tmp/simulator.log
+    resolve_bin
+    echo "xinitrc: restarting after update -> $BIN" >> "$LOG"
 done

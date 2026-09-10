@@ -7,9 +7,22 @@ namespace Neomotive.Update;
 /// Checks a version manifest endpoint for available updates and downloads the package zip.
 /// The version manifest JSON maps "{target}-{platform}" keys to { version, url, sha256 }.
 /// </summary>
-public sealed class NetworkUpdateSource(string versionManifestUrl) : IUpdateSource, IDisposable
+/// <param name="downloadDir">
+/// Where the package lands. Must be caller-supplied rather than
+/// <c>Path.GetTempPath()</c>: under the Pi Appliance Kit the app runs with
+/// ProtectSystem=strict and ReadWritePaths=/data, so /tmp is mounted read-only
+/// and every download failed with "Access to the path '/tmp/...' is denied" —
+/// which the Updates screen showed as a download failure with no hint why.
+/// </param>
+public sealed class NetworkUpdateSource(string versionManifestUrl, string downloadDir)
+    : IUpdateSource, IDisposable
 {
-    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
+    // A 30s ceiling on the whole request is fine for the small JSON manifest but
+    // not for a ~100 MB self-contained payload over a Pi's Wi-Fi, where the
+    // timeout fired mid-download and looked like a network fault.
+    private readonly HttpClient _http = new() { Timeout = Timeout.InfiniteTimeSpan };
+    private static readonly TimeSpan ManifestTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(20);
 
     public async Task<(UpdateManifest Manifest, string ZipPath)?> CheckAsync(
         string appId,
@@ -22,9 +35,11 @@ public sealed class NetworkUpdateSource(string versionManifestUrl) : IUpdateSour
         // date", which is the one thing it definitely does not mean. Let these
         // throw: UpdateService turns them into a Failed result with the reason.
         VersionManifestEntry? entry;
+        using var manifestCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        manifestCts.CancelAfter(ManifestTimeout);
         try
         {
-            var json = await _http.GetStringAsync(versionManifestUrl, ct);
+            var json = await _http.GetStringAsync(versionManifestUrl, manifestCts.Token);
             var all = JsonSerializer.Deserialize<Dictionary<string, VersionManifestEntry>>(json);
             if (all == null || !all.TryGetValue(key, out entry))
                 return null;   // Genuinely nothing published for this device.
@@ -45,14 +60,31 @@ public sealed class NetworkUpdateSource(string versionManifestUrl) : IUpdateSour
         if (!UsbUpdateSource.IsNewer(entry.Version, currentVersion))
             return null;
 
-        // Download the zip to a temp file
-        var tmpPath = Path.Combine(Path.GetTempPath(), $"neomotive-update-{entry.Version}.zip");
+        // Download into the caller's writable scratch dir — see downloadDir above.
+        var tmpPath = Path.Combine(downloadDir, $"neomotive-update-{entry.Version}.zip");
+        using var downloadCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        downloadCts.CancelAfter(DownloadTimeout);
         try
         {
-            using var response = await _http.GetAsync(entry.Url, HttpCompletionOption.ResponseHeadersRead, ct);
+            Directory.CreateDirectory(downloadDir);
+
+            using var response = await _http.GetAsync(
+                entry.Url, HttpCompletionOption.ResponseHeadersRead, downloadCts.Token);
             response.EnsureSuccessStatusCode();
             await using var fs = File.Create(tmpPath);
-            await response.Content.CopyToAsync(fs, ct);
+            await response.Content.CopyToAsync(fs, downloadCts.Token);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // The appliance signature: baseDir is not writable, so nothing about
+            // this update could ever work. Say which path, not just "denied".
+            throw new InvalidOperationException(
+                $"Cannot write the download to {downloadDir}: {ex.Message}", ex);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            TryDelete(tmpPath);
+            throw new InvalidOperationException($"Download of v{entry.Version} timed out.");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

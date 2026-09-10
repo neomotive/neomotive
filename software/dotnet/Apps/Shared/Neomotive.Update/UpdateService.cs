@@ -41,6 +41,7 @@ public sealed class UpdateService : IDisposable
         // Updates screen shows are the same clean MAJOR.MINOR.PATCH string.
         _currentVersion = UsbUpdateSource.Normalize(currentVersion);
         _applicator = new UpdateApplicator(baseDir);
+        _applicator.EnsureLayout();
     }
 
     /// <summary>The running version, as shown on the Updates screen.</summary>
@@ -58,8 +59,11 @@ public sealed class UpdateService : IDisposable
     {
         _network?.Dispose();
         ManifestUrl = string.IsNullOrWhiteSpace(networkUrl) ? DefaultManifestUrl : networkUrl.Trim();
-        _network = new NetworkUpdateSource(ManifestUrl);
+        _network = new NetworkUpdateSource(ManifestUrl, _applicator.DownloadDir);
     }
+
+    /// <summary>Where a network package is downloaded before it is extracted.</summary>
+    public string DownloadDir => _applicator.DownloadDir;
 
     public event Action<string>? StatusChanged;
 
@@ -157,17 +161,27 @@ public sealed class UpdateService : IDisposable
         if (result == null)
             return new UpdateResult.NotAvailable();
 
-        return await ApplyAsync(result.Value.Manifest, result.Value.ZipPath, ct);
+        // We own this zip (unlike a USB one, which belongs to the operator's stick),
+        // so it is ours to delete once it has been extracted or has failed.
+        return await ApplyAsync(result.Value.Manifest, result.Value.ZipPath, ct, deleteZip: true);
     }
 
-    private async Task<UpdateResult> ApplyAsync(UpdateManifest manifest, string zipPath, CancellationToken ct)
+    private async Task<UpdateResult> ApplyAsync(
+        UpdateManifest manifest, string zipPath, CancellationToken ct, bool deleteZip = false)
     {
         try
         {
+            EnsureRoomFor(zipPath);
+
             await Task.Run(() =>
                 UpdatePackage.ExtractAndVerify(zipPath, manifest, _applicator.StagingDir), ct);
 
             bool requiresRestart = _applicator.Apply(manifest);
+
+            // Before SelfRestart, never after: Environment.Exit does not return, so
+            // anything left here would strand a full payload copy on /data — the
+            // same partition that has to hold both slots.
+            if (deleteZip) TryDeleteZip(zipPath);
 
             if (!requiresRestart && OperatingSystem.IsLinux())
                 SelfRestart();
@@ -180,10 +194,39 @@ public sealed class UpdateService : IDisposable
         }
         catch (Exception ex)
         {
+            if (deleteZip) TryDeleteZip(zipPath);
             var failed = new UpdateResult.Failed(ex.Message);
             UpdateFailed?.Invoke(failed);
             return failed;
         }
+    }
+
+    /// <summary>
+    /// Refuses an update that cannot fit rather than letting it half-extract.
+    /// Extraction needs room for the expanded payload beside the zip, and the slot
+    /// swap then holds two full copies (current + previous). On the appliance all
+    /// of that lands on one /data partition, so budget three times the zip.
+    /// </summary>
+    private void EnsureRoomFor(string zipPath)
+    {
+        var free = _applicator.FreeSpaceBytes();
+        if (free == null) return;   // Unknown — don't block on a reading we can't take.
+
+        long needed;
+        try { needed = new FileInfo(zipPath).Length * 3; }
+        catch { return; }
+
+        if (free < needed)
+        {
+            throw new IOException(
+                $"Not enough free space to install: {needed / (1024 * 1024)} MB needed, " +
+                $"{free / (1024 * 1024)} MB free on {_applicator.BaseDir}.");
+        }
+    }
+
+    private static void TryDeleteZip(string zipPath)
+    {
+        try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { }
     }
 
     /// <summary>

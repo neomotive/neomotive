@@ -1,0 +1,79 @@
+#!/bin/sh
+# Pi Appliance Kit entrypoint for the ModuleSimulator. app-launch cd's here and
+# exec's this file; install it with the kit's install-app.sh, which rsyncs this
+# whole directory to /data/app.
+#
+# The classic Raspberry Pi OS deployment does NOT use this file — there the Pi
+# autologs in on tty1 and ~/.bash_profile calls startx, which runs ~/.xinitrc.
+# Both paths end up in the same xinitrc, which owns the supervise loop.
+#
+# The rootfs is a read-only overlay; /data is the only writable mount, and
+# app.service sets ProtectSystem=strict + ProtectHome=yes, so every path .NET
+# wants to write must be redirected under the app directory.
+set -e
+
+# Normally this file IS $APP_DIR/run. When it is the packaged copy handed off to
+# from app-current/launcher/run, the outer launcher passes the real app root
+# through NEOMOTIVE_APP_DIR — deriving it from $0 there would point at launcher/.
+if [ -n "${NEOMOTIVE_APP_DIR:-}" ]; then
+    APP_DIR="$NEOMOTIVE_APP_DIR"
+else
+    APP_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+export NEOMOTIVE_APP_DIR="$APP_DIR"
+
+# Hand off to the packaged launcher when the promoted slot ships one, so a
+# launcher fix can ride along with an update instead of needing SSH on every
+# device. Guarded hard: a bad launcher on a read-only appliance is a brick with
+# no console, so delegate only to a file the shell can actually parse, and fall
+# through to the logic below on any doubt.
+PACKAGED="$APP_DIR/app-current/launcher/run"
+if [ -z "${NEOMOTIVE_LAUNCHER_DELEGATED:-}" ] && [ -r "$PACKAGED" ]; then
+    if sh -n "$PACKAGED" 2>/dev/null; then
+        NEOMOTIVE_LAUNCHER_DELEGATED=1
+        export NEOMOTIVE_LAUNCHER_DELEGATED
+        exec sh "$PACKAGED" "$@"
+    fi
+    echo "run: $PACKAGED failed a syntax check — using the built-in launcher" >&2
+fi
+export HOME="$APP_DIR"
+export DOTNET_BUNDLE_EXTRACT_BASE_DIR="$APP_DIR/.dotnet-extract"
+export XDG_RUNTIME_DIR="$APP_DIR/.runtime"
+export TMPDIR="$APP_DIR/.tmp"
+export TMP="$TMPDIR"
+export TEMP="$TMPDIR"
+export DOTNET_EnableWriteXorExecute=0
+export DOTNET_gcServer=0
+
+mkdir -p "$DOTNET_BUNDLE_EXTRACT_BASE_DIR" "$XDG_RUNTIME_DIR" "$TMPDIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+# The updater's A/B directories, so a device that has only ever been rsynced by
+# install-app.sh still has somewhere to stage and download.
+mkdir -p "$APP_DIR/data" "$APP_DIR/config" "$APP_DIR/app-downloads"
+
+# Device-local overrides. `run` is part of the payload and every deploy
+# overwrites it, so put settings in local.env — that file is not in the payload
+# and survives an upgrade. See ScanTool/scripts/pi/run for the same convention.
+if [ -f "$APP_DIR/local.env" ]; then
+    . "$APP_DIR/local.env"
+fi
+
+# The simulator is a windowed Avalonia app, so unlike the ScanTool (DRM/KMS, no
+# X) it needs an X server. app.service has no controlling tty, so start X here
+# rather than relying on startx's tty detection. xinit exec's xinitrc as the
+# client and exits when it does — including with 42, which the loop inside
+# xinitrc consumes, so a self-update never tears down X.
+# Prefer the xinitrc from the promoted slot: it holds the supervise loop, so it
+# has to stay in step with the binary it restarts. Fall back to the deployed copy
+# at $APP_DIR/xinitrc for a device installed before launchers were packaged.
+if [ -f "$APP_DIR/app-current/launcher/xinitrc" ]; then
+    XINITRC="$APP_DIR/app-current/launcher/xinitrc"
+elif [ -f "$APP_DIR/xinitrc" ]; then
+    XINITRC="$APP_DIR/xinitrc"
+else
+    echo "run: no xinitrc in $APP_DIR/app-current/launcher or $APP_DIR" >&2
+    exit 1
+fi
+
+exec xinit "$XINITRC" -- :0 vt1 -keeptty -nolisten tcp

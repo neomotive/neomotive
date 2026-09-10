@@ -871,6 +871,60 @@ went out as the next patch instead.
   version normalization, and `UpdatePackage` hash verification — that a mismatch throws *and*
   deletes staging, since the applicator promotes whatever staging holds.
 
-**Not done:** neither device was reachable this session (pi-appliance powered off; the
-simulator at 192.168.4.31 refused key auth for `pi`), so nothing was verified on hardware.
-R7 in particular is untested against a real stick.
+---
+
+## Group S — Pi Appliance Kit compatibility
+
+The ScanTool image is built from `Pi-Appliance-Kit`, whose `app.service` runs the app under
+`ProtectSystem=strict` + `ReadWritePaths=/data`. That mounts the entire filesystem read-only
+in the unit's namespace except `/data` — **`/tmp` included**. Everything here follows from
+that one fact, and it is why the update path tested fine over SSH and failed from the service.
+
+- [x] **S1** `NetworkUpdateSource` takes its download directory as a constructor argument
+  instead of calling `Path.GetTempPath()`. This was the hard failure: every network update on
+  the appliance died with `Access to the path '/tmp/neomotive-update-….zip' is denied`, which
+  the Updates screen reported only as a download failure. `UpdateService` passes
+  `UpdateApplicator.DownloadDir` (`/data/app/app-downloads`).
+- [x] **S2** `UpdateApplicator` gained `DownloadDir`, `BaseDir`, `EnsureLayout()` and
+  `FreeSpaceBytes()`. `EnsureLayout()` runs from the `UpdateService` constructor: creates
+  `config/`, `data/`, `app-downloads/`, and clears an `app-staging/` or abandoned
+  `neomotive-update-*.zip` left by an interrupted attempt.
+- [x] **S3** Space guard. Extraction, the zip and both slots share one `/data` partition, so
+  `UpdateService` refuses an update when free space is under 3× the package — with the numbers
+  in the message — rather than half-extracting and leaving the device in pieces.
+- [x] **S4** Network downloads are deleted after apply (and after a failure). A USB package
+  belongs to the operator's stick and is never touched. The delete happens *before*
+  `SelfRestart()`, since `Environment.Exit` does not return.
+- [x] **S5** HTTP timeouts split: 30 s for the small JSON manifest, 20 min for the payload. One
+  30 s ceiling on the whole request fired mid-download on Pi Wi-Fi and looked like a network fault.
+- [x] **S6** `run` exports `TMPDIR`/`TMP`/`TEMP` into `$APP_DIR/.tmp` (alongside `HOME`,
+  `XDG_RUNTIME_DIR`, `DOTNET_BUNDLE_EXTRACT_BASE_DIR`) and pre-creates `data/`, `config/`,
+  `app-downloads/`. Defence in depth: `Path.GetTempPath()` honours `TMPDIR`.
+- [x] **S7** CRLF fix. `.gitattributes` pinned only `*.sh`, but `run` and `xinitrc` carry no
+  extension and were CRLF in the working tree — and `install-app.sh` rsyncs `run` straight from
+  it, so `app.service` would fail with `bad interpreter: /bin/sh^M`. Pinned all three
+  extensionless launchers to LF and normalized the files.
+- [x] **S8** The launcher is now shippable OTA. `$APP_DIR/run` sits outside the A/B slots, so an
+  update could never change it. `create-update-package.ps1` bundles the launcher scripts into
+  the payload at `app/launcher/`, and `$APP_DIR/run` hands off to `app-current/launcher/run`.
+  Guarded hard — a bad launcher on a read-only appliance is a brick with no console — so it
+  delegates only to a readable file that passes `sh -n`, passes the real app root through
+  `NEOMOTIVE_APP_DIR`, sets `NEOMOTIVE_LAUNCHER_DELEGATED` against a re-exec loop, and falls
+  back to its built-in logic otherwise.
+- [x] **S9** Simulator on an appliance image. Added `Apps/ModuleSimulator/scripts/pi/run`
+  (same environment, then `xinit`s the packaged `xinitrc` — the simulator is a windowed
+  Avalonia app and `app.service` has no tty for `startx`). `xinitrc` no longer hardcodes the
+  read-only `/opt/neomotive`: it resolves `NEOMOTIVE_APP_DIR` → `/data/app` → `/opt/neomotive`,
+  re-resolves the binary each pass, and keeps the exit-42 loop in either layout.
+- [x] **S10** `ApplianceLayoutTests` (9 tests) pins the guarantees: every working directory is
+  under `baseDir`; downloads are derived from `baseDir`, not `Path.GetTempPath()`;
+  `EnsureLayout` is idempotent, clears staging and stale downloads, and leaves `app-current`
+  and `app-previous` alone; `data/` survives a slot promotion. Suite: 48 in
+  `Neomotive.Update.Tests`, 256 across the solution.
+
+**Not done:** none of Group S is verified on hardware — the handoff and fallback were exercised
+against a simulated `/data/app` tree locally, not on a device. The ScanTool at `pi-appliance.local`
+is still staged on 1.1.1 awaiting `sudo systemctl restart app.service`, and the simulator update
+was stopped mid-promotion (slots untouched; `app-staging` verified at 276/276). USB support (R7)
+remains untested against a real stick, and `setup-usb-updates.sh` still needs a run on-device
+with the overlay lifted.

@@ -6,7 +6,37 @@
 # redirected under the app directory.
 set -e
 
-APP_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Normally this file IS $APP_DIR/run, so its own directory is the app root. When
+# it is the packaged copy (see the handoff below) it lives two levels down at
+# app-current/launcher/run, and the outer launcher passes the real root through
+# NEOMOTIVE_APP_DIR — deriving it from $0 there would point at launcher/.
+if [ -n "${NEOMOTIVE_APP_DIR:-}" ]; then
+    APP_DIR="$NEOMOTIVE_APP_DIR"
+else
+    APP_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+export NEOMOTIVE_APP_DIR="$APP_DIR"
+
+# ── Hand off to the packaged launcher ────────────────────────────────────────
+# This file sits at $APP_DIR/run, OUTSIDE the A/B slots, so an update package —
+# which only ever replaces app-current/ — can never change it. Without a handoff
+# every launcher fix would need SSH or a USB stick on every device forever.
+#
+# So: if the promoted slot ships its own launcher, run that instead. The guards
+# matter more than the feature — a bad launcher on a read-only appliance is a
+# brick with no console. Delegate only to a readable file that the shell can
+# actually parse, and fall through to the logic below on any doubt.
+# NEOMOTIVE_LAUNCHER_DELEGATED stops a packaged launcher that re-execs from
+# looping forever.
+PACKAGED="$APP_DIR/app-current/launcher/run"
+if [ -z "${NEOMOTIVE_LAUNCHER_DELEGATED:-}" ] && [ -r "$PACKAGED" ]; then
+    if sh -n "$PACKAGED" 2>/dev/null; then
+        NEOMOTIVE_LAUNCHER_DELEGATED=1
+        export NEOMOTIVE_LAUNCHER_DELEGATED
+        exec sh "$PACKAGED" "$@"
+    fi
+    echo "run: $PACKAGED failed a syntax check — using the built-in launcher" >&2
+fi
 
 export HOME="$APP_DIR"
 export DOTNET_BUNDLE_EXTRACT_BASE_DIR="$APP_DIR/.dotnet-extract"
@@ -14,8 +44,21 @@ export XDG_RUNTIME_DIR="$APP_DIR/.runtime"
 export DOTNET_EnableWriteXorExecute=0
 export DOTNET_gcServer=0
 
-mkdir -p "$DOTNET_BUNDLE_EXTRACT_BASE_DIR" "$XDG_RUNTIME_DIR"
+# app.service sets ProtectSystem=strict with ReadWritePaths=/data, which mounts
+# EVERYTHING outside /data read-only in this unit's namespace — /tmp included.
+# .NET's Path.GetTempPath() honours TMPDIR, so point it at the writable partition;
+# without this anything that touches temp (zip extraction, X11, the updater's
+# download) dies with "Access to the path '/tmp/...' is denied".
+export TMPDIR="$APP_DIR/.tmp"
+export TMP="$TMPDIR"
+export TEMP="$TMPDIR"
+
+mkdir -p "$DOTNET_BUNDLE_EXTRACT_BASE_DIR" "$XDG_RUNTIME_DIR" "$TMPDIR"
 chmod 700 "$XDG_RUNTIME_DIR"
+
+# The updater's A/B directories. Created here as well as in-app so a device that
+# has only ever been rsynced by install-app.sh still has somewhere to stage.
+mkdir -p "$APP_DIR/data" "$APP_DIR/config" "$APP_DIR/app-downloads"
 
 # ── Device-local overrides ───────────────────────────────────────────────────
 # Do NOT uncomment settings in this file to change a device: `run` is part of the

@@ -81,6 +81,37 @@ dotnet publish $ProjectPath `
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed (exit $LASTEXITCODE)" }
 Write-Host "Publish complete." -ForegroundColor Green
 
+# ── Bundle the Pi launcher scripts ────────────────────────────────────────────
+# The device's entrypoint ($APP_DIR/run) sits outside the A/B slots, so an update
+# — which only replaces app-current/ — can never reach it. Shipping the launcher
+# inside the payload lets $APP_DIR/run hand off to app-current/launcher/run, so a
+# launcher fix rides along with the binary instead of needing SSH on every device.
+#
+# LF endings are written explicitly: these are extensionless, and a CRLF shebang
+# makes app.service fail with "bad interpreter: /bin/sh^M".
+
+if ($Platform -eq "linux-arm64") {
+    $ScriptsDir = switch ($Target) {
+        "scantool"  { "$AppsRoot\ScanTool\scripts\pi" }
+        "simulator" { "$AppsRoot\ModuleSimulator\scripts\pi" }
+    }
+    $LauncherFiles = switch ($Target) {
+        "scantool"  { @("run") }
+        "simulator" { @("run", "xinitrc") }
+    }
+
+    $LauncherDir = Join-Path $PublishDir "launcher"
+    New-Item -ItemType Directory -Force $LauncherDir | Out-Null
+
+    foreach ($name in $LauncherFiles) {
+        $src = Join-Path $ScriptsDir $name
+        if (-not (Test-Path $src)) { throw "launcher script not found: $src" }
+        $text = (Get-Content $src -Raw) -replace "`r`n", "`n"
+        [System.IO.File]::WriteAllText((Join-Path $LauncherDir $name), $text, [System.Text.UTF8Encoding]::new($false))
+        Write-Host "  bundled launcher/$name" -ForegroundColor DarkGray
+    }
+}
+
 # ── Compute SHA256 for every published file ───────────────────────────────────
 
 Write-Host "Computing hashes..." -ForegroundColor Yellow

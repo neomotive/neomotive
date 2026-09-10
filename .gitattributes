@@ -2,3 +2,11 @@
 # A CRLF checkout on Windows makes them fail with "bad interpreter", so pin LF
 # regardless of the local core.autocrlf setting.
 *.sh text eol=lf
+
+# The Pi launchers carry no extension: `run` is the Pi Appliance Kit entrypoint
+# (install-app.sh rsyncs it straight from the working tree, and app.service will
+# not start a script whose shebang ends in CR), and xinitrc/bash_profile are the
+# simulator's equivalents.
+run          text eol=lf
+xinitrc      text eol=lf
+bash_profile text eol=lf

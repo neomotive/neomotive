@@ -9,17 +9,55 @@ namespace Neomotive.Update;
 ///   app-current/   ← active binary
 ///   app-previous/  ← last known-good
 ///   app-staging/   ← extracted during update (cleaned on success or failure)
+///   app-downloads/ ← network package lands here before extraction
 ///   config/        ← external catalog/config JSON files
+///   data/          ← user settings; survives updates
 ///   update-state.json
+///
+/// Every one of these is inside baseDir on purpose. Under the Pi Appliance Kit
+/// the app runs from app.service with ProtectSystem=strict and
+/// ReadWritePaths=/data, so /data is the ONLY writable path in the unit's mount
+/// namespace — /tmp included is read-only. An updater that reaches outside
+/// baseDir fails on the appliance with a bare "access denied".
 /// </summary>
 public sealed class UpdateApplicator(string baseDir)
 {
+    public string BaseDir     => baseDir;
     public string CurrentDir  => Path.Combine(baseDir, "app-current");
     public string PreviousDir => Path.Combine(baseDir, "app-previous");
     public string StagingDir  => Path.Combine(baseDir, "app-staging");
+    public string DownloadDir => Path.Combine(baseDir, "app-downloads");
     public string ConfigDir   => Path.Combine(baseDir, "config");
     public string DataDir     => Path.Combine(baseDir, "data");
     private string StateFile  => Path.Combine(baseDir, "update-state.json");
+
+    /// <summary>
+    /// Creates the writable working directories and clears anything a previous,
+    /// interrupted update left behind. Safe to call on every startup.
+    /// </summary>
+    public void EnsureLayout()
+    {
+        Directory.CreateDirectory(ConfigDir);
+        Directory.CreateDirectory(DataDir);
+        Directory.CreateDirectory(DownloadDir);
+
+        // A staging dir at startup means the last attempt died between extraction
+        // and the slot swap. It is never the running app, and leaving it costs a
+        // full copy of the payload on a partition that also has to hold two slots.
+        TryDelete(StagingDir);
+        foreach (var stale in SafeEnumerate(DownloadDir, "neomotive-update-*.zip"))
+            TryDeleteFile(stale);
+    }
+
+    /// <summary>
+    /// Free bytes on the volume holding baseDir, or null when it cannot be read.
+    /// Used to refuse an update before it half-extracts rather than after.
+    /// </summary>
+    public long? FreeSpaceBytes()
+    {
+        try { return new DriveInfo(Path.GetPathRoot(Path.GetFullPath(baseDir))!).AvailableFreeSpace; }
+        catch { return null; }
+    }
 
     public UpdateState ReadState()
     {
@@ -114,6 +152,24 @@ public sealed class UpdateApplicator(string baseDir)
             state.PendingVersion = null;
             WriteState(state);
         }
+    }
+
+    private static void TryDelete(string dir)
+    {
+        try { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
+        catch { }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch { }
+    }
+
+    private static IEnumerable<string> SafeEnumerate(string dir, string pattern)
+    {
+        try { return Directory.EnumerateFiles(dir, pattern).ToList(); }
+        catch { return []; }
     }
 
     private static void CopyDirectory(string source, string dest)

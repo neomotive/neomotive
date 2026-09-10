@@ -265,12 +265,25 @@ a `did,name` CSV) into the ScanTool config directory, and `Export` writes the me
   so a stock device updates from GitHub with no per-device config. `updateServerUrl` in
   `neomotive.config.json` is an override for bench testing against a local server.
 - Updates screen shows the installed version and the manifest URL it will query.
+- Pi Appliance Kit correctness (2026-09-09): `app.service` runs the app under
+  `ProtectSystem=strict` + `ReadWritePaths=/data`, so `/data` is the only writable path in the
+  unit's namespace — `/tmp` included. `NetworkUpdateSource` therefore takes its download
+  directory from the caller (`/data/app/app-downloads`) instead of `Path.GetTempPath()`, which
+  had made every network update on the appliance fail with "access denied". `UpdateApplicator`
+  gained `EnsureLayout()` (creates the writable dirs, clears interrupted staging) and
+  `FreeSpaceBytes()`; `UpdateService` refuses an update that cannot fit in 3x the package and
+  deletes its own download after applying. See `docs/updates/release-and-update.md` §6.
+- Launchers ship inside the payload (2026-09-09): `$APP_DIR/run` lives outside the A/B slots, so
+  update packages now carry `app/launcher/`, and `run` hands off to `app-current/launcher/run`
+  when it is present and passes `sh -n`. The simulator gained an appliance-kit `run`, and its
+  `xinitrc` resolves the app root instead of hardcoding the now-read-only `/opt/neomotive`.
 
 **Package format:**
 ```
 neomotive-update-{version}-{target}-{platform}.zip
 ├── update.json          ← manifest (version, target, platform, type, file hashes)
 ├── app/                 ← optional: full self-contained publish output
+│   └── launcher/        ← Pi launcher scripts (run; + xinitrc for the simulator)
 └── config/              ← optional: catalog JSON overrides
 ```
 

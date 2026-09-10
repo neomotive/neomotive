@@ -259,6 +259,76 @@ journalctl -u app.service -f
 
 ---
 
+## 6. The Pi Appliance Kit constraint
+
+The ScanTool image (and any simulator installed the same way) is built from
+[Pi-Appliance-Kit](https://github.com/ctacke/Pi-Appliance-Kit). Its `app.service`
+runs the app with:
+
+```ini
+ProtectSystem=strict
+ReadWritePaths=/data
+ProtectHome=yes
+```
+
+`ProtectSystem=strict` mounts the **entire** filesystem hierarchy read-only in
+that unit's mount namespace. `ReadWritePaths=/data` punches one hole in it. So
+inside the running app there is exactly one writable location — `/data` — and
+that includes `/tmp`, which is read-only here despite being writable from an SSH
+shell. This is the single most common way an update path breaks on the appliance:
+it works when you test it over SSH and fails from the service.
+
+Consequences the updater has to respect, all of them now enforced by
+`Neomotive.Update.Tests.ApplianceLayoutTests`:
+
+- **Every working directory hangs off `baseDir`** (`/data/app`): `app-current/`,
+  `app-previous/`, `app-staging/`, `app-downloads/`, `config/`, `data/`.
+  `NetworkUpdateSource` takes its download directory as a constructor argument
+  for this reason — it used `Path.GetTempPath()`, and every network update on the
+  appliance died with `Access to the path '/tmp/neomotive-update-….zip' is denied`.
+- **`run` exports `TMPDIR`/`TMP`/`TEMP`** into `$APP_DIR/.tmp`, alongside `HOME`,
+  `XDG_RUNTIME_DIR` and `DOTNET_BUNDLE_EXTRACT_BASE_DIR`. `Path.GetTempPath()`
+  honours `TMPDIR`, so anything that still reaches for temp lands somewhere
+  writable.
+- **Space is finite and shared.** Extraction, the downloaded zip and two full
+  slots all live on `/data`. `UpdateService` refuses an update up front when free
+  space is under 3× the package rather than half-extracting, and deletes a
+  network download once it has been applied (a USB package belongs to the
+  operator's stick and is never touched).
+- **An interrupted update leaves `app-staging/`.** `UpdateApplicator.EnsureLayout()`
+  runs at startup and clears it, plus any abandoned `neomotive-update-*.zip`.
+
+### The launcher is inside the payload
+
+`$APP_DIR/run` sits *outside* the A/B slots, so an update package — which only
+ever replaces `app-current/` — could never change it, and every launcher fix
+meant SSH or a USB stick on every device.
+
+`create-update-package.ps1` now bundles the launcher scripts into the payload at
+`app/launcher/` (`run` for the ScanTool; `run` + `xinitrc` for the simulator),
+and `$APP_DIR/run` hands off to `app-current/launcher/run` when the promoted slot
+carries one. The handoff is deliberately timid — a bad launcher on a read-only
+appliance is a brick with no console — so it delegates only to a readable file
+that passes `sh -n`, exports `NEOMOTIVE_APP_DIR` so the packaged copy still knows
+the real app root, sets `NEOMOTIVE_LAUNCHER_DELEGATED` to stop a re-exec loop, and
+falls through to its own built-in logic on any doubt.
+
+Launcher scripts carry no file extension, so `.gitattributes` pins `run`,
+`xinitrc` and `bash_profile` to LF explicitly. A CRLF shebang makes `app.service`
+fail with `bad interpreter: /bin/sh^M`, and `install-app.sh` rsyncs these straight
+from the working tree.
+
+### Simulator on an appliance image
+
+The simulator's classic deployment (`/opt/neomotive`, autologin + `startx`) still
+works unchanged. To run it on an appliance image instead, install
+`Apps/ModuleSimulator/scripts/pi/` to `/data/app` with the kit's
+`install-app.sh`: `run` sets the same environment and then `xinit`s the packaged
+`xinitrc`, because the simulator is a windowed Avalonia app and `app.service` has
+no controlling tty for `startx` to find. `xinitrc` no longer hardcodes
+`/opt/neomotive` — it honours `NEOMOTIVE_APP_DIR`, then `/data/app`, then
+`/opt/neomotive` — and keeps the exit-42 supervise loop in either layout.
+
 ## 6. Troubleshooting
 
 | Symptom | Cause |
