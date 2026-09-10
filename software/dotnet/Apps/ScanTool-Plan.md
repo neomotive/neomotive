@@ -209,6 +209,15 @@ What remains is bench and vehicle verification, which needs hardware:
   stall auto-stop behave on the wire as they do in tests
 - Confirm captures land in `/data` on the Pi and survive an update
 - Verify the 260 px capture sidebar is usable on the Pi's 800×480 panel
+- Confirm `settings.json` round-trips on a device: written to `/data`, reloaded on restart, and
+  still there after an update installs over the top
+- Tap the gear on the panel, switch tooltips on, and confirm the tips actually appear (the
+  `ToolTip.ServiceEnabled` inheritance is verified against the Avalonia assembly but has not been
+  seen working in the running app)
+- Confirm on the panel that the de-tooltipped labels still fit: the `UdsView` quick-DID row now
+  carries the DID numbers and relies on the `WrapPanel` to wrap rather than clip, the signal
+  picker row gained a systems column, and `CaptureView`'s "Reset to profile" and
+  "Start/stop rules…" are wider than the labels they replaced
 - Verify the review pane's lane visibility chips are tappable on the panel, and that a capture
   where the ECU answers only some of the selected PIDs now shows the unanswered ones as
   "no data" lanes rather than omitting them

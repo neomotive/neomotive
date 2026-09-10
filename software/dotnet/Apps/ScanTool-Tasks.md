@@ -437,6 +437,27 @@ crank in about four samples. Capture needs its own high-rate path.
   - **Signals that recorded nothing still get a lane**, labelled "no data — ECU did not
     respond". They used to be dropped silently, so a five-signal capture where three PIDs went
     unanswered rendered as two lanes and read as a UI bug rather than as a bus finding.
+  - **Every `ToolTip.Tip` is gone from the ScanTool UI** (grep confirms zero). The trigger
+    editor's "stop when a signal goes quiet" tip was the reported bug — on the panel it fired on
+    touch and hung over the threshold keypad's bottom row, covering ⌫ and C — but the whole
+    class had to go: touch-only hardware has no hover, so a tooltip hides meaning where it
+    cannot be retrieved, and firing on touch draws it over whatever is next to it. Each one was
+    replaced by whatever carries the same meaning in visible space:
+    - `TriggerEditorView` — the stop-condition sentence is now a wrapped line under the checkbox.
+    - `CaptureView` — "Reset" → **"Reset to profile"** (the label has to name what it resets to,
+      since discarding hand edits was the part only the tip explained); "Trigger…" →
+      **"Start/stop rules…"**; "Fire now" keeps its label and loses the tip, which restated it.
+    - `UdsView` — the DID numbers go back into the labels (**"VIN $F190"**, "Part# $F187",
+      "SW $F189"). They were moved to tips to save width, which on this hardware traded the
+      number away for nothing; the `WrapPanel` absorbs the extra width. The hex box's tip
+      duplicated its `PlaceholderText`.
+    - `SignalPickerView` — `SystemsText` is now a width-capped column in the row. It was the
+      only thing `DetailText` carried that the row did not already show, so `DetailText` is
+      deleted. Kept to one line: the picker shows a ~110-entry table at 800×480 and a second
+      line per row would halve what fits.
+    - `ScanToolView` — the connection icon's status tip is now `AutomationProperties.Name`,
+      which costs no screen space. The colour already carries state at arm's length and the
+      full text is one tap away on the Connection view the button opens.
   - **Lane visibility chips** above the lanes, one per signal, tap to switch a lane off. Five
     90 px lanes do not fit the appliance viewport at once, and the only prior remedy was
     scrolling. Each chip spells out the signal name — the panel is touch-only, so no meaning
@@ -1046,3 +1067,36 @@ holds the device and reports no error, not that the UI was seen. USB *update* en
 real package on a stick, installed) is still unexercised; only the mount is proven. The
 ScanTool has not been redeployed since these launcher changes, and is still on the 1.1.2
 staged in Group T.
+
+## Group V — Settings page (2026-09-10)
+
+- [x] **V1** `AppSettings` — operator preferences as JSON at `{DataDirectory}/settings.json`,
+  deliberately not in `neomotive.config.json`. That file is deployment configuration written by
+  the installer; this one is written by the operator at runtime and has to survive an update,
+  which is what `data/` is for. A corrupt or unreadable file falls back to defaults rather than
+  stopping the tool from starting.
+- [x] **V2** `SettingsViewModel` + `SettingsView`, reached from a gear icon at the right end of
+  the tab bar. Right-aligned and apart from the tabs: Settings is not a diagnostic view, and
+  appending it to the tab run would push the row past the 800 px panel. Every change writes the
+  file immediately — the appliance is powered down by pulling the plug, so there is no shutdown
+  hook to trust and no "apply" step to hang a save off. A failed write shows on the page.
+- [x] **V3** **Show tooltips** setting, off by default. Implemented as a single
+  `ToolTip.ServiceEnabled` binding on the `ScanToolView` root: that attached property inherits
+  down the visual tree (verified against Avalonia 12.0.4 — `Inherits=True`, default `True`), so
+  one binding gates every tooltip in the app, modals included, no matter what any individual
+  control sets for `ToolTip.Tip`.
+  - **The tooltips removed earlier in Group T's UI pass are back, as gated supplements.** The
+    setting needs something to control, and the reason for removing them was that they were the
+    *only* carrier of their meaning on a touch-only panel. The visible labels added then all
+    stay; the tips return on top of them, hidden unless the operator asks for them. Restored on
+    `CaptureView` (3), `UdsView` (3 DID buttons, now spelled out in words since the numbers are
+    in the labels), `ScanToolView` (connection status) and `SignalPickerView` (`DetailText`,
+    reinstated for the full address the row abbreviates).
+  - **Not restored:** the trigger editor's stop-condition tip and the UDS hex box's tip. Both
+    would now merely restate a visible line, and a tip that repeats its own label is noise
+    whether or not it is switched on.
+
+**Not verified on hardware:** the settings round-trip has not been exercised on a device — that
+`settings.json` is written to `/data`, survives a restart, and survives an update. Nor has the
+gear been tapped on the panel, or a tooltip seen once the setting is on.
+

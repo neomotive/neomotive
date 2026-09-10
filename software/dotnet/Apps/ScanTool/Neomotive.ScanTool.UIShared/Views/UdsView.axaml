@@ -184,20 +184,24 @@
                     <!-- A WrapPanel, not a Grid: this row has no elastic member, so once the
                          fixed widths exceed the panel the last control is simply clipped. Wrapping
                          degrades instead, which matters at 800x480 where it cannot fit on one line.
-                         The DID numbers moved to tooltips — they were the widest part of each
-                         label and are noise once you know which button is which. -->
+                         The DID numbers are back in the labels. They had been moved to tooltips to
+                         save width, but the panel is touch-only: a tooltip is unreachable there, so
+                         that traded the number away for nothing. Wrapping absorbs the extra width. -->
                     <WrapPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Classes="label" Text="Quick DID:" VerticalAlignment="Center" Margin="0,0,8,4" />
-                        <Button Content="VIN"   Classes="action-sm" Margin="0,0,4,4" ToolTip.Tip="Read VIN — DID $F190"
+                        <Button Content="VIN $F190"   Classes="action-sm" Margin="0,0,4,4"
+                                ToolTip.Tip="Read the vehicle identification number"
                                 IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadVinDid" />
-                        <Button Content="Part#" Classes="action-sm" Margin="0,0,4,4" ToolTip.Tip="Read part number — DID $F187"
+                        <Button Content="Part# $F187" Classes="action-sm" Margin="0,0,4,4"
+                                ToolTip.Tip="Read the manufacturer part number"
                                 IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadPartDid" />
-                        <Button Content="SW"    Classes="action-sm" Margin="0,0,8,4" ToolTip.Tip="Read software version — DID $F189"
+                        <Button Content="SW $F189"    Classes="action-sm" Margin="0,0,8,4"
+                                ToolTip.Tip="Read the software version"
                                 IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadSwDid" />
 
                         <TextBox Text="{Binding DidInputHex}" MaxLength="4" Width="70"
                                  VerticalAlignment="Center" Margin="0,0,4,4"
-                                 PlaceholderText="F190" ToolTip.Tip="Data identifier in hex, e.g. F190" />
+                                 PlaceholderText="F190" />
                         <Button Content="Read Hex DID" Classes="action-sm" Margin="0,0,0,4"
                                 IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadCustomDid" />
                     </WrapPanel>

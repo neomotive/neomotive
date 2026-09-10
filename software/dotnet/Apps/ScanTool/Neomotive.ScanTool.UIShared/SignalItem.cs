@@ -28,7 +28,10 @@ public class SignalItem : INotifyPropertyChanged
     /// <summary>Systems this signal belongs to, for the row's trailing label.</summary>
     public string SystemsText => string.Join(" · ", Definition.Systems);
 
-    /// <summary>Full detail for the row tooltip: address kind, systems and units.</summary>
+    /// <summary>
+    /// Row tooltip, shown only when the operator has switched tooltips on. Carries the full
+    /// address, which the row abbreviates to fit; the systems list is a visible column.
+    /// </summary>
     public string DetailText => $"{Definition.AddressText} · {SystemsText}";
 
     public bool IsSelected

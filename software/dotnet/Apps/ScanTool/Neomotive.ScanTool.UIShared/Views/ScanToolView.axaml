@@ -4,8 +4,12 @@
              xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
              xmlns:canviews="clr-namespace:Neomotive.Can.UI.Views;assembly=Neomotive.Can.UI"
              x:Class="Neomotive.ScanTool.UI.Views.ScanToolView"
-             x:DataType="local:MainWindowViewModel">
+             x:DataType="local:MainWindowViewModel"
+             ToolTip.ServiceEnabled="{Binding ShowToolTips}">
 
+    <!-- ToolTip.ServiceEnabled inherits down the visual tree, so this one binding is the whole
+         "show tooltips" setting: off, and no descendant shows a tip regardless of its own
+         ToolTip.Tip. Default is off — see AppSettings.ShowToolTips for why. -->
     <Grid RowDefinitions="42, *">
 
         <!-- Tab bar -->
@@ -24,8 +28,13 @@
                          piece of state read from arm's length in a driveway, and the dim grey it
                          used for "not connected" was easy to miss entirely. Amber marks the
                          transient connecting state. -->
+                    <!-- No tooltip for the status text: there is no hover on the panel, and the
+                         tip only ever restated what the icon colour already says. The full text
+                         lives one tap away, on the Connection view this button opens. The binding
+                         stays as the accessibility name, which costs no screen space. -->
                     <Button Classes="tab tab-icon" Classes.active="{Binding IsConnectionView}"
-                            Click="OnShowConnection" ToolTip.Tip="{Binding StatusText}">
+                            Click="OnShowConnection" AutomationProperties.Name="{Binding StatusText}"
+                            ToolTip.Tip="{Binding StatusText}">
                         <Panel Width="24" Height="24">
                             <Path Data="{StaticResource IconCanConnected}" Stretch="Uniform"
                                   Fill="#22C55E" IsVisible="{Binding IsConnected}" />
@@ -45,6 +54,19 @@
                     <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
 
+                <!-- Settings sits apart from the tabs, right-aligned: it is not a diagnostic
+                     view, and putting it at the end of the tab run would push the row wider than
+                     the 800 px panel. -->
+                <Button Classes="tab tab-icon" Classes.active="{Binding IsSettingsView}"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Click="OnShowSettings"
+                        AutomationProperties.Name="Settings"
+                        ToolTip.Tip="Settings">
+                    <Panel Width="20" Height="20">
+                        <Path Data="{StaticResource IconSettings}" Stretch="Uniform" Fill="#C8D0DA" />
+                    </Panel>
+                </Button>
+
             </Grid>
         </Border>
 
@@ -63,6 +85,9 @@
                 <views:CaptureView DataContext="{Binding CaptureVm}" />
             </Panel>
             <views:UpdatesView    IsVisible="{Binding IsUpdatesView}" />
+            <Panel IsVisible="{Binding IsSettingsView}">
+                <views:SettingsView DataContext="{Binding SettingsVm}" />
+            </Panel>
         </Grid>
 
     </Grid>

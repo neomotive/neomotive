@@ -25,9 +25,12 @@
                     <ComboBox Grid.Column="2" HorizontalAlignment="Stretch"
                               ItemsSource="{Binding ProfilesInCategory}"
                               SelectedItem="{Binding SelectedProfile}" />
-                    <Button Grid.Column="3" Content="Reset" Click="OnApplyProfile"
+                    <!-- "Reset to profile", not "Reset": the label has to say what it resets
+                         to, since the panel is touch-only and cannot summon a tooltip to explain
+                         that hand edits are the thing being discarded. -->
+                    <Button Grid.Column="3" Content="Reset to profile" Click="OnApplyProfile"
                             IsEnabled="{Binding HasSelectedProfile}"
-                            ToolTip.Tip="Re-apply the selected profile, discarding hand edits" />
+                            ToolTip.Tip="Re-applies the selected profile, discarding any hand edits to the signals and trigger" />
                     <Button Grid.Column="4" Content="Signals…" Click="OnOpenPicker" />
                 </Grid>
             </Border>
@@ -40,7 +43,7 @@
                     <Grid ColumnDefinitions="*, Auto">
                         <TextBlock Grid.Column="0" Classes="xs" TextTrimming="CharacterEllipsis"
                                    Text="{Binding SelectedSummary}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="Trigger…" Click="OnOpenTrigger"
+                        <Button Grid.Column="1" Content="Start/stop rules…" Click="OnOpenTrigger"
                                 ToolTip.Tip="Configure what starts and stops the capture" />
                     </Grid>
                     <TextBlock Classes="xs dim" TextWrapping="Wrap"

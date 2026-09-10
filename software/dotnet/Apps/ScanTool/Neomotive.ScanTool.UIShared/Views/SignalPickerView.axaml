@@ -44,10 +44,15 @@
                     <ItemsControl ItemsSource="{Binding Results}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="local:SignalItem">
+                                <!-- The systems list is a column, not a tooltip. It is the only
+                                     thing the tip carried that the row did not already show, and
+                                     on a touch panel a per-row tooltip is both unreachable and,
+                                     when touch does fire it, drawn over the neighbouring rows.
+                                     Capped width so it can never crowd out the name. -->
                                 <Button Classes="pidrow" HorizontalAlignment="Stretch"
                                         Click="OnToggleSignal" Tag="{Binding}"
                                         ToolTip.Tip="{Binding DetailText}">
-                                    <Grid ColumnDefinitions="18, 52, *, Auto" ColumnSpacing="6">
+                                    <Grid ColumnDefinitions="18, 52, *, Auto, Auto" ColumnSpacing="6">
                                         <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
                                         <!-- PID leads: techs usually arrive knowing the number. -->
                                         <TextBlock Grid.Column="1" Classes="xs"
@@ -55,7 +60,10 @@
                                                    Foreground="{StaticResource BrushFgSubtle}"
                                                    Text="{Binding ShortAddressText}" />
                                         <TextBlock Grid.Column="2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="3" Classes="xs dim" Text="{Binding Unit}" />
+                                        <TextBlock Grid.Column="3" Classes="xs dim" MaxWidth="120"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" Text="{Binding SystemsText}" />
+                                        <TextBlock Grid.Column="4" Classes="xs dim" Text="{Binding Unit}" />
                                     </Grid>
                                 </Button>
                             </DataTemplate>

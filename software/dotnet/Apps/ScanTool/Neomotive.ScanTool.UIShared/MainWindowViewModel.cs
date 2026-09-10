@@ -19,7 +19,7 @@ namespace Neomotive.ScanTool.UI;
 
 public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Uds, CanLog, LiveData, Capture, Updates }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Uds, CanLog, LiveData, Capture, Updates, Settings }
     private enum LiveSubView { Table, Gauges, Waveform }
 
     private ScanView _view = ScanView.Connection;
@@ -46,6 +46,10 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
         // Constructed after _udsScanner: capture needs the UDS client for Mode $22 channels.
         CaptureVm = new CaptureViewModel(scanner, _udsScanner);
+
+        // The tooltip switch is read by the shell, not by the Settings page, so the shell has to
+        // hear about a change made on that page.
+        SettingsVm.Changed += () => OnPropertyChanged(nameof(ShowToolTips));
         if (_loggingBus != null)
         {
             _log = _loggingBus.Log;
@@ -257,8 +261,24 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public string DataDirectory
     {
         get => CaptureVm.DataDirectory;
-        set => CaptureVm.DataDirectory = value;
+        set
+        {
+            CaptureVm.DataDirectory = value;
+
+            // Settings live beside the captures, so they load as soon as the host tells us where
+            // that is. Assigning this is what reads settings.json off disk.
+            SettingsVm.DataDirectory = value;
+        }
     }
+
+    /// <summary>Operator preferences, persisted to <c>settings.json</c> in the data directory.</summary>
+    public SettingsViewModel SettingsVm { get; } = new();
+
+    /// <summary>
+    /// Drives <c>ToolTip.ServiceEnabled</c> on the shell. That attached property inherits, so
+    /// setting it once at the root switches every tooltip in the app on or off at once.
+    /// </summary>
+    public bool ShowToolTips => SettingsVm.ShowToolTips;
 
     /// <summary>
     /// Config directory; holds the user-defined Mode $22 signal definitions and any
@@ -359,6 +379,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         }
     }
     public bool IsUpdatesView => _view == ScanView.Updates;
+    public bool IsSettingsView => _view == ScanView.Settings;
 
     public void ShowConnection() { StopPolling(); _view = ScanView.Connection; NotifyViewChanged(); }
     public void ShowVehicle() { StopPolling(); _view = ScanView.Vehicle; NotifyViewChanged(); }
@@ -370,6 +391,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     // Capture runs its own high-rate poll loop, so the 2 Hz live-data loop must be off first.
     public void ShowCapture() { StopPolling(); _view = ScanView.Capture; CaptureVm.RefreshRecordings(); NotifyViewChanged(); }
     public void ShowUpdates() { StopPolling(); _view = ScanView.Updates; NotifyViewChanged(); }
+    public void ShowSettings() { StopPolling(); _view = ScanView.Settings; NotifyViewChanged(); }
 
     private void NotifyViewChanged()
     {
@@ -382,6 +404,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         OnPropertyChanged(nameof(IsLiveDataView));
         OnPropertyChanged(nameof(IsCaptureView));
         OnPropertyChanged(nameof(IsUpdatesView));
+        OnPropertyChanged(nameof(IsSettingsView));
     }
 
     // ── Update service ────────────────────────────────────────────────────────

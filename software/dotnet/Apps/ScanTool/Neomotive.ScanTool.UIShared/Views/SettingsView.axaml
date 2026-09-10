@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.SettingsView"
+             x:DataType="local:SettingsViewModel">
+
+    <ScrollViewer>
+        <StackPanel Spacing="10" Margin="12">
+
+            <TextBlock Classes="label" Text="Interface" />
+
+            <Border Background="#141820" BorderBrush="#1E2530" BorderThickness="1"
+                    CornerRadius="4" Padding="10,8">
+                <StackPanel Spacing="4">
+                    <!-- The row is a comfortable touch target on its own; the explanation sits
+                         under it as visible text rather than in a tooltip, which would be both
+                         unreachable on the panel and absurd on this particular setting. -->
+                    <CheckBox MinHeight="40" Content="Show tooltips"
+                              IsChecked="{Binding ShowToolTips}" />
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap" Margin="24,0,0,0"
+                               Text="Adds hover explanations to buttons and fields. The touch panel has no hover, so this is only useful when running with a mouse — every control already spells out what it does in its own label." />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Classes="label" Text="Storage" Margin="0,6,0,0" />
+
+            <StackPanel Spacing="2">
+                <TextBlock Classes="xs dim" Text="Settings file" />
+                <TextBlock Classes="xs" TextWrapping="Wrap" Text="{Binding SettingsPath}" />
+            </StackPanel>
+
+            <TextBlock Classes="xs dim" TextWrapping="Wrap" Text="{Binding Status}" />
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

@@ -82,8 +82,12 @@
                         </StackPanel>
 
                         <TextBlock Classes="label" Text="Stop" Margin="0,8,0,0" />
-                        <CheckBox Content="Stop when a signal goes quiet" IsChecked="{Binding StopEnabled}"
-                                   ToolTip.Tip="Ends the capture once the signal has been active and then stays below the floor." />
+                        <!-- The explanation is a visible line, not a tooltip. The appliance panel
+                             is touch-only, so there is no hover to summon one; on the Pi the tip
+                             fired on touch and hung over the keypad's bottom row, covering ⌫ and C. -->
+                        <CheckBox Content="Stop when a signal goes quiet" IsChecked="{Binding StopEnabled}" />
+                        <TextBlock Classes="xs dim" TextWrapping="Wrap" Margin="24,0,0,0"
+                                   Text="Ends the capture once the signal has been active and then stays below the floor." />
                         <Grid ColumnDefinitions="*, *, *" ColumnSpacing="6" IsVisible="{Binding StopEnabled}">
                             <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
                                       ItemsSource="{Binding AvailableSignals}"
