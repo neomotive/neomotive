@@ -21,6 +21,14 @@ public sealed class AppSettings
     [JsonPropertyName("showToolTips")]
     public bool ShowToolTips { get; set; }
 
+    /// <summary>
+    /// Target period for one live-data sweep, in milliseconds. A target, not a delay: a sweep that
+    /// overruns simply runs back to back. The right value depends on how many PIDs are selected and
+    /// how fast the module answers, so it is the operator's to set.
+    /// </summary>
+    [JsonPropertyName("livePollPeriodMs")]
+    public int LivePollPeriodMs { get; set; } = 100;
+
     public static AppSettings Load(string path)
     {
         try

@@ -1,4 +1,5 @@
 using Neomotive.Vin.Contracts;
+using Neomotive.Vin.Data;
 using Neomotive.Vin.Extensions;
 using Neomotive.Vin.Models;
 
@@ -9,17 +10,20 @@ public sealed class VinDecoder : IVinDecoder
     private readonly IVinValidator _validator;
     private readonly IManufacturerProvider _manufacturers;
     private readonly INhtsaClient _nhtsa;
+    private readonly VdsPatternProvider _patterns;
     private readonly bool _nhtsaEnabled;
 
     public VinDecoder(
         IVinValidator validator,
         IManufacturerProvider manufacturers,
         INhtsaClient nhtsa,
-        VinOptions options)
+        VinOptions options,
+        VdsPatternProvider? patterns = null)
     {
         _validator = validator;
         _manufacturers = manufacturers;
         _nhtsa = nhtsa;
+        _patterns = patterns ?? new VdsPatternProvider(options);
         _nhtsaEnabled = options.EnableNhtsaFallback;
     }
 
@@ -47,6 +51,12 @@ public sealed class VinDecoder : IVinDecoder
             ? new WmiInfo(wmiCode, mfr.Manufacturer, mfr.Country, mfr.VehicleType)
             : null;
 
+        // Model and trim from the VDS pattern table — shipped rules plus anything learned from a
+        // previous online decode of this vehicle shape. Without this Model was only ever set by
+        // the NHTSA fallback, which meant a tool plugged into a vehicle with no network could
+        // never name the car it was talking to.
+        var pattern = _patterns.Match(wmiCode, vdsCode, modelYear > 0 ? modelYear : null);
+
         return new VinDecodeResult
         {
             Vin = vin,
@@ -55,6 +65,8 @@ public sealed class VinDecoder : IVinDecoder
             Vds = vds,
             Vis = vis,
             Make = mfr?.Makes.FirstOrDefault(),
+            Model = pattern?.Model,
+            Trim = pattern?.Trim,
             Year = modelYear > 0 ? modelYear : null,
             Country = mfr?.Country,
             IsFromNhtsa = false
@@ -75,6 +87,10 @@ public sealed class VinDecoder : IVinDecoder
         var nhtsa = await _nhtsa.DecodeAsync(vin, cancellationToken).ConfigureAwait(false);
         if (nhtsa is null)
             return local;
+
+        // Remember what the network just told us about this VIN shape. The next vehicle with the
+        // same WMI, VDS and model year — the next Explorer ST off the same line — decodes offline.
+        _patterns.Learn(vin[..3], vin[3..8], local.Year ?? nhtsa.ModelYear, nhtsa.Model, nhtsa.Trim);
 
         WmiInfo? mergedWmi = local.Wmi ?? (nhtsa.Manufacturer is not null
             ? new WmiInfo(vin[..3], nhtsa.Manufacturer, nhtsa.PlantCountry ?? "", nhtsa.VehicleType ?? "")

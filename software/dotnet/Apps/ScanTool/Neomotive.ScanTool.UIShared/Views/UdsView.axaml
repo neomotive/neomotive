@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
              xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
+             xmlns:veh="clr-namespace:Neomotive.ScanTool.Core.Vehicles;assembly=Neomotive.ScanTool.Core"
              xmlns:uds="clr-namespace:Meadow.Foundation.Telematics.Uds;assembly=Uds"
              x:Class="Neomotive.ScanTool.UI.Views.UdsView"
              x:DataType="local:MainWindowViewModel"
@@ -19,19 +20,57 @@
             <Grid RowDefinitions="Auto, *">
                 
                 <!-- Modules List Header -->
-                <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="10,8" VerticalAlignment="Center">
-                    <TextBlock Grid.Column="0" Classes="heading" Text="UDS MODULES" VerticalAlignment="Center" />
-                    <Button Grid.Column="1" Content="Scan" Classes="action-sm"
-                            IsEnabled="{Binding CanScanUds}"
-                            Click="OnScanModules" />
-                </Grid>
+                <StackPanel Grid.Row="0" Margin="10,8" Spacing="4">
+                    <Grid ColumnDefinitions="*, Auto, Auto" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Classes="heading" Text="UDS MODULES" VerticalAlignment="Center" />
+                        <!-- The remembered probe asks only the addresses this vehicle is known to
+                             answer on - dozens instead of several hundred - so it is the quick
+                             option and the full sweep is named for what it is. -->
+                        <Button Grid.Column="1" Content="Probe known" Classes="action-sm"
+                                Margin="0,0,4,0"
+                                IsVisible="{Binding HasRememberedModules}"
+                                IsEnabled="{Binding CanScanUds}"
+                                Click="OnProbeRemembered" />
+                        <Button Grid.Column="2" Content="Full scan" Classes="action-sm"
+                                IsVisible="{Binding !IsScanningUds}"
+                                IsEnabled="{Binding CanScanUds}"
+                                Click="OnScanModules" />
+                        <Button Grid.Column="2" Content="Cancel" Classes="action-sm"
+                                IsVisible="{Binding IsScanningUds}"
+                                Click="OnCancelScan" />
+                    </Grid>
+                    <ProgressBar Height="4" Minimum="0" Maximum="1"
+                                 IsVisible="{Binding IsScanningUds}"
+                                 Value="{Binding UdsScanProgress}" />
+                </StackPanel>
 
                 <!-- Modules List -->
                 <ScrollViewer Grid.Row="1">
                     <StackPanel>
-                        <TextBlock Classes="dim italic" Margin="10"
+                        <TextBlock Classes="dim italic" Margin="10" TextWrapping="Wrap"
                                    IsVisible="{Binding HasNoUdsModules}"
-                                   Text="No UDS modules detected. Click 'Scan' to probe CAN bus." />
+                                   Text="No UDS modules confirmed. Full scan sweeps the legislated OBD-II window, the 11-bit manufacturer range and 29-bit normal-fixed addresses - several hundred addresses, so it takes tens of seconds." />
+
+                        <!-- Modules carried over from a previous visit, before any probe has
+                             confirmed them. Listed plainly as remembered rather than mixed into
+                             the confirmed list, because a previous visit is not evidence about now. -->
+                        <StackPanel Margin="10,4" IsVisible="{Binding HasRememberedModules}">
+                            <TextBlock Classes="label" Text="REMEMBERED - NOT YET CONFIRMED" />
+                            <ItemsControl ItemsSource="{Binding RememberedModules}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="veh:RememberedModule">
+                                        <Grid ColumnDefinitions="*, Auto" Margin="0,2">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Classes="value" Text="{Binding Name}" />
+                                                <TextBlock Classes="dim xs" Text="{Binding AddressSummary}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Classes="dim xs"
+                                                       VerticalAlignment="Center" Text="remembered" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
 
                         <ItemsControl ItemsSource="{Binding UdsModules}">
                             <ItemsControl.ItemTemplate>
@@ -43,6 +82,10 @@
                                             <StackPanel Grid.Column="0">
                                                 <TextBlock Classes="value" FontWeight="SemiBold" Text="{Binding Name}" />
                                                 <TextBlock Classes="dim xs" Text="{Binding AddressSummary}" />
+                                                <!-- Addressing width spelled out: a 29-bit module
+                                                     found by the extended tier is a different kind
+                                                     of find from an 11-bit one. -->
+                                                <TextBlock Classes="dim xs" Text="{Binding AddressingText}" />
                                             </StackPanel>
                                             <Border Grid.Column="1"
                                                     CornerRadius="3"

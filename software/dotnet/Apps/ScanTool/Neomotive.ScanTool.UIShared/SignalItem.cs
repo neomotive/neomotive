@@ -5,14 +5,46 @@ using Neomotive.ScanTool.Core.Signals;
 
 namespace Neomotive.ScanTool.UI;
 
+/// <summary>
+/// Whether the connected vehicle reports serving a signal.
+/// <para>
+/// Three states, not two. The Mode 01 support bitmap only speaks for Mode 01, so a Mode $22 UDS
+/// signal has nothing to consult and is honestly <see cref="Unknown"/> rather than quietly treated
+/// as missing — and a vehicle that has not been read yet leaves everything unknown.
+/// </para>
+/// </summary>
+public enum SignalSupport { Unknown, Supported, Unsupported }
+
 /// <summary>A signal offered in the picker, with its selection state.</summary>
 public class SignalItem : INotifyPropertyChanged
 {
     private bool _isSelected;
 
-    public SignalItem(SignalDefinition definition) => Definition = definition;
+    public SignalItem(SignalDefinition definition, SignalSupport support = SignalSupport.Unknown)
+    {
+        Definition = definition;
+        Support = support;
+    }
 
     public SignalDefinition Definition { get; }
+
+    /// <summary>What the vehicle said about this signal when the support bitmap was read.</summary>
+    public SignalSupport Support { get; }
+
+    /// <summary>
+    /// The support state in words. The panel is touch-only and has no hover, and colour alone is
+    /// not a label, so the row carries the state as text.
+    /// </summary>
+    public string SupportText => Support switch
+    {
+        SignalSupport.Supported => "supported",
+        SignalSupport.Unsupported => "not supported",
+        _ => ""
+    };
+
+    public bool IsUnsupported => Support == SignalSupport.Unsupported;
+
+    public bool HasSupportText => SupportText.Length > 0;
 
     public string Key => Definition.Key;
 

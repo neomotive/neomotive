@@ -512,6 +512,52 @@ public class CaptureViewModel : INotifyPropertyChanged
         }
     }
 
+    // ── Sub-tabs ─────────────────────────────────────────────────────────────
+    //
+    // Capture splits into Configure and Review rather than gaining two top-level tabs: the main
+    // strip is already full at eight, and on an 800x480 panel a graph sharing the page with the
+    // profile pickers and run controls had nowhere near the height to be read.
+
+    private bool _isReviewTab;
+
+    public bool IsConfigureTab => !_isReviewTab;
+
+    public bool IsReviewTab => _isReviewTab;
+
+    public void ShowConfigureTab()
+    {
+        if (!_isReviewTab) return;
+        _isReviewTab = false;
+        IsReviewExpanded = false;
+        NotifyTabsChanged();
+    }
+
+    public void ShowReviewTab()
+    {
+        if (_isReviewTab) return;
+        _isReviewTab = true;
+        RefreshRecordings();
+        NotifyTabsChanged();
+    }
+
+    private void NotifyTabsChanged()
+    {
+        OnPropertyChanged(nameof(IsConfigureTab));
+        OnPropertyChanged(nameof(IsReviewTab));
+    }
+
+    private bool _isReviewExpanded;
+
+    /// <summary>
+    /// Whether the trace is drawn full-screen over the tab strip. The pane itself is moved, not
+    /// duplicated, so zoom, pan, cursor and lane toggles survive in both directions.
+    /// </summary>
+    public bool IsReviewExpanded
+    {
+        get => _isReviewExpanded;
+        set { _isReviewExpanded = value; OnPropertyChanged(); }
+    }
+
     public bool CanArm => !_isArmed;
 
     public CaptureState State

@@ -20,6 +20,14 @@ public partial class UdsView : UserControl
             await VM.ScanUdsModulesAsync();
     }
 
+    private async void OnProbeRemembered(object? sender, RoutedEventArgs e)
+    {
+        if (VM != null)
+            await VM.ProbeRememberedModulesAsync();
+    }
+
+    private void OnCancelScan(object? sender, RoutedEventArgs e) => VM?.CancelUdsScan();
+
     private void OnSelectModule(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: UdsModuleInfo module } && VM != null)

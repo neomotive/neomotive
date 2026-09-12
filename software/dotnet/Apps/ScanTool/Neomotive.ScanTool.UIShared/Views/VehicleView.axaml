@@ -9,6 +9,21 @@
     <ScrollViewer>
         <StackPanel Spacing="16">
 
+            <!-- Recognition band. Says whether this vehicle has been here before and whether its
+                 calibration has moved since — the one line that turns a stored record into a
+                 diagnostic result rather than just a faster startup. -->
+            <Border IsVisible="{Binding HasRecognition}"
+                    Background="#141820" BorderBrush="#2E3440" BorderThickness="1"
+                    CornerRadius="4" Padding="10,8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBlock Grid.Column="0" Classes="value" TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Text="{Binding RecognitionText}" />
+                    <Button Grid.Column="1" Content="Forget this vehicle" Classes="action-sm"
+                            Margin="8,0,0,0" Click="OnForgetVehicle" />
+                </Grid>
+            </Border>
+
             <StackPanel Spacing="4">
                 <TextBlock Classes="label" Text="VIN" />
                 <TextBlock Classes="vin" Text="{Binding DisplayVin}" />
@@ -40,7 +55,9 @@
             <StackPanel Spacing="8">
                 <Grid ColumnDefinitions="*, Auto">
                     <TextBlock Grid.Column="0" Classes="label" Text="CALIBRATION" VerticalAlignment="Center" />
-                    <Button Grid.Column="1" Content="Check tune"
+                    <!-- These fields now fill themselves on connect, so this button is what its
+                         name says: the analysis step, not the only way to get a reading. -->
+                    <Button Grid.Column="1" Content="Analyse tune"
                             Click="OnCheckTune" IsEnabled="{Binding CanCheckTune}" />
                 </Grid>
 
@@ -52,6 +69,17 @@
                     <StackPanel Grid.Column="1" Spacing="4">
                         <TextBlock Classes="label" Text="CVN" />
                         <TextBlock Classes="value" Text="{Binding DisplayCvn}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Classes="label" Text="ECU NAME" />
+                        <TextBlock Classes="value" Text="{Binding DisplayEcuName}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Classes="label" Text="SUPPORTED PIDS" />
+                        <TextBlock Classes="value" Text="{Binding SupportedPidSummary}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Grid>
 
@@ -94,6 +122,13 @@
 
             <!-- Module tiles -->
             <TextBlock Classes="heading" Text="MODULES" IsVisible="{Binding IsConnected}" />
+
+            <!-- Only modules that answer legislated OBD-II show up here, which on most vehicles
+                 built this century is the powertrain and nothing else. Saying so beats letting the
+                 list imply the car has one controller. -->
+            <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                       IsVisible="{Binding ShowFewModulesNote}"
+                       Text="{Binding ModuleScopeNote}" />
 
             <ItemsControl ItemsSource="{Binding Modules}" IsVisible="{Binding IsConnected}">
                 <ItemsControl.ItemsPanel>

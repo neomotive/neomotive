@@ -117,31 +117,28 @@ foreach (var make in targetMakes)
         Console.WriteLine($"WMI error: {ex.Message}");
     }
 
-    // Pick the "best" WMI:
-    //   Priority 1 — Passenger Car from US/Canada/Japan/Germany/Korea
-    //   Priority 2 — MPV from same origins
-    //   Priority 3 — any Passenger Car or MPV
-    //   Priority 4 — first available
-    static int WmiScore(NhtsaWmiResult w)
-    {
-        bool isCar = w.VehicleType.Contains("Passenger", StringComparison.OrdinalIgnoreCase)
-                  || w.VehicleType.Contains("MPV", StringComparison.OrdinalIgnoreCase)
-                  || w.VehicleType.Contains("Multipurpose", StringComparison.OrdinalIgnoreCase);
-        bool isPreferredOrigin = w.Wmi.Length > 0 && w.Wmi[0] is '1' or '2' or '4' or '5' or 'J' or 'K' or 'W';
-        return (isCar ? 0 : 100) + (isPreferredOrigin ? 0 : 10);
-    }
-
-    // Best passenger-car/MPV/truck WMI from NHTSA (null if only non-car types returned)
+    // Keep EVERY car/truck WMI the make has, not one "best" one.
+    //
+    // This used to score the WMIs and take the winner, which is why a 2021 Ford Explorer decoded
+    // to nothing: Ford has 78 WMIs, the scorer picked "1FA" (Passenger Car, USA), and "1FM" — the
+    // Explorer's, and every other Ford SUV's — was thrown away along with 1FT, 1FD, 2FM and the
+    // rest. A WMI is the manufacturer's identity, not a preference, so all of them belong in the
+    // table; the file is a few hundred KB either way.
     static bool IsCarOrTruck(string vt) =>
         vt.Contains("Passenger", StringComparison.OrdinalIgnoreCase) ||
         vt.Contains("MPV", StringComparison.OrdinalIgnoreCase) ||
         vt.Contains("Multipurpose", StringComparison.OrdinalIgnoreCase) ||
         vt.Contains("Truck", StringComparison.OrdinalIgnoreCase);
 
-    var bestWmi = wmis
+    var makeWmis = wmis
         .Where(w => w.Wmi.Length == 3 && IsCarOrTruck(w.VehicleType))
-        .OrderBy(WmiScore)
-        .FirstOrDefault();
+        .GroupBy(w => w.Wmi, StringComparer.OrdinalIgnoreCase)
+        .Select(g => g.First())
+        .OrderBy(w => w.Wmi, StringComparer.Ordinal)
+        .ToList();
+
+    // The first one still names the make in model-catalog.json, which is keyed by make.
+    var bestWmi = makeWmis.FirstOrDefault();
 
     // ── Model lookup ──────────────────────────────────────────────────────────
     List<NhtsaModelResult> models = [];
@@ -163,49 +160,48 @@ foreach (var make in targetMakes)
         .OrderBy(n => n)
         .ToList();
 
-    // ── Accumulate manufacturer entry ─────────────────────────────────────────
-    // Precedence: NHTSA car/truck WMI → supplemental map → no WMI
-    string? wmiCode;
-    string mfrName, mfrCountry, mfrVehicleType;
-    if (bestWmi is not null)
+    // ── Accumulate manufacturer entries ───────────────────────────────────────
+    // Every NHTSA car/truck WMI for the make, plus the supplemental one if NHTSA returned none.
+    var entriesForMake = new List<(string Wmi, string Manufacturer, string Country, string VehicleType)>();
+
+    foreach (var w in makeWmis)
     {
-        wmiCode = bestWmi.Wmi;
-        mfrName = string.IsNullOrWhiteSpace(bestWmi.ManufacturerName) ? make : bestWmi.ManufacturerName;
-        mfrCountry = bestWmi.Country ?? "";
-        mfrVehicleType = string.IsNullOrWhiteSpace(bestWmi.VehicleType) ? "Passenger Car" : bestWmi.VehicleType;
-    }
-    else if (supplementalWmis.TryGetValue(make, out var sup))
-    {
-        wmiCode = sup.Wmi;
-        mfrName = sup.Manufacturer;
-        mfrCountry = sup.Country;
-        mfrVehicleType = sup.VehicleType;
-    }
-    else
-    {
-        wmiCode = null;
-        mfrName = make;
-        mfrCountry = "";
-        mfrVehicleType = "Passenger Car";
+        entriesForMake.Add((
+            w.Wmi,
+            string.IsNullOrWhiteSpace(w.ManufacturerName) ? make : w.ManufacturerName,
+            w.Country ?? "",
+            string.IsNullOrWhiteSpace(w.VehicleType) ? "Passenger Car" : w.VehicleType));
     }
 
-    Console.WriteLine($"WMI={wmiCode ?? "???",-4}  models={uniqueModels.Count}");
-
-    if (wmiCode is not null)
+    if (entriesForMake.Count == 0 && supplementalWmis.TryGetValue(make, out var sup))
     {
-        var mfrEntry = new ManufacturerEntry
+        entriesForMake.Add((sup.Wmi, sup.Manufacturer, sup.Country, sup.VehicleType));
+    }
+
+    string? wmiCode = entriesForMake.Count > 0 ? entriesForMake[0].Wmi : null;
+
+    Console.WriteLine($"WMIs={entriesForMake.Count,3}  models={uniqueModels.Count}");
+
+    foreach (var (wmi, mfrName, mfrCountry, mfrVehicleType) in entriesForMake)
+    {
+        if (manufacturerMap.TryGetValue(wmi, out var existing))
         {
-            Wmi = wmiCode,
-            Manufacturer = mfrName,
-            Country = mfrCountry,
-            VehicleType = mfrVehicleType,
-            Makes = [make]
-        };
-
-        if (manufacturerMap.TryGetValue(wmiCode, out var existing))
-            existing[0].Makes.Add(make);
+            // Several brands can share a WMI (Ford and Lincoln both appear under some), so the
+            // makes list accumulates rather than the entry being replaced.
+            if (!existing[0].Makes.Contains(make, StringComparer.OrdinalIgnoreCase))
+                existing[0].Makes.Add(make);
+        }
         else
-            manufacturerMap[wmiCode] = [mfrEntry];
+        {
+            manufacturerMap[wmi] = [new ManufacturerEntry
+            {
+                Wmi = wmi,
+                Manufacturer = mfrName,
+                Country = mfrCountry,
+                VehicleType = mfrVehicleType,
+                Makes = [make]
+            }];
+        }
     }
 
     // ── Accumulate catalog entry ───────────────────────────────────────────────

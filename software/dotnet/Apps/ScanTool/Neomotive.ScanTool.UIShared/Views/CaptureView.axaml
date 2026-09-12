@@ -6,83 +6,137 @@
              x:DataType="local:CaptureViewModel">
 
     <Grid>
-        <!-- Main content -->
-        <Grid RowDefinitions="Auto, Auto, Auto, *, Auto">
+        <!-- Sub-tabs, not two more top-level tabs: the main strip is full at eight. Configure is
+             everything you set before a run; Review is the trace and nothing else, so the graph
+             gets the height it needs instead of sharing the page with controls nobody is touching
+             while they read it. -->
+        <Grid RowDefinitions="32, *">
 
-            <!-- Setup: profile, signals, trigger. The scrolling sidebar is gone; each of these
-                 opens a modal, which leaves the full width for the trace. -->
-            <Border Grid.Row="0" Background="#141820" Padding="8,6"
+            <Border Grid.Row="0" Background="#141820"
                     BorderBrush="#1E2530" BorderThickness="0,0,0,1">
-                <!-- No Apply button: choosing a profile applies it. A separate press made the
-                     profile look inert, since only the description changed. "Reset" puts the
-                     chosen profile back after hand edits. -->
-                <Grid ColumnDefinitions="Auto, 150, 190, Auto, Auto" ColumnSpacing="6">
-                    <TextBlock Grid.Column="0" Classes="label" Text="Profile"
-                               VerticalAlignment="Center" Margin="0,0,4,0" />
-                    <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
-                              ItemsSource="{Binding Categories}"
-                              SelectedItem="{Binding SelectedCategory}" />
-                    <ComboBox Grid.Column="2" HorizontalAlignment="Stretch"
-                              ItemsSource="{Binding ProfilesInCategory}"
-                              SelectedItem="{Binding SelectedProfile}" />
-                    <!-- "Reset to profile", not "Reset": the label has to say what it resets
-                         to, since the panel is touch-only and cannot summon a tooltip to explain
-                         that hand edits are the thing being discarded. -->
-                    <Button Grid.Column="3" Content="Reset to profile" Click="OnApplyProfile"
-                            IsEnabled="{Binding HasSelectedProfile}"
-                            ToolTip.Tip="Re-applies the selected profile, discarding any hand edits to the signals and trigger" />
-                    <Button Grid.Column="4" Content="Signals…" Click="OnOpenPicker" />
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Content="Configure" Classes="tab" Classes.active="{Binding IsConfigureTab}"
+                                Click="OnShowConfigure" />
+                        <Button Content="Review"    Classes="tab" Classes.active="{Binding IsReviewTab}"
+                                Click="OnShowReview" />
+                    </StackPanel>
+
+                    <!-- Run state stays visible on both tabs: arming from Configure switches to
+                         Review, and an operator watching the trace still needs to see it running. -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding RateText}" />
+                        <TextBlock Classes="xs dim" VerticalAlignment="Center"
+                                   Text="{Binding SampleCount, StringFormat='{}{0} samples'}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2" Content="Expand" Classes="action-sm"
+                            Margin="0,0,8,0" VerticalAlignment="Center"
+                            IsVisible="{Binding IsReviewTab}"
+                            Click="OnExpandReview" />
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Padding="8,4">
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
-                               IsVisible="{Binding HasSelectedProfile}"
-                               Text="{Binding SelectedProfileDescription}" />
-                    <Grid ColumnDefinitions="*, Auto">
-                        <TextBlock Grid.Column="0" Classes="xs" TextTrimming="CharacterEllipsis"
-                                   Text="{Binding SelectedSummary}" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Content="Start/stop rules…" Click="OnOpenTrigger"
-                                ToolTip.Tip="Configure what starts and stops the capture" />
+            <!-- ── Configure ────────────────────────────────────────────────────────────── -->
+            <Grid Grid.Row="1" RowDefinitions="Auto, Auto, Auto, *" IsVisible="{Binding IsConfigureTab}">
+
+                <!-- Setup: profile, signals, trigger. Each opens a modal, which leaves the full
+                     width for the settings themselves. -->
+                <Border Grid.Row="0" Background="#141820" Padding="8,6"
+                        BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+                    <!-- No Apply button: choosing a profile applies it. A separate press made the
+                         profile look inert, since only the description changed. "Reset" puts the
+                         chosen profile back after hand edits. -->
+                    <Grid ColumnDefinitions="Auto, 150, 190, Auto, Auto" ColumnSpacing="6">
+                        <TextBlock Grid.Column="0" Classes="label" Text="Profile"
+                                   VerticalAlignment="Center" Margin="0,0,4,0" />
+                        <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding Categories}"
+                                  SelectedItem="{Binding SelectedCategory}" />
+                        <ComboBox Grid.Column="2" HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding ProfilesInCategory}"
+                                  SelectedItem="{Binding SelectedProfile}" />
+                        <!-- "Reset to profile", not "Reset": the label has to say what it resets
+                             to, since the panel is touch-only and cannot summon a tooltip to explain
+                             that hand edits are the thing being discarded. -->
+                        <Button Grid.Column="3" Content="Reset to profile" Click="OnApplyProfile"
+                                IsEnabled="{Binding HasSelectedProfile}"
+                                ToolTip.Tip="Re-applies the selected profile, discarding any hand edits to the signals and trigger" />
+                        <Button Grid.Column="4" Content="Signals…" Click="OnOpenPicker" />
                     </Grid>
-                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
-                               Text="{Binding TriggerSummary, StringFormat='Trigger: {0}'}" />
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <!-- Run controls -->
-            <Border Grid.Row="2" Background="#141820" Padding="8,6"
-                    BorderBrush="#1E2530" BorderThickness="0,1,0,1">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Arm"     Click="OnArm"     IsEnabled="{Binding CanArm}" />
-                    <Button Content="Fire now" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}"
-                            ToolTip.Tip="Trigger the armed capture immediately, without waiting for the condition" />
-                    <Button Content="Stop"    Click="OnStop"    IsEnabled="{Binding IsArmed}" />
-                    <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding RateText}" />
-                    <TextBlock Classes="xs dim" VerticalAlignment="Center"
-                               Text="{Binding SampleCount, StringFormat='{}{0} samples'}" />
-                    <TextBlock Classes="xs" VerticalAlignment="Center" Text="{Binding Status}"
-                               TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-            </Border>
+                <Border Grid.Row="1" Padding="8,4">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                                   IsVisible="{Binding HasSelectedProfile}"
+                                   Text="{Binding SelectedProfileDescription}" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock Grid.Column="0" Classes="xs" TextTrimming="CharacterEllipsis"
+                                       Text="{Binding SelectedSummary}" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="Start/stop rules…" Click="OnOpenTrigger"
+                                    ToolTip.Tip="Configure what starts and stops the capture" />
+                        </Grid>
+                        <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                                   Text="{Binding TriggerSummary, StringFormat='Trigger: {0}'}" />
+                    </StackPanel>
+                </Border>
 
-            <views:CaptureReviewPane Grid.Row="3" DataContext="{Binding}" />
+                <!-- Run controls -->
+                <Border Grid.Row="2" Background="#141820" Padding="8,6"
+                        BorderBrush="#1E2530" BorderThickness="0,1,0,1">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Content="Arm"     Click="OnArm"     IsEnabled="{Binding CanArm}" />
+                        <Button Content="Fire now" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}"
+                                ToolTip.Tip="Trigger the armed capture immediately, without waiting for the condition" />
+                        <Button Content="Stop"    Click="OnStop"    IsEnabled="{Binding IsArmed}" />
+                        <TextBlock Classes="xs" VerticalAlignment="Center" Text="{Binding Status}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
 
-            <Border Grid.Row="4" Background="#141820" Padding="8,6"
-                    BorderBrush="#1E2530" BorderThickness="0,1,0,0">
-                <Grid ColumnDefinitions="Auto, *, Auto, Auto">
-                    <TextBlock Grid.Column="0" Classes="xs dim" VerticalAlignment="Center"
-                               Margin="0,0,6,0" Text="Saved" />
-                    <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
-                              ItemsSource="{Binding Recordings}"
-                              SelectedItem="{Binding SelectedRecording}" />
-                    <Button Grid.Column="2" Content="Refresh" Margin="6,0,0,0" Click="OnRefresh" />
-                    <Button Grid.Column="3" Content="Export wide CSV" Margin="6,0,0,0"
-                            Click="OnExport" IsEnabled="{Binding HasLoadedRecording}" />
-                </Grid>
-            </Border>
+                <TextBlock Grid.Row="3" Classes="xs dim" Margin="10" TextWrapping="Wrap"
+                           VerticalAlignment="Top"
+                           Text="Arming switches to the Review tab, where the trace is drawn. Saved captures are picked there too." />
+            </Grid>
+
+            <!-- ── Review ───────────────────────────────────────────────────────────────── -->
+            <Grid Grid.Row="1" RowDefinitions="*, Auto" IsVisible="{Binding IsReviewTab}">
+
+                <!-- The review pane itself is created once in code-behind and moved between this
+                     host and the full-screen one. Declaring it twice would mean two panes with
+                     two independent zoom, pan, cursor and lane-toggle states, so expanding would
+                     silently throw away where the operator had scrolled to. -->
+                <ContentControl Grid.Row="0" Name="InlineReviewHost" />
+
+                <Border Grid.Row="1" Background="#141820" Padding="8,6"
+                        BorderBrush="#1E2530" BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                        <TextBlock Grid.Column="0" Classes="xs dim" VerticalAlignment="Center"
+                                   Margin="0,0,6,0" Text="Saved" />
+                        <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding Recordings}"
+                                  SelectedItem="{Binding SelectedRecording}" />
+                        <Button Grid.Column="2" Content="Refresh" Margin="6,0,0,0" Click="OnRefresh" />
+                        <Button Grid.Column="3" Content="Export wide CSV" Margin="6,0,0,0"
+                                Click="OnExport" IsEnabled="{Binding HasLoadedRecording}" />
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
+
+        <!-- Full-screen review. Same overlay pattern as the picker and trigger editor, for the
+             same reason: the Pi runs a single-view DRM lifetime with no window manager. Drawn over
+             the sub-tab strip so the trace gets the whole panel. -->
+        <Panel IsVisible="{Binding IsReviewExpanded}" Background="#0B0E13">
+            <Grid RowDefinitions="*">
+                <ContentControl Grid.Row="0" Name="ExpandedReviewHost" />
+                <Button Grid.Row="0" Content="✕ Close" Classes="action-sm"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,4,8,0" Click="OnCollapseReview" />
+            </Grid>
+        </Panel>
 
         <!-- Modal overlays. Hosted here rather than as Windows because the Pi runs a single-view
              DRM lifetime with no window manager, so a real dialog would have nowhere to go. -->

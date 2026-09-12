@@ -62,7 +62,14 @@ public class UdsModuleHost : IDisposable
 
             var source = new SimulatorUdsDataSource(profile, mirror, vin, onDtcsCleared, catalog);
             _sources[profile.ResponseId] = source;
-            _servers.Add(new UdsServer([bus], (short)profile.ResponseId, source));
+
+            // Addressing width is a config field, so a 29-bit body controller is a JSON edit —
+            // which is what makes the extended discovery tier testable without a vehicle.
+            var address = profile.Extended
+                ? UdsAddress.NormalFixed(profile.EcuAddress)
+                : UdsAddress.Standard((uint)(profile.ResponseId - 8), profile.ResponseId);
+
+            _servers.Add(new UdsServer([bus], address, source));
         }
     }
 

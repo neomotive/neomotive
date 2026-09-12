@@ -59,6 +59,14 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
                                 VerticalAlignment="Center" Margin="0,0,8,0">
+                        <!-- The achieved rate, on screen rather than inferred from how the needles
+                             feel. A slow sweep is a fact to read, not an impression. -->
+                        <TextBlock Classes="xs dim" VerticalAlignment="Center"
+                                   IsVisible="{Binding HasPollRate}"
+                                   Text="{Binding PollRateText}"/>
+                        <Button Content="Retry no-response" Classes="action-sm"
+                                IsVisible="{Binding HasUnansweredPids}"
+                                Click="OnRetryUnanswered"/>
                         <Button Content="▶ Start" Classes="action-sm"
                                 IsVisible="{Binding !IsPolling}"
                                 IsEnabled="{Binding CanStartPolling}"

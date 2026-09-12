@@ -10,7 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Meadow.Foundation.Telematics.Uds" Version="3.*-*" />
+    <!-- Project reference, not a package: this repo builds the Meadow Telematics libraries
+         from source (see the version-stamping note in the app csproj), and the UDS scanner
+         is actively developed alongside ScanTool. Against the published package, local
+         changes to discovery and addressing silently would not reach the app. -->
+    <ProjectReference Include="..\..\..\..\..\..\wilderness\Meadow.Foundation\Source\Meadow.Foundation.Libraries_and_Frameworks\Telematics.Uds\Driver\Telematics.Uds.csproj" />
     <ProjectReference Include="..\Neomotive.Obd2\Neomotive.Obd2.csproj" />
   </ItemGroup>
 </Project>

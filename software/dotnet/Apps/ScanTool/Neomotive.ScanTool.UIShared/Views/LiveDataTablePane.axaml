@@ -10,10 +10,11 @@
         <!-- Column headers -->
         <Border Grid.Row="0" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1"
                 Padding="16,6,8,6">
-            <Grid ColumnDefinitions="*, 90, 60">
+            <Grid ColumnDefinitions="*, 90, 60, 90">
                 <TextBlock Grid.Column="0" Classes="label" Text="PID"/>
                 <TextBlock Grid.Column="1" Classes="label" Text="Value"/>
                 <TextBlock Grid.Column="2" Classes="label" Text="Unit"/>
+                <TextBlock Grid.Column="3" Classes="label" Text="Age"/>
             </Grid>
         </Border>
 
@@ -30,7 +31,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="local:LivePidItem">
                         <Border Padding="16,0,8,0" MinHeight="44">
-                            <Grid ColumnDefinitions="*, 90, 60" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="*, 90, 60, 90" VerticalAlignment="Center">
                                 <TextBlock Grid.Column="0" Classes="label"
                                            Text="{Binding Descriptor.Name}"
                                            VerticalAlignment="Center"/>
@@ -39,6 +40,12 @@
                                            VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="2" Classes="dim"
                                            Text="{Binding Descriptor.Unit}"
+                                           VerticalAlignment="Center"/>
+                                <!-- How stale the value is. A PID the module has stopped answering
+                                     reads "no response" here rather than leaving a frozen number
+                                     in the Value column looking live. -->
+                                <TextBlock Grid.Column="3" Classes="xs dim"
+                                           Text="{Binding AgeText}"
                                            VerticalAlignment="Center"/>
                             </Grid>
                         </Border>

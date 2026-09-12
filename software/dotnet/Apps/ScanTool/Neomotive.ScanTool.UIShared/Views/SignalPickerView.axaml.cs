@@ -28,6 +28,9 @@ public partial class SignalPickerView : UserControl
     private void OnToggleSelectedOnly(object? sender, RoutedEventArgs e)
         => Vm.ShowSelectedOnly = !Vm.ShowSelectedOnly;
 
+    private void OnToggleSupportedOnly(object? sender, RoutedEventArgs e)
+        => Vm.SupportedOnly = !Vm.SupportedOnly;
+
     private void OnSelectAllResults(object? sender, RoutedEventArgs e) => Vm.SelectAllResults();
 
     private void OnClearSelection(object? sender, RoutedEventArgs e) => Vm.ClearSelection();

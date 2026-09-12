@@ -18,6 +18,14 @@ public class LoggingCanBus : ICanBus
 
     public CanPacketLog Log => _log;
 
+    /// <summary>
+    /// Whether frames are recorded into the packet log. Every recorded frame costs a payload copy
+    /// and a <see cref="CanPacketEntry"/>, paid on both directions of every request the tool makes
+    /// — including the live-data polling loop, which runs continuously and whose frames nobody is
+    /// looking at unless the CAN tab is open. The CAN tab turns recording on.
+    /// </summary>
+    public bool CaptureEnabled { get; set; }
+
     public LoggingCanBus(ICanBus inner, CanPacketLog log)
     {
         _inner = inner;
@@ -25,7 +33,7 @@ public class LoggingCanBus : ICanBus
 
         _inner.FrameReceived += (s, f) =>
         {
-            if (f is StandardDataFrame sdf)
+            if (CaptureEnabled && f is StandardDataFrame sdf)
             {
                 _log.Add(new CanPacketEntry(DateTime.Now, sdf.ID, sdf.Payload.ToArray(), false));
             }
@@ -37,7 +45,7 @@ public class LoggingCanBus : ICanBus
 
     public void WriteFrame(ICanFrame frame)
     {
-        if (frame is StandardDataFrame sdf)
+        if (CaptureEnabled && frame is StandardDataFrame sdf)
         {
             _log.Add(new CanPacketEntry(DateTime.Now, sdf.ID, sdf.Payload.ToArray(), true));
         }

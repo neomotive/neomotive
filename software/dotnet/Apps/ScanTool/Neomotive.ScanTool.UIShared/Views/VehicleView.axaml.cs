@@ -19,4 +19,6 @@ public partial class VehicleView : UserControl
     private MainWindowViewModel Vm => (MainWindowViewModel)DataContext!;
 
     private void OnCheckTune(object? sender, RoutedEventArgs e) => _ = Vm.CheckTuneAsync();
+
+    private void OnForgetVehicle(object? sender, RoutedEventArgs e) => Vm.ForgetCurrentVehicle();
 }

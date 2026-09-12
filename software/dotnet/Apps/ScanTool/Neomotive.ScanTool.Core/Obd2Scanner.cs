@@ -9,7 +9,26 @@ public class Obd2Scanner : IObd2Scanner
     private static readonly TimeSpan ResponseTimeout = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan CollectTimeout = TimeSpan.FromSeconds(1);
 
+    /// <summary>
+    /// Timeout for Mode 01 current-data reads, which are the live-data polling loop's inner loop.
+    /// A PCM that is going to answer a current-data request answers it in well under 150 ms; the
+    /// 3 s <see cref="ResponseTimeout"/> is sized for discovery and multi-frame reads, and paying
+    /// it once per unanswered PID per sweep is what made live data crawl on a real vehicle.
+    /// </summary>
+    private static readonly TimeSpan CurrentDataTimeout = TimeSpan.FromMilliseconds(150);
+
     private readonly ICanBus _bus;
+
+    /// <summary>
+    /// Gates the per-frame TX/RX trace. Off by default: the trace interpolates a hex dump for
+    /// every frame in both directions, and on the Pi with a file sink that cost dominates the
+    /// polling loop. The CAN tab turns it on when the operator is actually watching frames.
+    /// <para>
+    /// The check has to happen at the call site, not inside the logger — <c>Logger.Log</c> drops
+    /// the message by level, but the interpolated string has already been built by then.
+    /// </para>
+    /// </summary>
+    public static bool FrameLoggingEnabled { get; set; }
 
     public bool IsSimulated { get; private set; }
 
@@ -63,7 +82,7 @@ public class Obd2Scanner : IObd2Scanner
     {
         var data = await SendAndReceive(
             [(byte)Service.Current, pid],
-            ResponseServiceId(Service.Current), ct);
+            ResponseServiceId(Service.Current), ct, CurrentDataTimeout);
 
         // Response is [0x41, pid, A, B, ...]; hand back only the data bytes so signal definitions
         // can address them from zero.
@@ -215,7 +234,7 @@ public class Obd2Scanner : IObd2Scanner
 
         var data = await SendAndReceive(
             [(byte)Service.Current, (byte)pid],
-            ResponseServiceId(Service.Current), ct);
+            ResponseServiceId(Service.Current), ct, CurrentDataTimeout);
 
         if (data == null || data.Length < 2 + descriptor.ByteCount) return null;
 
@@ -247,7 +266,7 @@ public class Obd2Scanner : IObd2Scanner
         var payload = new byte[8];
         payload[0] = (byte)obd2Data.Length;
         Array.Copy(obd2Data, 0, payload, 1, obd2Data.Length);
-        Resolver.Log?.Info($"TX 0x{targetId:X3}: [{string.Join(" ", payload.Select(b => $"{b:X2}"))}]");
+        if (FrameLoggingEnabled) Resolver.Log?.Trace($"TX 0x{targetId:X3}: [{string.Join(" ", payload.Select(b => $"{b:X2}"))}]");
         _bus.WriteFrame(new StandardDataFrame { ID = targetId, Payload = payload });
     }
 
@@ -256,7 +275,7 @@ public class Obd2Scanner : IObd2Scanner
         var payload = new byte[8];
         payload[0] = (byte)obd2Data.Length;
         Array.Copy(obd2Data, 0, payload, 1, obd2Data.Length);
-        Resolver.Log?.Info($"TX 0x{Obd2Addresses.FunctionalRequest:X3}: [{string.Join(" ", payload.Select(b => $"{b:X2}"))}]");
+        if (FrameLoggingEnabled) Resolver.Log?.Trace($"TX 0x{Obd2Addresses.FunctionalRequest:X3}: [{string.Join(" ", payload.Select(b => $"{b:X2}"))}]");
         _bus.WriteFrame(new StandardDataFrame { ID = Obd2Addresses.FunctionalRequest, Payload = payload });
     }
 
@@ -268,10 +287,11 @@ public class Obd2Scanner : IObd2Scanner
         _bus.WriteFrame(new StandardDataFrame { ID = ecuPhysicalId, Payload = payload });
     }
 
-    private async Task<byte[]?> SendAndReceive(byte[] obd2Data, byte expectedResponseService, CancellationToken ct)
+    private async Task<byte[]?> SendAndReceive(
+        byte[] obd2Data, byte expectedResponseService, CancellationToken ct, TimeSpan? timeout = null)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(ResponseTimeout);
+        cts.CancelAfter(timeout ?? ResponseTimeout);
 
         var tcs = new TaskCompletionSource<byte[]?>(TaskCreationOptions.RunContinuationsAsynchronously);
         var assembler = new MultiFrameAssembler();
@@ -281,15 +301,15 @@ public class Obd2Scanner : IObd2Scanner
         {
             if (frame is not StandardDataFrame sdf)
             {
-                Resolver.Log?.Info($"RX: non-standard frame ignored (type={frame.GetType().Name})");
+                if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX: non-standard frame ignored (type={frame.GetType().Name})");
                 return;
             }
 
-            Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: [{string.Join(" ", (sdf.Payload ?? []).Select(b => $"{b:X2}"))}]");
+            if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: [{string.Join(" ", (sdf.Payload ?? []).Select(b => $"{b:X2}"))}]");
 
             if (sdf.ID < Obd2Addresses.EcuResponseBase || sdf.ID > Obd2Addresses.EcuResponseMax)
             {
-                Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: ignored (not in ECU response range 0x{Obd2Addresses.EcuResponseBase:X3}–0x{Obd2Addresses.EcuResponseMax:X3})");
+                if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: ignored (not in ECU response range 0x{Obd2Addresses.EcuResponseBase:X3}–0x{Obd2Addresses.EcuResponseMax:X3})");
                 return;
             }
 
@@ -298,7 +318,7 @@ public class Obd2Scanner : IObd2Scanner
 
             byte frameTypeByte = p[0];
             var frameType = (IsoTpFrameType)(frameTypeByte >> 4);
-            Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: ISO-TP frame type={frameType}");
+            if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: ISO-TP frame type={frameType}");
 
             if (frameType == IsoTpFrameType.Single)
             {
@@ -308,13 +328,13 @@ public class Obd2Scanner : IObd2Scanner
                 Array.Copy(p, 1, data, 0, len);
                 if (data.Length > 0 && data[0] == expectedResponseService)
                 {
-                    Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: single frame match for service 0x{expectedResponseService:X2} — complete.");
+                    if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: single frame match for service 0x{expectedResponseService:X2} — complete.");
                     _bus.FrameReceived -= handler;
                     tcs.TrySetResult(data);
                 }
                 else
                 {
-                    Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: single frame service=0x{(data.Length > 0 ? data[0] : 0):X2}, expected=0x{expectedResponseService:X2} — ignored.");
+                    if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: single frame service=0x{(data.Length > 0 ? data[0] : 0):X2}, expected=0x{expectedResponseService:X2} — ignored.");
                 }
             }
             else if (frameType == IsoTpFrameType.First)
@@ -324,7 +344,7 @@ public class Obd2Scanner : IObd2Scanner
                 var initial = new byte[firstBytes];
                 Array.Copy(p, 2, initial, 0, firstBytes);
                 assembler.Start(totalLen, initial);
-                Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: first frame, totalLen={totalLen}, got {firstBytes} bytes — sending flow control.");
+                if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: first frame, totalLen={totalLen}, got {firstBytes} bytes — sending flow control.");
 
                 // physical address = response ID - 8  (e.g. 0x7E8 → 0x7E0)
                 SendFlowControl((short)(sdf.ID - Obd2Addresses.EcuPhysicalOffset));
@@ -336,14 +356,14 @@ public class Obd2Scanner : IObd2Scanner
                 var chunk = new byte[available];
                 Array.Copy(p, 1, chunk, 0, available);
                 assembler.Append(chunk);
-                Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: consecutive frame, {available} bytes appended, complete={assembler.IsComplete}");
+                if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: consecutive frame, {available} bytes appended, complete={assembler.IsComplete}");
 
                 if (assembler.IsComplete)
                 {
                     var data = assembler.GetData();
                     if (data.Length > 0 && data[0] == expectedResponseService)
                     {
-                        Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: multi-frame complete, service=0x{data[0]:X2} — done.");
+                        if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: multi-frame complete, service=0x{data[0]:X2} — done.");
                         _bus.FrameReceived -= handler;
                         tcs.TrySetResult(data);
                     }
@@ -355,13 +375,13 @@ public class Obd2Scanner : IObd2Scanner
             }
             else
             {
-                Resolver.Log?.Info($"RX 0x{sdf.ID:X3}: unhandled ISO-TP frame type={frameType}");
+                if (FrameLoggingEnabled) Resolver.Log?.Trace($"RX 0x{sdf.ID:X3}: unhandled ISO-TP frame type={frameType}");
             }
         };
 
         cts.Token.Register(() =>
         {
-            Resolver.Log?.Warn($"SendAndReceive: timeout waiting for service 0x{expectedResponseService:X2} response.");
+            if (FrameLoggingEnabled) Resolver.Log?.Trace($"SendAndReceive: timeout waiting for service 0x{expectedResponseService:X2} response.");
             _bus.FrameReceived -= handler;
             tcs.TrySetResult(null);
         });

@@ -1,5 +1,32 @@
 [
   {
+    "wmi": "19U",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "19V",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "19X",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
     "wmi": "1B3",
     "manufacturer": "Stellantis",
     "country": "United States",
@@ -18,10 +45,55 @@
     ]
   },
   {
+    "wmi": "1F1",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1F7",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
     "wmi": "1FA",
     "manufacturer": "FORD MOTOR COMPANY",
     "country": "UNITED STATES (USA)",
     "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1FL",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "NORWAY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1FM",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1FT",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
     "makes": [
       "Ford"
     ]
@@ -90,6 +162,15 @@
     ]
   },
   {
+    "wmi": "1HG",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
     "wmi": "1J4",
     "manufacturer": "Stellantis",
     "country": "United States",
@@ -99,21 +180,68 @@
     ]
   },
   {
-    "wmi": "1LN",
-    "manufacturer": "Ford Motor Company",
-    "country": "United States",
+    "wmi": "1L1",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
     "vehicleType": "Passenger Car",
     "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1LN",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford",
       "Lincoln"
     ]
   },
   {
+    "wmi": "1MB",
+    "manufacturer": "MERCEDES-BENZ TRUCK COMPANY INC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
     "wmi": "1ME",
-    "manufacturer": "Ford Motor Company",
-    "country": "United States",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
     "vehicleType": "Passenger Car",
     "makes": [
+      "Ford",
       "Mercury"
+    ]
+  },
+  {
+    "wmi": "1MR",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "1N4",
+    "manufacturer": "NISSAN NORTH AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "1N6",
+    "manufacturer": "NISSAN NORTH AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Nissan"
     ]
   },
   {
@@ -126,12 +254,822 @@
     ]
   },
   {
+    "wmi": "1V1",
+    "manufacturer": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "1V2",
+    "manufacturer": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "1VW",
+    "manufacturer": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "1WA",
+    "manufacturer": "VOLVO WHITE TRUCK CORPORATION",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "1WU",
+    "manufacturer": "VOLVO WHITE TRUCK CORPORATION",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "2BA",
+    "manufacturer": "DAIMLERCHRYSLER COMMERCIAL BUSES NORTH AMERICA (CANADA)",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "2FA",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2FM",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2FT",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2HG",
+    "manufacturer": "HONDA OF CANADA MFG., A DIVISION OF HONDA CANADA INC.",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "2HH",
+    "manufacturer": "HONDA OF CANADA MFG., A DIVISION OF HONDA CANADA INC.",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "2HJ",
+    "manufacturer": "HONDA OF CANADA MFG., A DIVISION OF HONDA CANADA INC.",
+    "country": "CANADA",
+    "vehicleType": "Truck",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "2HK",
+    "manufacturer": "HONDA OF CANADA MFG., A DIVISION OF HONDA CANADA INC.",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "2HN",
+    "manufacturer": "HONDA OF CANADA MFG., A DIVISION OF HONDA CANADA INC.",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "2HU",
+    "manufacturer": "HONDA OF CANADA MFG., A DIVISION OF HONDA CANADA INC.",
+    "country": "CANADA",
+    "vehicleType": "Truck",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "2LM",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2LN",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2ME",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2MR",
+    "manufacturer": "FORD MOTOR COMPANY OF CANADA, LTD.",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "2S2",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "2S3",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "2T1",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING CANADA",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "2T2",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING CANADA",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "2T3",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING CANADA",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "2V8",
+    "manufacturer": "CHRYSLER GROUP LLC(USA),CHRYSLER CANADA, CHRYSLER DE MEXICO",
+    "country": "CANADA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
     "wmi": "2XM",
     "manufacturer": "CHRYSLER GROUP LLC(USA),CHRYSLER CANADA, CHRYSLER DE MEXICO",
     "country": "CANADA",
     "vehicleType": "Passenger Car",
     "makes": [
       "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3A3",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3A4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3A7",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3A8",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3B3",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3B4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3B7",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3B8",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3C3",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3C4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3C6",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3C8",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3CA",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3CZ",
+    "manufacturer": "HONDA DE MEXICO, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "3D3",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3D4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3D7",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3D8",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3DH",
+    "manufacturer": "HONDA DE MEXICO, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "3E3",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3E4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3F6",
+    "manufacturer": "DAIMLER CHRYSLER DE MEXICO SA DE CV",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3FA",
+    "manufacturer": "FORD MOTOR COMPANY, MEXICO",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "3FM",
+    "manufacturer": "FORD MOTOR COMPANY, MEXICO",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "3FT",
+    "manufacturer": "FORD MOTOR COMPANY, MEXICO",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "3HD",
+    "manufacturer": "HONDA DE MEXICO, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "3HG",
+    "manufacturer": "HONDA DE MEXICO, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "3J4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3KM",
+    "manufacturer": "KIA MEXICO S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "3KP",
+    "manufacturer": "KIA MEXICO S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "3LN",
+    "manufacturer": "FORD MOTOR COMPANY, MEXICO",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "3MA",
+    "manufacturer": "FORD MOTOR COMPANY, MEXICO",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "3MD",
+    "manufacturer": "MAZDA MOTOR MANUFACTURING DE MEXICO S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "3ME",
+    "manufacturer": "FORD MOTOR COMPANY, MEXICO",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "3MF",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "3MV",
+    "manufacturer": "MAZDA MOTOR MANUFACTURING DE MEXICO S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "3MW",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "3MY",
+    "manufacturer": "MAZDA MOTOR MANUFACTURING DE MEXICO S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "3MZ",
+    "manufacturer": "MAZDA MOTOR MANUFACTURING DE MEXICO S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "3N1",
+    "manufacturer": "NISSAN MEXICANA, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "3N6",
+    "manufacturer": "NISSAN MEXICANA, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "3N8",
+    "manufacturer": "NISSAN MEXICANA, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "3P3",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3P4",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3P7",
+    "manufacturer": "CHRYSLER DE MEXICO TOLUCA",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "3PC",
+    "manufacturer": "NISSAN NORTH AMERICA, INC.",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "3TM",
+    "manufacturer": "TOYOTA MOTOR MFG DE BAJA CALIFORNIA S DE RL DE CV",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "3TY",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING DE GUANAJUATO",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "3V4",
+    "manufacturer": "VOLVO GROUP OPERATIONS MEXICO, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "3VV",
+    "manufacturer": "VOLKSWAGEN DE MEXICO SA DE CV",
+    "country": "MEXICO",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "3VW",
+    "manufacturer": "VOLKSWAGEN DE MEXICO SA DE CV",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "3X1",
+    "manufacturer": "VOLVO GROUP OPERATIONS MEXICO, S.A. DE C.V.",
+    "country": "MEXICO",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4A3",
+    "manufacturer": "MITSUBISHI MOTORS NORTH AMERICA",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "4A4",
+    "manufacturer": "MITSUBISHI MOTORS NORTH AMERICA",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "4F2",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4F3",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4F4",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4JG",
+    "manufacturer": "MERCEDES-BENZ OF NORTH AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "4M2",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4M4",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4N2",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4N4",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "4P3",
+    "manufacturer": "MITSUBISHI MOTORS NORTH AMERICA",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "4S1",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "4S2",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Isuzu"
     ]
   },
   {
@@ -144,12 +1082,591 @@
     ]
   },
   {
+    "wmi": "4S4",
+    "manufacturer": "SUBARU OF AMERICA, INC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Subaru"
+    ]
+  },
+  {
+    "wmi": "4S6",
+    "manufacturer": "ISUZU MANUFACTURING SERVICES OF AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "4T1",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "4T3",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "4T4",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, NORTHERN KENTUCKY, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "4US",
+    "manufacturer": "BMW MANUFACTURER CORPORATION / BMW NORTH AMERICA",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "4V1",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4V3",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4V4",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4V6",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4VA",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4VD",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4VG",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "4VJ",
+    "manufacturer": "VOLVO GROUP NORTH AMERICA, LLC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "55S",
+    "manufacturer": "MERCEDES-BENZ CARS",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "58A",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, KENTUCKY, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "5FN",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5FP",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5FR",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5FS",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5J6",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5J7",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5J8",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5KB",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5KC",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "5L1",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "5LM",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "5LT",
+    "manufacturer": "FORD MOTOR COMPANY",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "5N1",
+    "manufacturer": "NISSAN NORTH AMERICA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "5N3",
+    "manufacturer": "NISSAN NORTH AMERICA, INC.",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "5NM",
+    "manufacturer": "HYUNDAI MOTOR MANUFACTURING ALABAMA LLC (HMMA)",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "5NP",
+    "manufacturer": "HYUNDAI-KIA AMERICA TECHNICAL CENTER INC (HATCI)",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Hyundai",
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "5NT",
+    "manufacturer": "HYUNDAI MOTOR MANUFACTURING ALABAMA LLC (HMMA)",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "5TB",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, INDIANA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "5TD",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, INDIANA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "5TE",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, CALIFORNIA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "5TF",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, TEXAS, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "5UM",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "5UX",
+    "manufacturer": "BMW MANUFACTURER CORPORATION / BMW NORTH AMERICA",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "5XX",
+    "manufacturer": "KIA GEORGIA, INC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "5XY",
+    "manufacturer": "KIA GEORGIA, INC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "5YF",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, MISSISSIPPI, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
     "wmi": "5YJ",
     "manufacturer": "TESLA, INC.",
     "country": "UNITED STATES (USA)",
     "vehicleType": "Passenger Car",
     "makes": [
       "Tesla"
+    ]
+  },
+  {
+    "wmi": "5YM",
+    "manufacturer": "BMW MANUFACTURER CORPORATION / BMW NORTH AMERICA",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "5Z6",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "6MM",
+    "manufacturer": "MITSUBISHI MOTORS AUSTRALIA LTD.",
+    "country": "AUSTRALIA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "6MP",
+    "manufacturer": "FORD MOTOR CO OF AUSTRALIA LTD.",
+    "country": "AUSTRALIA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "7FA",
+    "manufacturer": "AMERICAN HONDA MOTOR CO., INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "7G2",
+    "manufacturer": "TESLA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Tesla"
+    ]
+  },
+  {
+    "wmi": "7JD",
+    "manufacturer": "VOLVO CAR USA, LLC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "7JR",
+    "manufacturer": "VOLVO CAR USA, LLC",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "7MM",
+    "manufacturer": "MAZDA TOYOTA MANUFACTURING, USA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota",
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "7MU",
+    "manufacturer": "MAZDA TOYOTA MANUFACTURING, USA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota",
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "7SA",
+    "manufacturer": "TESLA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Tesla"
+    ]
+  },
+  {
+    "wmi": "7SV",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, TEXAS, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "7YA",
+    "manufacturer": "HYUNDAI MOTOR GROUP METAPLANT AMERICA",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "8BT",
+    "manufacturer": "MERCEDES-BENZ USA, LLC (SPRINTER)",
+    "country": "ARGENTINA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "8BU",
+    "manufacturer": "MERCEDES-BENZ USA, LLC (SPRINTER)",
+    "country": "ARGENTINA",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "9BF",
+    "manufacturer": "FORD MOTOR COMPANY BRASIL LTDA.",
+    "country": "BRAZIL",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "9BV",
+    "manufacturer": "VOLVO DO BRASIL VEICULOS LTDA",
+    "country": "BRAZIL",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "9BW",
+    "manufacturer": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+    "country": "MEXICO",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "9DB",
+    "manufacturer": "MERCEDES-BENZ TRUCK COMPANY INC",
+    "country": "BRAZIL",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "J81",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "J87",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "CANADA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "J8Z",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Isuzu"
     ]
   },
   {
@@ -162,6 +1679,33 @@
     ]
   },
   {
+    "wmi": "JA4",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JA7",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JAA",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
     "wmi": "JAB",
     "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
     "country": "JAPAN",
@@ -171,12 +1715,139 @@
     ]
   },
   {
+    "wmi": "JAC",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "JAE",
+    "manufacturer": "ISUZU MOTORS LIMITED, JAPAN",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Isuzu"
+    ]
+  },
+  {
+    "wmi": "JB4",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JB7",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JC1",
+    "manufacturer": "MAZDA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "JC2",
+    "manufacturer": "MAZDA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "JE4",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JF1",
+    "manufacturer": "SUBARU CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Subaru"
+    ]
+  },
+  {
+    "wmi": "JF2",
+    "manufacturer": "SUBARU CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Subaru"
+    ]
+  },
+  {
+    "wmi": "JF3",
+    "manufacturer": "FUJI HEAVY INDUSTRIES U.S.A., INC. (C/O SUBARU OF AMERICA)",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Subaru"
+    ]
+  },
+  {
+    "wmi": "JF4",
+    "manufacturer": "FUJI HEAVY INDUSTRIES U.S.A., INC. (C/O SUBARU OF AMERICA)",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Subaru"
+    ]
+  },
+  {
+    "wmi": "JG7",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "JH1",
+    "manufacturer": "HONDA MOTOR CO., LTD.",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
     "wmi": "JH4",
     "manufacturer": "Honda Motor Co., Ltd.",
     "country": "Japan",
     "vehicleType": "Passenger Car",
     "makes": [
-      "Acura"
+      "Acura",
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "JHL",
+    "manufacturer": "HONDA MOTOR CO., LTD.",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
     ]
   },
   {
@@ -189,10 +1860,37 @@
     ]
   },
   {
+    "wmi": "JJ3",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
     "wmi": "JM1",
     "manufacturer": "MAZDA MOTOR CORPORATION",
     "country": "JAPAN",
     "vehicleType": "Passenger Car",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "JM2",
+    "manufacturer": "MAZDA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mazda"
+    ]
+  },
+  {
+    "wmi": "JM3",
+    "manufacturer": "MAZDA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
     "makes": [
       "Mazda"
     ]
@@ -208,6 +1906,87 @@
     ]
   },
   {
+    "wmi": "JN6",
+    "manufacturer": "NISSAN MOTOR COMPANY, LTD",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "JN8",
+    "manufacturer": "NISSAN MOTOR COMPANY, LTD",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "JNK",
+    "manufacturer": "NISSAN MOTOR COMPANY, LTD",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "JNR",
+    "manufacturer": "NISSAN MOTOR COMPANY, LTD",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "JNT",
+    "manufacturer": "NISSAN MOTOR COMPANY, LTD",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "JP3",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JP4",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JP7",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "JR2",
+    "manufacturer": "HONDA MOTOR CO., LTD.",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
     "wmi": "JS2",
     "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
     "country": "",
@@ -217,12 +1996,94 @@
     ]
   },
   {
+    "wmi": "JS3",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "JS4",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "JT2",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JT3",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JT4",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JT5",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JT6",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
     "wmi": "JT8",
     "manufacturer": "Toyota Motor Corporation",
     "country": "Japan",
     "vehicleType": "Passenger Car",
     "makes": [
-      "Lexus"
+      "Lexus",
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JTD",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JTE",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
     ]
   },
   {
@@ -235,12 +2096,94 @@
     ]
   },
   {
+    "wmi": "JTJ",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
     "wmi": "JTK",
-    "manufacturer": "Toyota Motor Corporation",
-    "country": "Japan",
+    "manufacturer": "TOYOTA MOTOR NORTH AMERICA, INC",
+    "country": "JAPAN",
     "vehicleType": "Passenger Car",
     "makes": [
+      "Toyota",
       "Scion"
+    ]
+  },
+  {
+    "wmi": "JTL",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JTM",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JTN",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "JAPAN",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "JW7",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "JAPAN",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "KL5",
+    "manufacturer": "SUZUKI MOTOR OF AMERICA, INC",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Suzuki"
+    ]
+  },
+  {
+    "wmi": "KM8",
+    "manufacturer": "HYUNDAI MOTOR CO",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "KME",
+    "manufacturer": "HYUNDAI MOTOR CO",
+    "country": "",
+    "vehicleType": "Truck",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "KMF",
+    "manufacturer": "HYUNDAI MOTOR CO",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Truck",
+    "makes": [
+      "Hyundai"
     ]
   },
   {
@@ -254,12 +2197,140 @@
     ]
   },
   {
+    "wmi": "KMT",
+    "manufacturer": "HYUNDAI MOTOR CO",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "KMU",
+    "manufacturer": "HYUNDAI MOTOR CO",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
     "wmi": "KNA",
     "manufacturer": "KIA CORPORATION",
     "country": "SOUTH KOREA",
     "vehicleType": "Passenger Car",
     "makes": [
       "Kia"
+    ]
+  },
+  {
+    "wmi": "KND",
+    "manufacturer": "KIA CORPORATION",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "KNJ",
+    "manufacturer": "KIA MOTORS (FORD IMPORTS)",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford",
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "KPH",
+    "manufacturer": "HYUNDAI MOTOR CO",
+    "country": "SOUTH KOREA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "LVY",
+    "manufacturer": "DAQING VOLVO CAR MANUFACTURING CO LTD",
+    "country": "CHINA",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "LYV",
+    "manufacturer": "DAQING VOLVO CAR MANUFACTURING CO LTD",
+    "country": "CHINA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "MAJ",
+    "manufacturer": "FORD INDIA LTD",
+    "country": "INDIA",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "ML3",
+    "manufacturer": "MITSUBISHI MOTORS CORPORATION (MMC)",
+    "country": "THAILAND",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "MP3",
+    "manufacturer": "MITSUBISHI MOTORS (THAILAND) CO LTD",
+    "country": "THAILAND",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "NM0",
+    "manufacturer": "FORD OTOMOTIV SANAYI A.S., TURKEY",
+    "country": "TURKEY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "NMT",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING,TURKEY ,INC.",
+    "country": "TURKEY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "PFD",
+    "manufacturer": "HYUNDAI MOTOR GROUP INNOVATION CENTRE IN SINGAPORE",
+    "country": "SINGAPORE",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Hyundai"
+    ]
+  },
+  {
+    "wmi": "SAD",
+    "manufacturer": "JAGUAR LAND ROVER LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Jaguar",
+      "Land Rover"
     ]
   },
   {
@@ -270,6 +2341,25 @@
     "makes": [
       "Jaguar",
       "Land Rover"
+    ]
+  },
+  {
+    "wmi": "SAL",
+    "manufacturer": "JAGUAR LAND ROVER LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Jaguar",
+      "Land Rover"
+    ]
+  },
+  {
+    "wmi": "SB1",
+    "manufacturer": "TOYOTA MOTOR CORPORATION",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
     ]
   },
   {
@@ -291,12 +2381,247 @@
     ]
   },
   {
+    "wmi": "SD7",
+    "manufacturer": "ASTON MARTIN LAGONDA LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Aston Martin"
+    ]
+  },
+  {
+    "wmi": "SFZ",
+    "manufacturer": "TESLA, INC.",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Tesla"
+    ]
+  },
+  {
+    "wmi": "SHH",
+    "manufacturer": "HONDA OF THE U.K. MFG., LTD.",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "SHS",
+    "manufacturer": "HONDA OF THE U.K. MFG., LTD.",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Honda"
+    ]
+  },
+  {
+    "wmi": "SJA",
+    "manufacturer": "BENTLEY MOTORS LIMITED",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Bentley"
+    ]
+  },
+  {
+    "wmi": "SJK",
+    "manufacturer": "NISSAN MOTOR MANUFACTURING (UK) LTD",
+    "country": "UNITED KINGDOM (UK)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Nissan"
+    ]
+  },
+  {
+    "wmi": "TMC",
+    "manufacturer": "THOMPSON MFG. COMPANY WEXFORD LTD.",
+    "country": "IRELAND",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "TRU",
+    "manufacturer": "AUDI AG",
+    "country": "HUNGARY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Audi"
+    ]
+  },
+  {
+    "wmi": "TYB",
+    "manufacturer": "MITSUBISHI FUSO TRUCK EUROPE S.A.",
+    "country": "PORTUGAL",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mitsubishi"
+    ]
+  },
+  {
+    "wmi": "U5Y",
+    "manufacturer": "HYUNDAI-KIA AMERICA TECHNICAL CENTER INC (HATCI)",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Hyundai",
+      "Kia"
+    ]
+  },
+  {
+    "wmi": "VNK",
+    "manufacturer": "TOYOTA MOTOR MANUFACTURING, FRANCE, S.A.S.",
+    "country": "FRANCE",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Toyota"
+    ]
+  },
+  {
+    "wmi": "W1A",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1H",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1K",
+    "manufacturer": "MERCEDES-BENZ CARS",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1L",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1M",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1N",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1P",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1R",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1W",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W1Y",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W2W",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "W2Y",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WA1",
+    "manufacturer": "AUDI AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Audi"
+    ]
+  },
+  {
+    "wmi": "WAP",
+    "manufacturer": "BMW OF NORTH AMERICA, LLC",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
     "wmi": "WAU",
     "manufacturer": "AUDI AG",
     "country": "GERMANY",
     "vehicleType": "Passenger Car",
     "makes": [
       "Audi"
+    ]
+  },
+  {
+    "wmi": "WB5",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "BMW"
     ]
   },
   {
@@ -309,7 +2634,160 @@
     ]
   },
   {
+    "wmi": "WBS",
+    "manufacturer": "BMW M GMBH",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "WBX",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "WBY",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "WD0",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WD2",
+    "manufacturer": "DAIMLER CHRYSLER AG",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "WD3",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WD4",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WD5",
+    "manufacturer": "DAIMLER CHRYSLER AG",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "WD6",
+    "manufacturer": "DAIMLER CHRYSLER AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "WD8",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "UNITED STATES (USA)",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WDB",
+    "manufacturer": "MERCEDES-BENZ CARS",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WDC",
+    "manufacturer": "MERCEDES-BENZ CARS",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
     "wmi": "WDD",
+    "manufacturer": "MERCEDES-BENZ CARS",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WDR",
+    "manufacturer": "DAIMLER CHRYSLER AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "WDY",
+    "manufacturer": "DAIMLER CHRYSLER AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Chrysler"
+    ]
+  },
+  {
+    "wmi": "WF0",
+    "manufacturer": "FORD WERKE AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "WF1",
+    "manufacturer": "FORD WERKE AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Ford"
+    ]
+  },
+  {
+    "wmi": "WME",
     "manufacturer": "MERCEDES-BENZ CARS",
     "country": "GERMANY",
     "vehicleType": "Passenger Car",
@@ -320,10 +2798,20 @@
   {
     "wmi": "WMW",
     "manufacturer": "BMW AG",
-    "country": "Germany",
+    "country": "GERMANY",
     "vehicleType": "Passenger Car",
     "makes": [
+      "BMW",
       "Mini"
+    ]
+  },
+  {
+    "wmi": "WMZ",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "BMW"
     ]
   },
   {
@@ -336,12 +2824,93 @@
     ]
   },
   {
+    "wmi": "WP1",
+    "manufacturer": "DR. ING. H.C.F. PORSCHE AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Porsche"
+    ]
+  },
+  {
+    "wmi": "WU1",
+    "manufacturer": "AUDI SPORT GMBH",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Audi"
+    ]
+  },
+  {
+    "wmi": "WUA",
+    "manufacturer": "AUDI SPORT GMBH",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Audi"
+    ]
+  },
+  {
+    "wmi": "WV1",
+    "manufacturer": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "WV2",
+    "manufacturer": "VOLKSWAGEN GROUP OF AMERICA, INC.",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "WVG",
+    "manufacturer": "VOLKSWAGEN AG",
+    "country": "GERMANY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Volkswagen"
+    ]
+  },
+  {
     "wmi": "WVW",
     "manufacturer": "VOLKSWAGEN AG",
     "country": "GERMANY",
     "vehicleType": "Passenger Car",
     "makes": [
       "Volkswagen"
+    ]
+  },
+  {
+    "wmi": "WYB",
+    "manufacturer": "MERCEDES-BENZ, AG",
+    "country": "GERMANY",
+    "vehicleType": "Truck",
+    "makes": [
+      "Mercedes-Benz"
+    ]
+  },
+  {
+    "wmi": "WZ1",
+    "manufacturer": "BMW AG",
+    "country": "GERMANY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "BMW"
+    ]
+  },
+  {
+    "wmi": "YK1",
+    "manufacturer": "OY SAAB VALMET AB",
+    "country": "FINLAND",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Saab"
     ]
   },
   {
@@ -358,6 +2927,15 @@
     "manufacturer": "VOLVO CAR CORPORATION",
     "country": "SWEDEN",
     "vehicleType": "Passenger Car",
+    "makes": [
+      "Volvo"
+    ]
+  },
+  {
+    "wmi": "YV4",
+    "manufacturer": "VOLVO CAR CORPORATION",
+    "country": "SWEDEN",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
     "makes": [
       "Volvo"
     ]
@@ -381,12 +2959,39 @@
     ]
   },
   {
+    "wmi": "ZAS",
+    "manufacturer": "ALFA ROMEO S.P.A.",
+    "country": "ITALY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Alfa Romeo"
+    ]
+  },
+  {
+    "wmi": "ZC2",
+    "manufacturer": "MASERATI S.P.A.",
+    "country": "ITALY",
+    "vehicleType": "Passenger Car",
+    "makes": [
+      "Maserati"
+    ]
+  },
+  {
     "wmi": "ZFA",
     "manufacturer": "Fiat Group Automobiles S.p.A.",
     "country": "Italy",
     "vehicleType": "Passenger Car",
     "makes": [
       "Fiat"
+    ]
+  },
+  {
+    "wmi": "ZN6",
+    "manufacturer": "MASERATI S.P.A.",
+    "country": "ITALY",
+    "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+    "makes": [
+      "Maserati"
     ]
   }
 ]

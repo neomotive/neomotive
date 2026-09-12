@@ -22,6 +22,40 @@
                 </StackPanel>
             </Border>
 
+            <TextBlock Classes="label" Text="Live data" Margin="0,6,0,0" />
+
+            <Border Background="#141820" BorderBrush="#1E2530" BorderThickness="1"
+                    CornerRadius="4" Padding="10,8">
+                <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*, Auto, Auto">
+                        <TextBlock Grid.Column="0" Classes="label" VerticalAlignment="Center"
+                                   Text="{Binding LivePollPeriodText}" />
+                        <Button Grid.Column="1" Content="Slower" Classes="action-sm" MinHeight="40"
+                                Margin="6,0,0,0" Click="OnSlowerPoll" />
+                        <Button Grid.Column="2" Content="Faster" Classes="action-sm" MinHeight="40"
+                                Margin="6,0,0,0" Click="OnFasterPoll" />
+                    </Grid>
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                               Text="How often the tool asks for each selected PID. This is a target, not a delay — if a sweep takes longer than the period it simply runs again straight away, so the achieved rate shown on the Live Data tab is what matters. Slower is worth trying when a module is struggling to keep up." />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Classes="label" Text="Remembered vehicles" Margin="0,6,0,0" />
+
+            <Border Background="#141820" BorderBrush="#1E2530" BorderThickness="1"
+                    CornerRadius="4" Padding="10,8">
+                <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBlock Grid.Column="0" Classes="label" VerticalAlignment="Center"
+                                   Text="{Binding RememberedVehiclesText}" />
+                        <Button Grid.Column="1" Content="Forget all" Classes="action-sm" MinHeight="40"
+                                Margin="6,0,0,0" Click="OnForgetAllVehicles" />
+                    </Grid>
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                               Text="A vehicle seen before starts up with its known modules, supported PIDs and last calibration already on screen, and only probes the addresses it expects. Forgetting clears every stored VIN along with the vehicle-type profiles built from them; nothing is lost except the head start." />
+                </StackPanel>
+            </Border>
+
             <TextBlock Classes="label" Text="Storage" Margin="0,6,0,0" />
 
             <StackPanel Spacing="2">

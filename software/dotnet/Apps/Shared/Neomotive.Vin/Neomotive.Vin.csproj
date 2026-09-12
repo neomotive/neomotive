@@ -14,5 +14,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\manufacturers.json" />
     <EmbeddedResource Include="Resources\model-catalog.json" />
+    <!-- Ships empty. NHTSA publishes manufacturers and model names but not the VDS-to-model
+         patterns that connect them, so the table is filled by the decoder as it learns from online
+         decodes, and by hand-written entries dropped into the config directory. -->
+    <EmbeddedResource Include="Resources\vds-patterns.json" />
   </ItemGroup>
 </Project>

@@ -1,7 +1,9 @@
 using Avalonia.Threading;
+using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using Neomotive.Can.UI;
 using Neomotive.ScanTool.Core;
+using Neomotive.ScanTool.Core.Vehicles;
 using Neomotive.Update;
 using Neomotive.Vin.Contracts;
 using Neomotive.Vin.Models;
@@ -49,7 +51,11 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
         // The tooltip switch is read by the shell, not by the Settings page, so the shell has to
         // hear about a change made on that page.
-        SettingsVm.Changed += () => OnPropertyChanged(nameof(ShowToolTips));
+        SettingsVm.Changed += () =>
+        {
+            OnPropertyChanged(nameof(ShowToolTips));
+            LivePollPeriodMs = SettingsVm.LivePollPeriodMs;
+        };
         if (_loggingBus != null)
         {
             _log = _loggingBus.Log;
@@ -268,8 +274,17 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             // Settings live beside the captures, so they load as soon as the host tells us where
             // that is. Assigning this is what reads settings.json off disk.
             SettingsVm.DataDirectory = value;
+
+            // Remembered vehicles live here too: writable, and preserved across an A/B update.
+            _vehicleStore = string.IsNullOrWhiteSpace(value) ? null : new VehicleStore(value);
+            SettingsVm.VehicleStore = _vehicleStore;
         }
     }
+
+    private VehicleStore? _vehicleStore;
+
+    /// <summary>The record for the vehicle currently connected, once one has been recognised.</summary>
+    private VehicleRecord? _currentVehicle;
 
     /// <summary>Operator preferences, persisted to <c>settings.json</c> in the data directory.</summary>
     public SettingsViewModel SettingsVm { get; } = new();
@@ -291,6 +306,11 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         {
             CaptureVm.ConfigDirectory = value;
             if (!string.IsNullOrWhiteSpace(value)) UdsCatalog.Shared.SetDataDir(value);
+
+            // Address tiers and friendly module names load the same way DID names do: a JSON drop
+            // in the config directory, so supporting a manufacturer's address map never means
+            // compiling its addresses into the tool.
+            LoadDiscoveryPlan(value);
         }
     }
 
@@ -300,14 +320,84 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     private bool _isCheckingTune;
     private string _tuneStatus = "Not checked.";
 
-    public string DisplayCalibrationId => CaptureVm.VehicleCalibrationId ?? "—";
+    /// <summary>How far the connect-time fingerprint read has got.</summary>
+    public enum FingerprintReadState { NotRead, Reading, Done }
 
-    public string DisplayCvn => CaptureVm.VehicleCvn ?? "—";
+    private FingerprintReadState _fingerprintState = FingerprintReadState.NotRead;
+
+    public FingerprintReadState FingerprintState
+    {
+        get => _fingerprintState;
+        private set
+        {
+            _fingerprintState = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DisplayCalibrationId));
+            OnPropertyChanged(nameof(DisplayCvn));
+            OnPropertyChanged(nameof(DisplayEcuName));
+            OnPropertyChanged(nameof(SupportedPidSummary));
+        }
+    }
+
+    /// <summary>
+    /// Renders a fingerprint field so the three outcomes stay distinguishable: not asked for yet,
+    /// being read, or asked for and declined. A bare dash conflated all three.
+    /// </summary>
+    private string Fingerprint(string? value) => value ?? _fingerprintState switch
+    {
+        FingerprintReadState.Reading => "reading…",
+        FingerprintReadState.Done => "not supported",
+        _ => "not read"
+    };
+
+    public string DisplayCalibrationId => Fingerprint(CaptureVm.VehicleCalibrationId);
+
+    public string DisplayCvn => Fingerprint(CaptureVm.VehicleCvn);
+
+    private string? _ecuName;
+    public string? EcuName
+    {
+        get => _ecuName;
+        private set { _ecuName = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayEcuName)); }
+    }
+
+    public string DisplayEcuName => Fingerprint(_ecuName);
+
+    private IReadOnlyList<Pid> _supportedPids = [];
+
+    /// <summary>
+    /// The Mode 01 support bitmap as reported by the vehicle. Read once on connect and kept, so the
+    /// signal picker can mark what this vehicle actually serves without re-walking the bitmaps —
+    /// the old code read this inside the tune check and discarded it.
+    /// </summary>
+    public IReadOnlyList<Pid> SupportedPids
+    {
+        get => _supportedPids;
+        private set
+        {
+            _supportedPids = value;
+            _supportedPidAddresses = new HashSet<byte>(value.Select(p => (byte)p));
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SupportedPidSummary));
+            LivePicker.SetSupportedPids(_supportedPidAddresses);
+            CaptureVm.Picker.SetSupportedPids(_supportedPidAddresses);
+        }
+    }
+
+    private HashSet<byte> _supportedPidAddresses = [];
+
+    public string SupportedPidSummary => _fingerprintState switch
+    {
+        FingerprintReadState.Reading => "reading…",
+        FingerprintReadState.Done when _supportedPids.Count > 0 => $"{_supportedPids.Count} PIDs reported",
+        FingerprintReadState.Done => "none reported",
+        _ => "not read"
+    };
 
     public bool IsCheckingTune
     {
         get => _isCheckingTune;
-        private set { _isCheckingTune = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanCheckTune)); }
+        private set { _isCheckingTune = value; OnPropertyChanged(); NotifyCommandStates(); }
     }
 
     public bool CanCheckTune => !_isCheckingTune && IsConnected;
@@ -544,10 +634,34 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     private bool _isConnecting;
     private string _statusText = "Not connected";
 
+    /// <summary>
+    /// Raises a change notification for every computed <c>Can*</c> gate on this view model.
+    /// <para>
+    /// These gates each depend on several backing fields, and the fields live in setters scattered
+    /// across the class. Maintaining a per-setter list of dependent properties by hand is what let
+    /// <see cref="CanScanUds"/> go unnotified from the <see cref="IsConnected"/> setter — the UDS
+    /// "Scan" button bound its <c>IsEnabled</c> once while disconnected and was never told to
+    /// re-evaluate, so it stayed grey for the whole session. Every gating setter calls this instead;
+    /// a new gate is added in one place and cannot be forgotten.
+    /// </para>
+    /// </summary>
+    private void NotifyCommandStates()
+    {
+        OnPropertyChanged(nameof(CanConnect));
+        OnPropertyChanged(nameof(CanRefresh));
+        OnPropertyChanged(nameof(CanStartPolling));
+        OnPropertyChanged(nameof(CanStopPolling));
+        OnPropertyChanged(nameof(CanCheckTune));
+        OnPropertyChanged(nameof(CanScanUds));
+        OnPropertyChanged(nameof(CanOperateUdsModule));
+        OnPropertyChanged(nameof(IsIdle));
+        OnPropertyChanged(nameof(ShowFewModulesNote));
+    }
+
     public bool IsConnected
     {
         get => _isConnected;
-        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); OnPropertyChanged(nameof(CanStartPolling)); OnPropertyChanged(nameof(CanCheckTune)); }
+        private set { _isConnected = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsNotConnected)); NotifyCommandStates(); }
     }
 
     public bool IsNotConnected => !_isConnected;
@@ -555,7 +669,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsConnecting
     {
         get => _isConnecting;
-        private set { _isConnecting = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanConnect)); OnPropertyChanged(nameof(IsIdle)); OnPropertyChanged(nameof(CanRefresh)); }
+        private set { _isConnecting = value; OnPropertyChanged(); NotifyCommandStates(); }
     }
 
     public bool CanConnect => !_isConnecting;
@@ -632,6 +746,21 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         Vin = null;
         VinDecode = null;
         Protocol = "";
+        EcuName = null;
+        SupportedPids = [];
+        FingerprintState = FingerprintReadState.NotRead;
+        _currentVehicle = null;
+        _visitCounted = false;
+        _codesAtLastVisit = [];
+        RememberedModules = [];
+        RecognitionText = "";
+        RecalledFromClass = false;
+
+        // The last vehicle's support bitmap must not stay on screen next to a different car.
+        LivePicker.SetSupportedPids(null);
+        CaptureVm.Picker.SetSupportedPids(null);
+        CaptureVm.VehicleCalibrationId = null;
+        CaptureVm.VehicleCvn = null;
         ReadinessMonitors = [];
         ModuleDtcGroups = [];
         Modules = [];
@@ -679,7 +808,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             OnPropertyChanged(nameof(SelectedModulePartNumber));
             OnPropertyChanged(nameof(SelectedModuleSoftwareVersion));
             OnPropertyChanged(nameof(SelectedModuleHardwareNumber));
-            OnPropertyChanged(nameof(CanOperateUdsModule));
+            NotifyCommandStates();
         }
     }
 
@@ -703,8 +832,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         {
             _isScanningUds = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(CanScanUds));
-            OnPropertyChanged(nameof(CanOperateUdsModule));
+            NotifyCommandStates();
         }
     }
 
@@ -733,14 +861,79 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     }
     public bool HasDidResult => !string.IsNullOrEmpty(_didResultText);
 
+    private CancellationTokenSource? _udsScanCts;
+
+    private double _udsScanProgress;
+
+    /// <summary>Sweep progress, 0 to 1. A full three-tier sweep takes tens of seconds.</summary>
+    public double UdsScanProgress
+    {
+        get => _udsScanProgress;
+        private set { _udsScanProgress = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>
+    /// The address plan the full scan walks. Loaded from <c>uds-discovery.json</c> in the config
+    /// directory when one is present, so manufacturer address maps are a file drop rather than a
+    /// release; otherwise the ISO-generic three-tier default.
+    /// </summary>
+    public UdsDiscoveryPlan DiscoveryPlan { get; private set; } = UdsDiscoveryPlan.Default();
+
+    private void LoadDiscoveryPlan(string? configDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(configDirectory)) return;
+
+        var path = System.IO.Path.Combine(configDirectory, "uds-discovery.json");
+        if (!System.IO.File.Exists(path)) return;
+
+        try
+        {
+            var plan = System.Text.Json.JsonSerializer.Deserialize<UdsDiscoveryPlan>(
+                System.IO.File.ReadAllText(path),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (plan is { Tiers.Count: > 0 }) DiscoveryPlan = plan;
+        }
+        catch (Exception ex)
+        {
+            // A malformed overlay must not cost the built-in plan; the default still scans.
+            UdsStatusText = $"uds-discovery.json ignored: {ex.Message}";
+        }
+    }
+
+    /// <summary>Cancels a sweep in progress.</summary>
+    public void CancelUdsScan()
+    {
+        _udsScanCts?.Cancel();
+        UdsStatusText = "Cancelling scan…";
+    }
+
+    /// <summary>
+    /// Full three-tier sweep: the legislated window, the rest of the 11-bit diagnostic range, then
+    /// 29-bit normal-fixed addressing. Several hundred addresses, so it reports progress and can be
+    /// cancelled rather than presenting a frozen button for half a minute.
+    /// </summary>
     public async Task ScanUdsModulesAsync()
     {
         if (_udsScanner == null || !_isConnected || _isScanningUds) return;
+
+        _udsScanCts = CancellationTokenSource.CreateLinkedTokenSource(_opCts?.Token ?? CancellationToken.None);
         IsScanningUds = true;
-        UdsStatusText = "Scanning for UDS modules on CAN bus...";
+        UdsScanProgress = 0;
+        UdsStatusText = $"Scanning {DiscoveryPlan.TotalAddresses} addresses…";
+
+        var progress = new Progress<UdsDiscoveryProgress>(p => Dispatcher.UIThread.Post(() =>
+        {
+            UdsScanProgress = p.Fraction;
+            UdsStatusText = p.Summary;
+        }));
+
         try
         {
-            var modules = await Task.Run(() => _udsScanner.DiscoverModulesAsync(_opCts?.Token ?? CancellationToken.None));
+            var token = _udsScanCts.Token;
+            var modules = await Task.Run(
+                () => _udsScanner.DiscoverModulesAsync(DiscoveryPlan, progress, token), token);
+
             Dispatcher.UIThread.Post(() =>
             {
                 UdsModules = modules;
@@ -748,7 +941,12 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
                 UdsStatusText = modules.Count > 0
                     ? $"Found {modules.Count} module(s)."
                     : "No UDS modules responded.";
+                RecordModuleScan(modules, wasFullSweep: true);
             });
+        }
+        catch (OperationCanceledException)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = "Scan cancelled.");
         }
         catch (Exception ex)
         {
@@ -756,8 +954,131 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         }
         finally
         {
-            Dispatcher.UIThread.Post(() => IsScanningUds = false);
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsScanningUds = false;
+                UdsScanProgress = 0;
+                _udsScanCts?.Dispose();
+                _udsScanCts = null;
+            });
         }
+    }
+
+    /// <summary>
+    /// Probes only the addresses this vehicle — or its type — is known to answer on. Dozens of
+    /// addresses instead of several hundred, which is the entire payoff of remembering them.
+    /// </summary>
+    public async Task ProbeRememberedModulesAsync()
+    {
+        if (_udsScanner == null || !_isConnected || _isScanningUds) return;
+        if (_rememberedModules.Count == 0) return;
+
+        _udsScanCts = CancellationTokenSource.CreateLinkedTokenSource(_opCts?.Token ?? CancellationToken.None);
+        IsScanningUds = true;
+        UdsScanProgress = 0;
+        UdsStatusText = $"Probing {_rememberedModules.Count} remembered address(es)…";
+
+        var addresses = _rememberedModules
+            .Select(m => new UdsAddress(m.TxId, m.RxId, m.Addressing == ModuleAddressing.Ext29))
+            .ToList();
+
+        var progress = new Progress<UdsDiscoveryProgress>(p => Dispatcher.UIThread.Post(() =>
+        {
+            UdsScanProgress = p.Fraction;
+            UdsStatusText = p.Summary;
+        }));
+
+        try
+        {
+            var token = _udsScanCts.Token;
+            var modules = await Task.Run(
+                () => _udsScanner.ProbeAddressesAsync(addresses, progress, token), token);
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                UdsModules = modules;
+                SelectedUdsModule = modules.FirstOrDefault();
+                UdsStatusText = modules.Count == _rememberedModules.Count
+                    ? $"Confirmed all {modules.Count} remembered module(s)."
+                    : $"Confirmed {modules.Count} of {_rememberedModules.Count} remembered module(s). Run a full scan to look for the rest.";
+
+                // A targeted probe is not a full sweep, so a silent address is NOT recorded as a
+                // miss here: it may simply not have been asked properly, and a miss count that can
+                // be run up by a fast probe would demote modules that are genuinely present.
+                RecordModuleScan(modules, wasFullSweep: false);
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = "Probe cancelled.");
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.UIThread.Post(() => UdsStatusText = $"Probe failed: {ex.Message}");
+        }
+        finally
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsScanningUds = false;
+                UdsScanProgress = 0;
+                _udsScanCts?.Dispose();
+                _udsScanCts = null;
+            });
+        }
+    }
+
+    /// <summary>
+    /// Folds the result of a scan into the vehicle record. Modules that answered are recorded as
+    /// seen; on a full sweep, ones that did not answer take a miss — but are never removed, since
+    /// a quiet bus is not evidence that a module is gone.
+    /// </summary>
+    private void RecordModuleScan(IReadOnlyList<UdsModuleInfo> modules, bool wasFullSweep)
+    {
+        if (_currentVehicle is null) return;
+
+        var now = DateTime.UtcNow;
+        var seen = new HashSet<(uint, uint)>();
+
+        foreach (var module in modules)
+        {
+            seen.Add((module.TxId, module.RxId));
+
+            var existing = _currentVehicle.Modules.FirstOrDefault(
+                m => m.TxId == module.TxId && m.RxId == module.RxId);
+
+            if (existing is null)
+            {
+                existing = new RememberedModule
+                {
+                    TxId = module.TxId,
+                    RxId = module.RxId,
+                    Addressing = module.IsExtended ? ModuleAddressing.Ext29 : ModuleAddressing.Std11,
+                    FirstSeenUtc = now
+                };
+                _currentVehicle.Modules.Add(existing);
+            }
+
+            existing.Name = module.Name;
+            existing.EcuName = module.EcuName ?? existing.EcuName;
+            existing.PartNumber = module.PartNumber ?? existing.PartNumber;
+            existing.SoftwareVersion = module.SoftwareVersion ?? existing.SoftwareVersion;
+            existing.HardwareNumber = module.HardwareNumber ?? existing.HardwareNumber;
+            existing.MarkSeen(now);
+        }
+
+        if (wasFullSweep)
+        {
+            foreach (var module in _currentVehicle.Modules)
+            {
+                if (!seen.Contains((module.TxId, module.RxId))) module.MarkMissed();
+            }
+        }
+
+        PersistVehicle();
+
+        // Confirmed modules replace the remembered placeholders they matched.
+        RememberedModules = _currentVehicle.Modules.Where(m => m.ShouldPrepopulate).ToList();
     }
 
     public async Task ReadSelectedModuleDtcsAsync()
@@ -768,7 +1089,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         UdsStatusText = $"Reading DTCs from {mod.Name}...";
         try
         {
-            var dtcs = await Task.Run(() => _udsScanner.ReadModuleDtcsAsync(mod.TxId, mod.RxId, _opCts?.Token ?? CancellationToken.None));
+            var dtcs = await Task.Run(() => _udsScanner.ReadModuleDtcsAsync(mod.Address, _opCts?.Token ?? CancellationToken.None));
             Dispatcher.UIThread.Post(() =>
             {
                 var updated = mod with { Dtcs = dtcs };
@@ -796,8 +1117,8 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         UdsStatusText = $"Clearing DTCs on {mod.Name}...";
         try
         {
-            var ok = await Task.Run(() => _udsScanner.ClearModuleDtcsAsync(mod.TxId, mod.RxId, _opCts?.Token ?? CancellationToken.None));
-            var dtcs = await Task.Run(() => _udsScanner.ReadModuleDtcsAsync(mod.TxId, mod.RxId, _opCts?.Token ?? CancellationToken.None));
+            var ok = await Task.Run(() => _udsScanner.ClearModuleDtcsAsync(mod.Address, _opCts?.Token ?? CancellationToken.None));
+            var dtcs = await Task.Run(() => _udsScanner.ReadModuleDtcsAsync(mod.Address, _opCts?.Token ?? CancellationToken.None));
             Dispatcher.UIThread.Post(() =>
             {
                 var updated = mod with { Dtcs = dtcs };
@@ -846,7 +1167,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         UdsStatusText = $"Reading DID 0x{did:X4} from {mod.Name}...";
         try
         {
-            var res = await Task.Run(() => _udsScanner.ReadDidAsync(mod.TxId, mod.RxId, did, _opCts?.Token ?? CancellationToken.None));
+            var res = await Task.Run(() => _udsScanner.ReadDidAsync(mod.Address, did, _opCts?.Token ?? CancellationToken.None));
             Dispatcher.UIThread.Post(() =>
             {
                 if (res != null)
@@ -893,8 +1214,29 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public IReadOnlyList<VehicleModule> Modules
     {
         get => _modules;
-        private set { _modules = value; OnPropertyChanged(); }
+        private set
+        {
+            _modules = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ModuleScopeNote));
+            OnPropertyChanged(nameof(ShowFewModulesNote));
+        }
     }
+
+    /// <summary>
+    /// Explains what this list is and is not. Only modules answering the legislated OBD-II
+    /// services appear here, and on most vehicles that is the powertrain alone — the body and
+    /// chassis controllers are reachable only over UDS on manufacturer addresses. Left unsaid, a
+    /// one-row list reads as "this vehicle has one module", which is wrong and misleading.
+    /// </summary>
+    public string ModuleScopeNote => _modules.Count switch
+    {
+        0 => "No module answered OBD-II. Run a UDS scan to look for modules on manufacturer addresses.",
+        1 => $"1 module answered OBD-II ({_modules[0].Name}). Body and chassis controllers usually answer only UDS — run a UDS scan to find them.",
+        _ => $"{_modules.Count} modules answered OBD-II. Modules that answer only UDS are found by a UDS scan."
+    };
+
+    public bool ShowFewModulesNote => _isConnected && _modules.Count <= 2;
 
     // ── Vehicle data ──────────────────────────────────────────────────────────
 
@@ -1013,7 +1355,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsRefreshing
     {
         get => _isRefreshing;
-        private set { _isRefreshing = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanRefresh)); }
+        private set { _isRefreshing = value; OnPropertyChanged(); NotifyCommandStates(); }
     }
     public bool CanRefresh => _isConnected && !_isRefreshing;
 
@@ -1049,25 +1391,351 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     private async Task RefreshAllAsync(CancellationToken ct)
     {
         await RefreshVinAsync(ct);
+        await RefreshFingerprintAsync(ct);
         await RefreshReadinessAsync(ct);
         await RefreshDtcsByModuleAsync(ct);
         Dispatcher.UIThread.Post(() => Protocol = "ISO 15765-4 (CAN)");
+
+        // A recalled vehicle gets its remembered addresses probed straight away: the list is
+        // already on screen marked as remembered, and this is what turns those rows into
+        // confirmed ones without the operator pressing anything or waiting for a full sweep.
+        if (_rememberedModules.Count > 0 && !ct.IsCancellationRequested)
+        {
+            await ProbeRememberedModulesAsync();
+        }
+    }
+
+    /// <summary>
+    /// Reads calibration ID, CVN, ECU name and the supported-PID set on connect, rather than
+    /// leaving the Vehicle page showing dashes until someone presses "Check Tune". The dash was
+    /// ambiguous in the worst way: it read the same whether the value was unsupported or simply
+    /// never asked for.
+    /// </summary>
+    private async Task RefreshFingerprintAsync(CancellationToken ct)
+    {
+        Dispatcher.UIThread.Post(() => FingerprintState = FingerprintReadState.Reading);
+
+        try
+        {
+            var calId = await _scanner.ReadCalibrationIdAsync(ct);
+            var cvn = await _scanner.ReadCvnAsync(ct);
+            var ecuName = await _scanner.ReadEcuNameAsync(ct);
+            var supported = await _scanner.ReadSupportedPidsAsync(ct);
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                CaptureVm.VehicleCalibrationId = calId;
+                CaptureVm.VehicleCvn = cvn;
+                EcuName = ecuName;
+                SupportedPids = supported;
+                FingerprintState = FingerprintReadState.Done;
+
+                OnPropertyChanged(nameof(DisplayCalibrationId));
+                OnPropertyChanged(nameof(DisplayCvn));
+
+                if (_currentVehicle is not null)
+                {
+                    _currentVehicle.RecordCalibration(calId, cvn, ecuName, DateTime.UtcNow);
+                    _currentVehicle.SupportedPids = supported.Select(p => (byte)p).ToList();
+                    _currentVehicle.SupportedPidsReadUtc = DateTime.UtcNow;
+                    PersistVehicle();
+
+                    // The recognition line is written before the calibration is read, so it has to
+                    // be recomputed once the reading is in — otherwise a reflash goes unreported
+                    // until the next visit.
+                    if (!RecalledFromClass && _currentVehicle.VisitCount > 1)
+                        RecognitionText = DescribeVisit(_currentVehicle);
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            Dispatcher.UIThread.Post(() => FingerprintState = FingerprintReadState.NotRead);
+        }
+        catch
+        {
+            Dispatcher.UIThread.Post(() => FingerprintState = FingerprintReadState.Done);
+        }
     }
 
     private async Task RefreshVinAsync(CancellationToken ct)
     {
         try
         {
-            var vin = await Task.Run(() => _scanner.ReadVinAsync(ct), ct);
+            var vin = await _scanner.ReadVinAsync(ct);
             Dispatcher.UIThread.Post(() => Vin = vin);
+
+            // Recall before decoding. The store answers instantly and offline, so the page can
+            // show what is known about this vehicle while the decode — which may want a network
+            // the tool does not have — is still in flight.
+            Dispatcher.UIThread.Post(() => RecallVehicle(vin));
+
             if (vin != null && _vinDecoder != null)
             {
                 var decode = await _vinDecoder.DecodeAsync(vin, ct);
-                Dispatcher.UIThread.Post(() => VinDecode = decode);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    VinDecode = decode;
+                    ApplyDecodeToRecord(decode);
+                });
             }
         }
         catch (OperationCanceledException) { }
     }
+
+    // ── Remembered vehicles ───────────────────────────────────────────────────
+
+    private string _recognitionText = "";
+
+    /// <summary>
+    /// The line at the top of the Vehicle page saying whether this vehicle has been here before,
+    /// and whether its calibration has changed since. Empty when there is nothing to say.
+    /// </summary>
+    public string RecognitionText
+    {
+        get => _recognitionText;
+        private set { _recognitionText = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasRecognition)); }
+    }
+
+    public bool HasRecognition => _recognitionText.Length > 0;
+
+    private bool _recalledFromClass;
+
+    /// <summary>Whether the remembered data came from the vehicle class rather than this vehicle.</summary>
+    public bool RecalledFromClass
+    {
+        get => _recalledFromClass;
+        private set { _recalledFromClass = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>
+    /// Looks the connected vehicle up in the store and seeds whatever is known. An exact VIN match
+    /// is this vehicle's own history; failing that a class profile says what vehicles of this type
+    /// have carried. Everything seeded here is provisional until this session's bus confirms it.
+    /// </summary>
+    private void RecallVehicle(string? vin)
+    {
+        _currentVehicle = null;
+        RecalledFromClass = false;
+        RecognitionText = "";
+
+        if (_vehicleStore is null || !VehicleKey.IsUsable(vin)) return;
+
+        var classKey = VehicleKey.ClassKeyFor(vin) ?? "";
+        var record = _vehicleStore.LoadVehicle(vin);
+
+        if (record is not null)
+        {
+            _currentVehicle = record;
+            SeedFromRecall(record.SupportedPids, record.Modules, fromClass: false);
+            RecognitionText = DescribeVisit(record);
+            return;
+        }
+
+        // First time for this VIN. Start a record now so the visit is captured even if nothing
+        // else about the session succeeds.
+        _currentVehicle = new VehicleRecord
+        {
+            Vin = VehicleKey.VehicleKeyFor(vin)!,
+            ClassKey = classKey,
+            FirstSeenUtc = DateTime.UtcNow
+        };
+
+        var profile = _vehicleStore.LoadClass(classKey);
+        if (profile is null) return;
+
+        RecalledFromClass = true;
+        SeedFromRecall(profile.SupportedPids, profile.Modules, fromClass: true);
+
+        var name = profile.Identity.DisplayName;
+        RecognitionText = profile.VinCount == 1
+            ? $"First visit for this vehicle. One other {name} has been scanned; showing its module list."
+            : $"First visit for this vehicle. {profile.VinCount} vehicles of this type scanned; showing their typical module list.";
+    }
+
+    private static string DescribeVisit(VehicleRecord record)
+    {
+        var ordinal = record.VisitCount switch
+        {
+            <= 1 => "Seen before",
+            2 => "2nd visit",
+            3 => "3rd visit",
+            var n => $"{n}th visit"
+        };
+
+        var line = $"{ordinal} — last seen {record.LastSeenUtc.ToLocalTime():yyyy-MM-dd}.";
+
+        var latest = record.LatestCalibration;
+        var previous = record.PreviousCalibration;
+
+        if (latest is null) return line;
+
+        // A changed calibration ID between visits is a real diagnostic result — the vehicle has
+        // been reflashed since it was last here — so it is stated, not buried.
+        return previous is null || previous.SameAs(latest.CalibrationId, latest.Cvn)
+            ? $"{line} Calibration unchanged."
+            : $"{line} Calibration changed on {latest.SeenUtc.ToLocalTime():yyyy-MM-dd} (was {previous.CalibrationId ?? "unknown"}).";
+    }
+
+    /// <summary>Applies remembered supported-PIDs and modules to the live view models.</summary>
+    private void SeedFromRecall(List<byte> supportedPids, List<RememberedModule> modules, bool fromClass)
+    {
+        if (supportedPids.Count > 0 && _supportedPids.Count == 0)
+        {
+            // Seeds the picker filter before the bus has been asked, and is replaced the moment
+            // the connect-time read returns.
+            _supportedPidAddresses = [.. supportedPids];
+            LivePicker.SetSupportedPids(_supportedPidAddresses);
+            CaptureVm.Picker.SetSupportedPids(_supportedPidAddresses);
+        }
+
+        RememberedModules = modules.Where(m => m.ShouldPrepopulate).ToList();
+        _recalledFromClassModules = fromClass;
+    }
+
+    private bool _recalledFromClassModules;
+
+    private IReadOnlyList<RememberedModule> _rememberedModules = [];
+
+    /// <summary>
+    /// Modules carried over from a previous visit, shown before any probe has confirmed them.
+    /// </summary>
+    public IReadOnlyList<RememberedModule> RememberedModules
+    {
+        get => _rememberedModules;
+        private set
+        {
+            _rememberedModules = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasRememberedModules));
+        }
+    }
+
+    public bool HasRememberedModules => _rememberedModules.Count > 0;
+
+    private void ApplyDecodeToRecord(VinDecodeResult? decode)
+    {
+        if (_currentVehicle is null || decode is null) return;
+
+        _currentVehicle.Identity = new VehicleIdentity
+        {
+            Make = decode.Make,
+            Model = decode.Model,
+            Year = decode.Year,
+            Trim = decode.Trim,
+            Country = decode.Country,
+            PlantCity = decode.PlantCity,
+            EngineType = decode.EngineType
+        };
+    }
+
+    /// <summary>
+    /// Writes what this visit learned back to the store. Called after the fingerprint read, after
+    /// any module scan and after a DTC read, so a session that ends abruptly still leaves behind
+    /// whatever it had got to.
+    /// </summary>
+    private void PersistVehicle()
+    {
+        if (_vehicleStore is null || _currentVehicle is null) return;
+
+        var now = DateTime.UtcNow;
+        _currentVehicle.LastSeenUtc = now;
+        if (_currentVehicle.FirstSeenUtc == default) _currentVehicle.FirstSeenUtc = now;
+
+        if (!_visitCounted)
+        {
+            _currentVehicle.VisitCount++;
+            _visitCounted = true;
+        }
+
+        _vehicleStore.Save(_currentVehicle);
+    }
+
+    private bool _visitCounted;
+
+    /// <summary>
+    /// Forgets the connected vehicle's record. The class profile stays — it is built from other
+    /// vehicles too, and forgetting one car is not a statement about its type.
+    /// </summary>
+    public void ForgetCurrentVehicle()
+    {
+        if (_vehicleStore is null || _currentVehicle is null) return;
+
+        _vehicleStore.Forget(_currentVehicle.Vin);
+
+        _currentVehicle = new VehicleRecord
+        {
+            Vin = _currentVehicle.Vin,
+            ClassKey = _currentVehicle.ClassKey,
+            Identity = _currentVehicle.Identity,
+            FirstSeenUtc = DateTime.UtcNow
+        };
+
+        _visitCounted = false;
+        _codesAtLastVisit = [];
+        RememberedModules = [];
+        RecognitionText = "Forgotten. This visit starts a new record.";
+        SettingsVm.OnVehicleStoreChanged();
+    }
+
+    private HashSet<string> _codesAtLastVisit = [];
+
+    /// <summary>
+    /// Records this visit's codes and works out which of them are new since last time. "New since
+    /// the last visit" is a different question from "stored versus pending", and it is usually the
+    /// one being asked — it separates what has just happened from what was already wrong.
+    /// </summary>
+    private void RecordDtcSnapshot(IReadOnlyList<ModuleDtcGroup> groups)
+    {
+        if (_currentVehicle is null) return;
+
+        var previous = _currentVehicle.DtcSnapshots.Count > 0
+            ? _currentVehicle.DtcSnapshots[^1]
+            : null;
+
+        _codesAtLastVisit = previous is null
+            ? []
+            : [.. previous.Codes.Select(c => c.Code)];
+
+        var snapshot = new DtcSnapshot { SeenUtc = DateTime.UtcNow };
+
+        foreach (var group in groups)
+        {
+            foreach (var dtc in group.StoredDtcs)
+                snapshot.Codes.Add(new DtcSnapshotCode { Code = dtc.Code, Module = group.Module.Name, Status = "Stored" });
+            foreach (var dtc in group.PendingDtcs)
+                snapshot.Codes.Add(new DtcSnapshotCode { Code = dtc.Code, Module = group.Module.Name, Status = "Pending" });
+        }
+
+        _currentVehicle.RecordDtcSnapshot(snapshot);
+        PersistVehicle();
+
+        OnPropertyChanged(nameof(NewCodesSinceLastVisit));
+        OnPropertyChanged(nameof(HasNewCodesSinceLastVisit));
+    }
+
+    /// <summary>Codes present now that were not present at the previous visit.</summary>
+    public IReadOnlyList<string> NewCodesSinceLastVisit
+    {
+        get
+        {
+            if (_codesAtLastVisit.Count == 0) return [];
+
+            return _moduleDtcGroups
+                .SelectMany(g => g.StoredDtcs.Concat(g.PendingDtcs))
+                .Select(d => d.Code)
+                .Distinct()
+                .Where(c => !_codesAtLastVisit.Contains(c))
+                .ToList();
+        }
+    }
+
+    public bool HasNewCodesSinceLastVisit => NewCodesSinceLastVisit.Count > 0;
+
+    /// <summary>Summary line for the DTCs view.</summary>
+    public string NewCodesText => HasNewCodesSinceLastVisit
+        ? $"New since last visit: {string.Join(", ", NewCodesSinceLastVisit)}"
+        : "";
 
     private async Task RefreshReadinessAsync(CancellationToken ct)
     {
@@ -1088,6 +1756,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             {
                 ModuleDtcGroups = groups;
                 Modules = groups.Select(g => g.Module).ToList();
+                RecordDtcSnapshot(groups);
             });
         }
         catch (OperationCanceledException) { }
@@ -1111,11 +1780,65 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsPolling
     {
         get => _isPolling;
-        private set { _isPolling = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanStartPolling)); OnPropertyChanged(nameof(CanStopPolling)); }
+        private set { _isPolling = value; OnPropertyChanged(); NotifyCommandStates(); }
     }
 
     public bool CanStartPolling => _isConnected && !_isPolling;
     public bool CanStopPolling => _isPolling;
+
+    private int _livePollPeriodMs = 100;
+
+    /// <summary>
+    /// Target seconds-per-sweep for the live-data loop, in milliseconds. This is a *target*, not a
+    /// delay: a sweep that takes longer simply runs back to back. Operator-settable because the
+    /// right value depends on how many PIDs are selected and how quickly the module answers.
+    /// </summary>
+    public int LivePollPeriodMs
+    {
+        get => _livePollPeriodMs;
+        set
+        {
+            var clamped = Math.Clamp(value, 20, 2000);
+            if (clamped == _livePollPeriodMs) return;
+            _livePollPeriodMs = clamped;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LivePollPeriodText));
+        }
+    }
+
+    public string LivePollPeriodText => $"{_livePollPeriodMs} ms ({1000.0 / _livePollPeriodMs:F1} Hz)";
+
+    private string _pollRateText = "";
+
+    /// <summary>
+    /// Achieved sweep rate, shown on the Live Data view. Without this the only measure of polling
+    /// speed is how the display feels, which is exactly how the original slowdown went unnoticed.
+    /// </summary>
+    public string PollRateText
+    {
+        get => _pollRateText;
+        private set { _pollRateText = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasPollRate)); }
+    }
+
+    public bool HasPollRate => !string.IsNullOrEmpty(_pollRateText);
+
+    /// <summary>Whether any selected PID has been dropped from the sweep for not answering.</summary>
+    public bool HasUnansweredPids => _liveItems.Any(p => p.IsUnanswered);
+
+    private void NoteMiss(LivePidItem item)
+    {
+        if (item.RecordMiss()) OnPropertyChanged(nameof(HasUnansweredPids));
+    }
+
+    /// <summary>
+    /// Puts every dropped PID back into the sweep. A PID can start answering — a module that was
+    /// busy, or one that only responds with the engine running — so being dropped is never final.
+    /// </summary>
+    public void RetryUnansweredPids()
+    {
+        foreach (var item in _liveItems) item.RetryUnanswered();
+        OnPropertyChanged(nameof(HasUnansweredPids));
+    }
 
     public void StartPolling()
     {
@@ -1132,39 +1855,84 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         IsPolling = false;
     }
 
+    /// <summary>
+    /// Drives the live-data sweep at <see cref="LivePollPeriodMs"/>, sleeping only the remainder of
+    /// the period rather than a flat delay on top of it. The old loop slept 500 ms *after* every
+    /// sweep, capping the display at under 2 Hz no matter how fast the bus answered — which is why
+    /// throttle position lagged the pedal.
+    /// </summary>
     private async Task RunPollingLoopAsync(CancellationToken ct)
     {
+        var sweepClock = new System.Diagnostics.Stopwatch();
+        var rateClock = System.Diagnostics.Stopwatch.StartNew();
+        int sweepsThisSecond = 0;
+
         try
         {
             while (!ct.IsCancellationRequested)
             {
-                var selected = LivePidItems.Where(p => p.IsSelected).ToList();
-                foreach (var item in selected)
+                sweepClock.Restart();
+
+                // ShouldPoll, not IsSelected: a PID the module has ignored three sweeps running is
+                // still on screen — marked "no response" — but costs no further requests.
+                foreach (var item in LivePidItems.Where(p => p.ShouldPoll).ToList())
                 {
                     if (ct.IsCancellationRequested) break;
                     try
                     {
                         // Raw read plus per-signal decode: one PID can carry several signals,
                         // so the value depends on the definition, not just the PID.
-                        var data = await Task.Run(
-                            () => _scanner.ReadPidDataAsync((byte)item.Descriptor.Address, ct), ct);
+                        // Awaited directly — the scanner is already async, and the Task.Run this
+                        // used to sit behind bought a thread-pool hop per PID and nothing else.
+                        var data = await _scanner.ReadPidDataAsync((byte)item.Descriptor.Address, ct);
 
+                        var captured = item;
                         if (item.Descriptor.Decode(data) is { } v)
                         {
-                            var captured = item;
                             Dispatcher.UIThread.Post(() => captured.UpdateValue(v));
+                        }
+                        else
+                        {
+                            Dispatcher.UIThread.Post(() => NoteMiss(captured));
                         }
                     }
                     catch (OperationCanceledException) { break; }
-                    catch { /* skip unresponsive PID */ }
+                    catch
+                    {
+                        var captured = item;
+                        Dispatcher.UIThread.Post(() => captured.RecordMiss());
+                    }
                 }
-                await Task.Delay(500, ct);
+
+                if (ct.IsCancellationRequested) break;
+
+                sweepsThisSecond++;
+                if (rateClock.ElapsedMilliseconds >= 1000)
+                {
+                    var sweeps = sweepsThisSecond;
+                    var elapsed = rateClock.Elapsed.TotalSeconds;
+                    var lastSweepMs = sweepClock.Elapsed.TotalMilliseconds;
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        PollRateText = $"{sweeps / elapsed:F1} sweeps/s · {lastSweepMs:F0} ms/sweep";
+                        foreach (var item in LivePidItems) item.NotifyAge();
+                    });
+                    sweepsThisSecond = 0;
+                    rateClock.Restart();
+                }
+
+                var remaining = LivePollPeriodMs - (int)sweepClock.ElapsedMilliseconds;
+                if (remaining > 0) await Task.Delay(remaining, ct);
             }
         }
         catch (OperationCanceledException) { }
         finally
         {
-            Dispatcher.UIThread.Post(() => IsPolling = false);
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsPolling = false;
+                PollRateText = "";
+            });
         }
     }
 
@@ -1192,6 +1960,13 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             _isLoggingEnabled = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(ShowWaitingMessage));
+
+            // Frame recording and the per-frame trace both cost real time on every request the
+            // tool makes, polling loop included. Nobody reads them unless this tab is on, so this
+            // switch — not app startup — is what turns them on.
+            if (_loggingBus != null) _loggingBus.CaptureEnabled = value;
+            Obd2Scanner.FrameLoggingEnabled = value;
+
             if (value) RefreshCanLog();
         }
     }

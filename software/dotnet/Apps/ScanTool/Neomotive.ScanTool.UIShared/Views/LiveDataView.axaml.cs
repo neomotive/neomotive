@@ -16,4 +16,5 @@ public partial class LiveDataView : UserControl
     private void OnShowWaveform(object? sender, RoutedEventArgs e)=> Vm.ShowWaveform();
     private void OnStartPolling(object? sender, RoutedEventArgs e)=> Vm.StartPolling();
     private void OnStopPolling(object? sender, RoutedEventArgs e) => Vm.StopPolling();
+    private void OnRetryUnanswered(object? sender, RoutedEventArgs e) => Vm.RetryUnansweredPids();
 }

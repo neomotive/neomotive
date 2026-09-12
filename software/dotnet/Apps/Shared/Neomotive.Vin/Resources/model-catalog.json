@@ -2563,7 +2563,7 @@
   },
   {
     "make": "Ford",
-    "wmi": "1FA",
+    "wmi": "1F1",
     "models": [
       {
         "name": "\u002734",
@@ -3995,7 +3995,7 @@
   },
   {
     "make": "Chrysler",
-    "wmi": "2XM",
+    "wmi": "2BA",
     "models": [
       {
         "name": "200",
@@ -5143,6 +5143,13 @@
         "plants": {}
       },
       {
+        "name": "Duramex",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "Easton Custom L.L.C",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -5927,7 +5934,7 @@
   },
   {
     "make": "Honda",
-    "wmi": "JHM",
+    "wmi": "19U",
     "models": [
       {
         "name": "599",
@@ -8711,7 +8718,7 @@
   },
   {
     "make": "Nissan",
-    "wmi": "JN1",
+    "wmi": "1N4",
     "models": [
       {
         "name": "200SX",
@@ -9150,7 +9157,7 @@
   },
   {
     "make": "Toyota",
-    "wmi": "JTH",
+    "wmi": "2T1",
     "models": [
       {
         "name": "4Runner",
@@ -9562,7 +9569,7 @@
   },
   {
     "make": "Mazda",
-    "wmi": "JM1",
+    "wmi": "3MD",
     "models": [
       {
         "name": "323",
@@ -9764,7 +9771,7 @@
   },
   {
     "make": "Mitsubishi",
-    "wmi": "JA3",
+    "wmi": "4A3",
     "models": [
       {
         "name": "3000GT",
@@ -10511,7 +10518,7 @@
   },
   {
     "make": "Suzuki",
-    "wmi": "JS2",
+    "wmi": "2S2",
     "models": [
       {
         "name": "Address V125",
@@ -10528,77 +10535,14 @@
         "plants": {}
       },
       {
-        "name": "AN400",
+        "name": "B-King",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
         "plants": {}
       },
       {
-        "name": "AN400 / AN400S",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN400A",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN400AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN400K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN400L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN650",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN650A",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN650AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN650K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "AN650L",
+        "name": "Bandit 1200",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10606,6 +10550,13 @@
       },
       {
         "name": "Bandit 1200S",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Bandit 1250F",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10633,7 +10584,21 @@
         "plants": {}
       },
       {
+        "name": "Bandit 600S",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "Bandit 650",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Bandit 650S",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10647,14 +10612,21 @@
         "plants": {}
       },
       {
-        "name": "Boulevard C50(VL800L8) / Boulevard C50T(VL800TL8)",
+        "name": "Boulevard C109R/C109RT",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
         "plants": {}
       },
       {
-        "name": "Boulevard C50/Boulevard C50T",
+        "name": "Boulevard C50",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Boulevard C50/C50T",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10682,6 +10654,13 @@
         "plants": {}
       },
       {
+        "name": "Boulevard C90/C90T",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "Boulevard C90/C90T, C90 B.O.S.S./C90T B.O.S.S.",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -10696,21 +10675,14 @@
         "plants": {}
       },
       {
+        "name": "Boulevard M109R",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "Boulevard M109R B.O.S.S.",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "Boulevard M109R B.O.S.S. (VZR1800BZL9)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "Boulevard M109R B.O.S.S.(VZR1800BZL8)",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10724,13 +10696,6 @@
         "plants": {}
       },
       {
-        "name": "Boulevard M50(VZ800L8)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "Boulevard M90",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -10738,7 +10703,7 @@
         "plants": {}
       },
       {
-        "name": "Boulevard M90(VZ1500L8)",
+        "name": "Boulevard M95",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10752,7 +10717,14 @@
         "plants": {}
       },
       {
-        "name": "Boulevard S40(LS650BL8 )",
+        "name": "Boulevard S50",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Boulevard S83",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10787,35 +10759,7 @@
         "plants": {}
       },
       {
-        "name": "DL1000",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL1000A/DL1000AA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL1000AL/DL1000AAL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL1000K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL1000L",
+        "name": "Cavalcade",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10829,84 +10773,7 @@
         "plants": {}
       },
       {
-        "name": "DL650",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650A",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650AAL/DL650AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650XA/DL650A",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650XAAL9 (V-Strom 650XT Touring)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650XAL/DL650AAL/DL650AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DL650XAL7",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "DR-Z110",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z110K",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10920,42 +10787,7 @@
         "plants": {}
       },
       {
-        "name": "DR-Z125K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "DR-Z125L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z125LK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z125LL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z125LL/DR-Z125L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z12LM",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -10969,35 +10801,7 @@
         "plants": {}
       },
       {
-        "name": "DR-Z250K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "DR-Z400",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400E",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400EK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400K",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11011,56 +10815,7 @@
         "plants": {}
       },
       {
-        "name": "DR-Z400SK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400SL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400SL8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400SL9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "DR-Z400SM",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400SML",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400SML8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR-Z400SML9",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11088,7 +10843,7 @@
         "plants": {}
       },
       {
-        "name": "DR125SE",
+        "name": "DR125S",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11102,48 +10857,6 @@
         "plants": {}
       },
       {
-        "name": "DR200SE",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR200SEK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR200SEL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR200SL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR200SL8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR200SL9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "DR250F",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -11151,7 +10864,7 @@
         "plants": {}
       },
       {
-        "name": "DR250SE",
+        "name": "DR250S",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11165,7 +10878,7 @@
         "plants": {}
       },
       {
-        "name": "DR350SE",
+        "name": "DR350S",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11173,41 +10886,6 @@
       },
       {
         "name": "DR650S",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR650SE",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR650SEK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR650SEL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR650SEL8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "DR650SEL9",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11277,14 +10955,7 @@
         "plants": {}
       },
       {
-        "name": "GN125E",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GN125E/ GN125ET",
+        "name": "GN125",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11326,35 +10997,7 @@
         "plants": {}
       },
       {
-        "name": "GS500(GS500H)/GS500F(GS500FH)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GS500E",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GS500E/GS500ET",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GS500F",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GS500K",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11376,83 +11019,6 @@
       },
       {
         "name": "GS750",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1200",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1200S/GSF1200SZ",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1200S/SA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1200SK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1200SK/GSF1200K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1250SA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF1250SA/GSX1250SA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF600S/GSF600ST",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF600SK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSF650SA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11494,27 +11060,6 @@
         "plants": {}
       },
       {
-        "name": "GSX-R1000AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R1000K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R1000L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GSX-R1000R",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -11529,35 +11074,7 @@
         "plants": {}
       },
       {
-        "name": "GSX-R1100W",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GSX-R600",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R600K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R600L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R600W",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11571,27 +11088,6 @@
         "plants": {}
       },
       {
-        "name": "GSX-R750K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R750L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-R750W",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GSX-S1000",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -11599,56 +11095,7 @@
         "plants": {}
       },
       {
-        "name": "GSX-S1000A",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S1000AL7",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S1000AL8 / GSX-S1000ZAL8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S1000AL9/GSXS1000ZAL9/GSXS1000YAL9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GSX-S1000F",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S1000FA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S1000FAL7",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S1000FAL8",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11676,41 +11123,6 @@
         "plants": {}
       },
       {
-        "name": "GSX-S750L8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S750ZAL8 / GSX-S750L8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S750ZL/GSX-S750L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-S750ZL9 (49st)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX-Z750ZAL9 (50st) / GSX-S750YAL9 (50st) / GSX-S750ZL9 (50st)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GSX1100",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -11725,119 +11137,7 @@
         "plants": {}
       },
       {
-        "name": "GSX1250FA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1250FAL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300 RK5",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300BK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300BKA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300R",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RAL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RAL/GSX1300RAZL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RAL9 (Hayabusa)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RAM0 (Hayabusa)",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RL/GSX1300RZL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX1300RRM2 / GSX1300RRZM2",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GSX250R",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX600F/GSX600FT",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX600FK",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11851,84 +11151,7 @@
         "plants": {}
       },
       {
-        "name": "GSX650FA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX750F/GSX750FT",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSX750FK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSXS1000FZL9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSXS1000SM0",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GSXS1000SM1",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GV1200GL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GV1400",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "GW250",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GW250FL/GW250ZL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GW250L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "GZ250K",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11942,7 +11165,21 @@
         "plants": {}
       },
       {
-        "name": "Hayabusa(GSX1300RAL8)",
+        "name": "Intruder 1400",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Intruder 1500 LC",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Intruder 750",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11963,13 +11200,6 @@
         "plants": {}
       },
       {
-        "name": "JR50K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "JR80",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -11977,14 +11207,7 @@
         "plants": {}
       },
       {
-        "name": "JR80K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "Katana",
+        "name": "Katana 1000",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -11999,13 +11222,6 @@
       },
       {
         "name": "Katana 750",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "KingQuad",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12089,244 +11305,6 @@
         "plants": {}
       },
       {
-        "name": "LS650",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LS650BL7",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LS650L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LS650PK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-A400",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-A400F/LT-A400FC/LT-A400FH",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-A400FK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-A400K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-A500F/LT-A500FC",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F250",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F250FK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F250K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F250L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F400",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F400F",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F400FK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F400FU",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F500F/QUADRUNNER",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-F500FK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-R450/LT-R450Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-R450Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z250",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z250/ LT-Z250Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z250K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z400K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z400L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z400L/LT-Z400ZL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z400Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z50",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z50/LT-Z50Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z90",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT-Z90L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT160K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "LT80K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "Madura",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12342,6 +11320,13 @@
       },
       {
         "name": "Marauder 250",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Marauder 800",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12369,7 +11354,14 @@
         "plants": {}
       },
       {
-        "name": "QuadMaster",
+        "name": "Ozark 250",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "QuadMaster 50",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12384,13 +11376,6 @@
       },
       {
         "name": "QuadRacer 450",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "QuadRunner",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12418,7 +11403,21 @@
         "plants": {}
       },
       {
-        "name": "QuadSport",
+        "name": "QuadSport 50",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "QuadSport 80",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "QuadSport Z250",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12481,20 +11480,6 @@
         "plants": {}
       },
       {
-        "name": "RM-Z250K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM-Z250L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "RM-Z450",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12516,28 +11501,7 @@
         "plants": {}
       },
       {
-        "name": "RM100K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "RM125",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM125K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM125T",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12551,28 +11515,7 @@
         "plants": {}
       },
       {
-        "name": "RM250/ RM250T",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM250K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "RM60",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM60K",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12586,13 +11529,6 @@
         "plants": {}
       },
       {
-        "name": "RM65K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "RM80",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12600,42 +11536,7 @@
         "plants": {}
       },
       {
-        "name": "RM80T",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "RM85",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM85K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM85L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM85LK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RM85LL",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12663,20 +11564,6 @@
         "plants": {}
       },
       {
-        "name": "RV200L8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "RV200L9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "Samurai",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12685,20 +11572,6 @@
       },
       {
         "name": "Savage",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SFV650",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SFV650A",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12733,20 +11606,6 @@
         "plants": {}
       },
       {
-        "name": "SV1000 / SV1000S",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV1000K / SV1000SK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "SV1000S",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12755,83 +11614,6 @@
       },
       {
         "name": "SV650",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650/SV650S",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650/SV650S/SV650SF",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650A/SV650SA",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650A/SV650SA/SV650SAF",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650AL7",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650AL8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650AL9 / SV650XAL9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650K/SV650SK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650L7",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650L8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "SV650L9",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12859,13 +11641,6 @@
         "plants": {}
       },
       {
-        "name": "TL1000RK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "TL1000S",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12887,49 +11662,7 @@
         "plants": {}
       },
       {
-        "name": "TU250XL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "TU250XL8",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "TU250XL9",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "Twin Peaks 700",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "UH200AL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "UH200AM2",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "UH200L",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -12978,13 +11711,6 @@
         "plants": {}
       },
       {
-        "name": "V-Strom 650XT Adventure",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "V-Strom 800",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -12992,7 +11718,7 @@
         "plants": {}
       },
       {
-        "name": "V-Strom 800DE / V-Strom 800DE Adventure",
+        "name": "V-Strom 800DE",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -13027,252 +11753,7 @@
         "plants": {}
       },
       {
-        "name": "VL1500",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL1500 / VL1500T",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL1500K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL1500L/VL1500BL/VL1500TL/VL1500BTL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800 / VL800T / VL800C/VL800B",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800/VL800C/VL800T",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800/VL800T/VL800Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800BL/VL800CL/VL800L/VL800TL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800CL/VL800L/VL800TL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800L/VL800TL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VL800TL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VLR1800/VLR1800T",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS1400",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS1400/VS1400GL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS1400GLP",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS1400GLPK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
         "name": "VS700",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS750 Intruder",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS800GL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VS800GLK",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VX800",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ1500",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ1600",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ800",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ800/VZ800B/VZ800Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ800/VZ800Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ800K",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZ800L",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZR1800",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZR1800/VZR1800Z",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZR1800/VZR1800Z/VZR1800N",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZR1800BZL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZR1800BZL/VZR1800L/VZR1800ZL",
-        "yearStart": 1996,
-        "yearEnd": 9999,
-        "packages": [],
-        "plants": {}
-      },
-      {
-        "name": "VZR1800L/VZR1800ZL",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -13296,7 +11777,7 @@
   },
   {
     "make": "Isuzu",
-    "wmi": "JAB",
+    "wmi": "4S1",
     "models": [
       {
         "name": "4000 Series Medium Duty",
@@ -13728,7 +12209,7 @@
   },
   {
     "make": "Hyundai",
-    "wmi": "KMH",
+    "wmi": "5NM",
     "models": [
       {
         "name": "Accent",
@@ -14014,7 +12495,7 @@
   },
   {
     "make": "Kia",
-    "wmi": "KNA",
+    "wmi": "3KM",
     "models": [
       {
         "name": "Amanti",
@@ -14209,7 +12690,7 @@
   },
   {
     "make": "Audi",
-    "wmi": "WAU",
+    "wmi": "TRU",
     "models": [
       {
         "name": "100",
@@ -14429,6 +12910,13 @@
         "plants": {}
       },
       {
+        "name": "Q9",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "R8",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -14569,6 +13057,13 @@
         "plants": {}
       },
       {
+        "name": "SQ9",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "TT",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -14600,7 +13095,7 @@
   },
   {
     "make": "Volkswagen",
-    "wmi": "WVW",
+    "wmi": "1V1",
     "models": [
       {
         "name": "Arteon",
@@ -14997,7 +13492,7 @@
   },
   {
     "make": "BMW",
-    "wmi": "WBA",
+    "wmi": "3MF",
     "models": [
       {
         "name": "128i",
@@ -15840,6 +14335,13 @@
         "plants": {}
       },
       {
+        "name": "F 450 GS",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "F 650",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -16226,6 +14728,13 @@
       },
       {
         "name": "M 1000 RR",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "M 1000 RS",
         "yearStart": 1996,
         "yearEnd": 9999,
         "packages": [],
@@ -17032,7 +15541,7 @@
   },
   {
     "make": "Mercedes-Benz",
-    "wmi": "WDD",
+    "wmi": "1MB",
     "models": [
       {
         "name": "190",
@@ -17453,12 +15962,26 @@
         "yearEnd": 9999,
         "packages": [],
         "plants": {}
+      },
+      {
+        "name": "Tourrider Business",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
+        "name": "Tourrider Premium",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
       }
     ]
   },
   {
     "make": "Volvo",
-    "wmi": "YV1",
+    "wmi": "1WA",
     "models": [
       {
         "name": "240 Series",
@@ -18028,6 +16551,13 @@
         "plants": {}
       },
       {
+        "name": "VNX (4)",
+        "yearStart": 1996,
+        "yearEnd": 9999,
+        "packages": [],
+        "plants": {}
+      },
+      {
         "name": "Volvo Trailers",
         "yearStart": 1996,
         "yearEnd": 9999,
@@ -18164,7 +16694,7 @@
   },
   {
     "make": "Saab",
-    "wmi": "YS3",
+    "wmi": "YK1",
     "models": [
       {
         "name": "9-2X",
@@ -18219,7 +16749,7 @@
   },
   {
     "make": "Jaguar",
-    "wmi": "SAJ",
+    "wmi": "SAD",
     "models": [
       {
         "name": "Black Jaguar",
@@ -18351,7 +16881,7 @@
   },
   {
     "make": "Land Rover",
-    "wmi": "SAJ",
+    "wmi": "SAD",
     "models": [
       {
         "name": "110\u0022 WB",

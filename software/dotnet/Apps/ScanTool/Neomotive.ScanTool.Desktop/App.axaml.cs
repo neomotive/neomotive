@@ -77,7 +77,11 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
 
         var vinOpts = new VinOptions
         {
-            ExternalCatalogPath = Path.Combine(baseDir, "config")
+            ExternalCatalogPath = Path.Combine(baseDir, "config"),
+
+            // Learned VDS patterns are written at runtime, so they go in data/ — config/ is the
+            // installer's to write and is not guaranteed writable or preserved across an update.
+            PatternStorePath = Path.Combine(baseDir, "data")
         };
         IVinDecoder vinDecoder = new VinDecoder(
             new VinValidator(),

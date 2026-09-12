@@ -84,6 +84,36 @@ public class UdsConfig
                     ["0xF197"] = "SRS (Airbag)"
                 },
                 Dtcs = [new UdsDtcProfile { Code = "B0051-13", Status = "Pending" }]
+            },
+
+            // The two below sit outside the legislated 0x7E0-0x7E7 window on purpose. A simulator
+            // whose every module answers there cannot tell a working three-tier sweep from the
+            // old legislated-only one — which is exactly how a real vehicle showing one module
+            // looked like correct behaviour on the bench.
+            new UdsModuleProfile
+            {
+                Name = "PSCM (Steering)",
+                ResponseId = 0x768,   // 11-bit manufacturer range; requests arrive at 0x760
+                Dids = new()
+                {
+                    ["0xF187"] = "NEO-PSCM-0001",
+                    ["0xF189"] = "SW 2.4.1",
+                    ["0xF197"] = "PSCM (Steering)"
+                },
+                Dtcs = [new UdsDtcProfile { Code = "C1B00-49", Status = "Confirmed" }]
+            },
+            new UdsModuleProfile
+            {
+                Name = "IPC (Cluster, 29-bit)",
+                Extended = true,
+                EcuAddress = 0x20,    // requests 0x18DA20F1, responses 0x18DAF120
+                Dids = new()
+                {
+                    ["0xF187"] = "NEO-IPC-0001",
+                    ["0xF189"] = "SW 5.0.2",
+                    ["0xF197"] = "IPC (Cluster, 29-bit)"
+                },
+                Dtcs = [new UdsDtcProfile { Code = "U0155-87", Status = "Confirmed" }]
             }
         ]
     };
@@ -95,8 +125,27 @@ public class UdsModuleProfile
     /// <summary>Display name. Also the fallback for DID $F197 when none is configured.</summary>
     public string Name { get; set; } = "";
 
-    /// <summary>The address this module answers from, e.g. 0x7E8. Requests arrive at that minus 8.</summary>
+    /// <summary>
+    /// The address this module answers from, e.g. 0x7E8. For an 11-bit module requests arrive at
+    /// that minus 8; for an extended one see <see cref="EcuAddress"/>, which supersedes this.
+    /// </summary>
     public ushort ResponseId { get; set; }
+
+    /// <summary>
+    /// When true the module is served on a 29-bit normal-fixed address instead of an 11-bit one:
+    /// requests at <c>0x18DA{EcuAddress}F1</c>, responses at <c>0x18DAF1{EcuAddress}</c>.
+    /// <para>
+    /// This is what lets the extended discovery tier be exercised on the bench. Several
+    /// manufacturers put everything outside the powertrain on 29-bit addressing, so a simulator
+    /// that can only speak 11-bit cannot prove the sweep works.
+    /// </para>
+    /// </summary>
+    public bool Extended { get; set; }
+
+    /// <summary>
+    /// The ECU address byte for an extended module. Ignored unless <see cref="Extended"/> is set.
+    /// </summary>
+    public byte EcuAddress { get; set; }
 
     /// <summary>Whether this module is served at all.</summary>
     public bool Enabled { get; set; } = true;

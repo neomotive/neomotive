@@ -67,6 +67,56 @@ public class SignalPickerViewModel : INotifyPropertyChanged
         set { _showSelectedOnly = value; OnPropertyChanged(); Rebuild(); }
     }
 
+    private HashSet<byte>? _supportedPidAddresses;
+    private bool _supportedOnly = true;
+
+    /// <summary>
+    /// Hides signals the vehicle's Mode 01 support bitmap does not list. On by default once the
+    /// bitmap has been read, because offering a tech every PID in the library on a vehicle that
+    /// serves a third of them is how a live-data sweep ends up full of timeouts.
+    /// <para>
+    /// A filter, not a rule: the bitmap covers Mode 01 only, and a PID absent from it is
+    /// occasionally still readable, so the operator can always switch back to the full list.
+    /// </para>
+    /// </summary>
+    public bool SupportedOnly
+    {
+        get => _supportedOnly;
+        set { _supportedOnly = value; OnPropertyChanged(); OnPropertyChanged(nameof(SupportedOnlyLabel)); Rebuild(); }
+    }
+
+    /// <summary>Whether a support bitmap has been read at all; gates the toggle's visibility.</summary>
+    public bool HasSupportInfo => _supportedPidAddresses is { Count: > 0 };
+
+    public string SupportedOnlyLabel => _supportedOnly
+        ? "● Supported only"
+        : "○ Showing all signals";
+
+    /// <summary>
+    /// Hands the picker the vehicle's Mode 01 support bitmap, read once on connect. Clearing it —
+    /// on disconnect — returns every row to <see cref="SignalSupport.Unknown"/> rather than
+    /// leaving the last vehicle's answer on screen next to a different car.
+    /// </summary>
+    public void SetSupportedPids(HashSet<byte>? supported)
+    {
+        _supportedPidAddresses = supported is { Count: > 0 } ? supported : null;
+        OnPropertyChanged(nameof(HasSupportInfo));
+        OnPropertyChanged(nameof(SupportedOnlyLabel));
+        Rebuild();
+    }
+
+    private SignalSupport SupportOf(SignalDefinition definition)
+    {
+        // Only Mode 01 has a bitmap to consult. Anything else — a Mode $22 DID especially — is
+        // unknown, and unknown must never be filtered out as though it were unsupported.
+        if (_supportedPidAddresses is null) return SignalSupport.Unknown;
+        if (definition.Source != SignalSource.Mode01) return SignalSupport.Unknown;
+
+        return _supportedPidAddresses.Contains((byte)definition.Address)
+            ? SignalSupport.Supported
+            : SignalSupport.Unsupported;
+    }
+
     public int SelectedCount => _selected.Count;
 
     public string SelectedCountText => $"{_selected.Count} selected";
@@ -180,7 +230,17 @@ public class SignalPickerViewModel : INotifyPropertyChanged
 
         foreach (var definition in matches)
         {
-            var item = new SignalItem(definition) { IsSelected = _selected.Contains(definition.Key) };
+            var support = SupportOf(definition);
+
+            // An unsupported signal the operator has already chosen stays listed even under the
+            // filter — a capture profile that references it must not silently lose the row, and
+            // hiding a selected item makes it impossible to deselect.
+            if (_supportedOnly && support == SignalSupport.Unsupported && !_selected.Contains(definition.Key))
+            {
+                continue;
+            }
+
+            var item = new SignalItem(definition, support) { IsSelected = _selected.Contains(definition.Key) };
             item.SelectionChanged += OnItemSelectionChanged;
             Results.Add(item);
         }

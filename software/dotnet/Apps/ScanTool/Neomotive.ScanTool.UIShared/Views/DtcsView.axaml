@@ -9,10 +9,18 @@
     <Grid RowDefinitions="Auto, *, Auto">
 
         <!-- MIL status -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,14">
-            <TextBlock Classes="label" Text="MIL:" VerticalAlignment="Center" />
-            <TextBlock Classes="mil-on"  IsVisible="{Binding MilOn}"  Text="ON  (Check Engine)" />
-            <TextBlock Classes="mil-off" IsVisible="{Binding MilOff}" Text="OFF" />
+        <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Classes="label" Text="MIL:" VerticalAlignment="Center" />
+                <TextBlock Classes="mil-on"  IsVisible="{Binding MilOn}"  Text="ON  (Check Engine)" />
+                <TextBlock Classes="mil-off" IsVisible="{Binding MilOff}" Text="OFF" />
+            </StackPanel>
+
+            <!-- Which codes are new since the vehicle was last here. A different question from
+                 stored-versus-pending, and usually the one being asked. -->
+            <TextBlock Classes="value" TextWrapping="Wrap"
+                       IsVisible="{Binding HasNewCodesSinceLastVisit}"
+                       Text="{Binding NewCodesText}" />
         </StackPanel>
 
         <!-- Per-module DTC groups -->

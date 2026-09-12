@@ -69,7 +69,7 @@
                             <Button Classes="pidrow" HorizontalAlignment="Stretch"
                                     Click="OnToggleSignal" Tag="{Binding}"
                                     ToolTip.Tip="{Binding DetailText}">
-                                <Grid ColumnDefinitions="18, 52, *, Auto, Auto" ColumnSpacing="6">
+                                <Grid ColumnDefinitions="18, 52, *, Auto, Auto, Auto" ColumnSpacing="6">
                                     <TextBlock Grid.Column="0" Text="{Binding SelectionIndicator}" />
                                     <!-- PID leads: techs usually arrive knowing the number. -->
                                     <TextBlock Grid.Column="1" Classes="xs"
@@ -77,10 +77,16 @@
                                                Foreground="{StaticResource BrushFgSubtle}"
                                                Text="{Binding ShortAddressText}" />
                                     <TextBlock Grid.Column="2" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Grid.Column="3" Classes="xs dim" MaxWidth="120"
+                                    <!-- Support state in words. Colour alone would not survive the
+                                         panel's viewing angle, and there is no hover to explain a
+                                         greyed row, so the row says what it means. -->
+                                    <TextBlock Grid.Column="3" Classes="xs dim" VerticalAlignment="Center"
+                                               IsVisible="{Binding HasSupportText}"
+                                               Text="{Binding SupportText}" />
+                                    <TextBlock Grid.Column="4" Classes="xs dim" MaxWidth="120"
                                                TextTrimming="CharacterEllipsis"
                                                VerticalAlignment="Center" Text="{Binding SystemsText}" />
-                                    <TextBlock Grid.Column="4" Classes="xs dim" Text="{Binding Unit}" />
+                                    <TextBlock Grid.Column="5" Classes="xs dim" Text="{Binding Unit}" />
                                 </Grid>
                             </Button>
                         </DataTemplate>
@@ -89,16 +95,21 @@
             </Border>
 
             <!-- Footer -->
-            <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, Auto, *, Auto, Auto"
+            <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, Auto, Auto, *, Auto, Auto"
                   Margin="10,8" ColumnSpacing="6">
                 <Button Grid.Column="0" Content="Selected only" Click="OnToggleSelectedOnly" />
-                <Button Grid.Column="1" Content="Add listed"    Click="OnSelectAllResults" />
-                <Button Grid.Column="2" Content="Clear"         Click="OnClearSelection" />
-                <TextBlock Grid.Column="3" Classes="xs dim" VerticalAlignment="Center"
+                <!-- Only offered once a vehicle has actually reported a support bitmap; before
+                     that there is nothing to filter by and the button would be a lie. -->
+                <Button Grid.Column="1" Click="OnToggleSupportedOnly"
+                        IsVisible="{Binding HasSupportInfo}"
+                        Content="{Binding SupportedOnlyLabel}" />
+                <Button Grid.Column="2" Content="Add listed"    Click="OnSelectAllResults" />
+                <Button Grid.Column="3" Content="Clear"         Click="OnClearSelection" />
+                <TextBlock Grid.Column="4" Classes="xs dim" VerticalAlignment="Center"
                            HorizontalAlignment="Right" Margin="0,0,8,0"
                            Text="{Binding ResultCountText}" />
-                <Button Grid.Column="4" Content="Cancel" Click="OnCancel" />
-                <Button Grid.Column="5" Content="Done"   Click="OnConfirm" />
+                <Button Grid.Column="5" Content="Cancel" Click="OnCancel" />
+                <Button Grid.Column="6" Content="Done"   Click="OnConfirm" />
             </Grid>
 
         </Grid>
