@@ -395,3 +395,329 @@ the shared project with `x:DataType` pointing at an *interface* (`ICanViewModel`
 app's `MainWindowViewModel` implement it. Host views reference it via
 `xmlns:canviews="clr-namespace:Neomotive.Can.UI.Views;assembly=Neomotive.Can.UI"`. Styles stay
 resolved at app level, so `Classes="heading"` etc. still work.
+
+---
+
+## Phase 7 — 2021 Ford Explorer field findings (planned, 2026-09-11)
+
+First real-vehicle session on a 2021 Ford Explorer. Six observations, root-caused against the
+code below. Tracked as Group AF in `ScanTool-Tasks.md`.
+
+### AF1 — UDS "Scan" button never becomes enabled
+
+**Root cause — confirmed bug.** `MainWindowViewModel.IsConnected`'s setter (line ~550) raises
+`OnPropertyChanged` for `IsNotConnected`, `IsIdle`, `CanRefresh`, `CanStartPolling` and
+`CanCheckTune` — but *not* for `CanScanUds` or `CanOperateUdsModule`. `UdsView.axaml:25` binds
+`IsEnabled="{Binding CanScanUds}"`, which is `_isConnected && !_isScanningUds && _udsScanner != null`.
+The binding is evaluated once while disconnected and never re-evaluated, so the button stays grey
+for the life of the session.
+
+**Fix.** Add both notifications to the `IsConnected` setter. Then sweep every `Can*` computed
+property and assert that each dependency raises it — the class has enough of these that a helper
+(`NotifyCommandStates()`) called from all the gating setters is the durable fix rather than
+another hand-maintained list.
+
+### AF2 — Only the PCM appears under OBD modules
+
+**Not a bug — a scope limit.** `Obd2Scanner.ScanModulesAsync` discovers modules by broadcasting
+Mode 01 PID 01 / Mode 03 / Mode 07 to `0x7DF` and accepting responses in `0x7E8-0x7EF`. On a 2021
+Explorer only the PCM answers legislated OBD-II services; ABS, IPC, BCM, PSCM, RCM and the rest
+are reachable only through UDS on manufacturer addresses. `UdsScanner.ScanModulesAsync`
+(`Telematics.Uds/Driver/UdsScanner.cs:42-77`) has the same limit: a `0x7DF` broadcast plus a
+`0x7E0-0x7E7` physical sweep.
+
+**Fix — full 11-bit + 29-bit sweep.** Extend `UdsScanner` discovery to three tiers:
+
+| Tier | Request addresses | Response | Notes |
+|---|---|---|---|
+| 1 — legislated | `0x7DF` broadcast, `0x7E0`-`0x7E7` physical | `+0x08` | today's behaviour; runs first, fast |
+| 2 — 11-bit manufacturer | `0x700`-`0x7DE` | `+0x08` | where the Ford body/chassis modules live |
+| 3 — 29-bit normal-fixed | `0x18DAxxF1`, `xx` = `0x00`-`0xFF` | `0x18DAF1xx` | ISO 15765-2 normal-fixed addressing |
+
+Requirements this imposes:
+
+- **Probe must be cheap.** Use TesterPresent `$3E 00` (positive response *not* suppressed) or
+  `$10 01`; accept *any* response including a negative one, since an NRC still proves a module is
+  there. Fire a whole tier as a burst and collect for a fixed window rather than paying a
+  per-address timeout — a 2 s timeout times 480 addresses is unusable.
+- **Extended-ID support in the bus layer.** `SendRequest`, `SendFlowControl` and the RX filters in
+  both `UdsScanner` and `Obd2Scanner` are hard-coded to `StandardDataFrame` and to the
+  `0x7E8`-`0x7EF` ID window. Tier 3 needs `ExtendedDataFrame` and an ID predicate instead of a
+  range check. This is the largest single piece of work in the phase.
+- **Progress and cancel.** A three-tier sweep takes tens of seconds. `UdsView` needs a progress
+  readout (tier, address, found-so-far) and a working Cancel, not a frozen button.
+- **Stay generic.** Per project rule, no Ford addresses in code. Ship the tier definitions and any
+  friendly per-address names as a JSON table in the diagnostic profile / `UdsCatalog` config
+  directory, with the ISO-generic tiers as the built-in default.
+
+**Also fix in `Obd2Scanner.ScanModulesAsync`:** when only one module answers, the Vehicle page
+should say so plainly ("1 module answered OBD-II — run a UDS scan for the rest") rather than
+implying the vehicle has one module.
+
+### AF3 — Vehicle page shows only VIN and year
+
+Two independent causes.
+
+**a) Make/Model.** `Apps/Shared/Neomotive.Vin/Resources/manufacturers.json` contains `1FA` but not
+`1FM` — the Explorer's WMI — so `ManufacturerProvider.TryGetByWmi` misses and `Make` and `Country`
+come back null. Worse, `VinDecoder.DecodeLocal` never sets `Model` at all: it is populated only by
+the NHTSA fallback in `DecodeAsync`, which needs a network the Pi does not have in a vehicle.
+
+*Fix — offline-first.* Regenerate `manufacturers.json` from the full NHTSA WMI list via
+`Neomotive.Vin.CatalogGenerator` (`1FM`, `1FT`, `1FD`, `2FM`, `3FA` and many more are missing), and
+add a local VDS-to-model resolution step driven by `model-catalog.json` — which already contains
+"Explorer" and is simply never consulted locally. NHTSA stays as enrichment for trim and engine
+when online, and its results get cached to disk so a VIN decoded once stays decoded.
+
+**b) Calibration ID / CVN / ECU name.** `DisplayCalibrationId` and `DisplayCvn` read from
+`CaptureVm`, which is only populated by `CheckTuneAsync` — nothing appears until the operator
+presses "Check Tune".
+
+*Fix — auto-populate on connect.* On a successful `ConnectAsync`, kick off a background fingerprint
+read (Cal ID `$09 04`, CVN `$09 06`, ECU name `$09 0A`, protocol, readiness) and fill the page.
+"Check Tune" remains for the *analysis*, and should be relabelled so it reads as analysis rather
+than as the only way to get data. Each field shows "reading..." then a value or an explicit
+"not supported", never a bare em dash that cannot be distinguished from "not tried".
+
+### AF4 — Live data updates are sluggish
+
+`MainWindowViewModel.RunPollingLoopAsync` (line ~1135). Four compounding causes:
+
+1. **A flat `await Task.Delay(500, ct)` after every full sweep.** Even a fast sweep can never
+   exceed 2 Hz, and the delay is paid on top of the sweep, not instead of it.
+2. **Strictly sequential request/response.** Each PID is a full round trip through
+   `SendAndReceive`, and `Obd2Scanner.ResponseTimeout` is **3 seconds**. One PID the PCM declines
+   to answer stalls the entire sweep for 3 s, every sweep. Throttle position sharing a sweep with
+   one such PID is exactly the symptom described.
+3. **Per-frame logging.** `SendRequest` and the `SendAndReceive` RX handler call
+   `Resolver.Log?.Info(...)` with an interpolated hex dump for *every* frame in both directions,
+   plus `LoggingCanBus` records each frame. On the Pi with a file sink this dominates the loop.
+4. **`Task.Run(() => _scanner.ReadPidDataAsync(...))`** wraps an already-async method, adding a
+   thread-pool hop per PID for nothing.
+
+*Fix.*
+- Drop the fixed delay; drive the loop from a target sweep period (default ~100 ms, configurable in
+  Settings) and sleep only the remainder, so a slow sweep simply runs back-to-back.
+- Split the timeout: Mode 01 current-data gets a short timeout (~150 ms — a PCM that is going to
+  answer answers well inside that); discovery and multi-frame reads keep the 3 s value.
+- Track consecutive failures per PID and drop a PID from the sweep after N misses, surfacing it in
+  the UI as "no response" rather than silently costing a timeout forever.
+- Move per-frame logging to `Trace` and gate it on the CAN-log setting, so the Pi's default log
+  level does not pay for it.
+- Remove the `Task.Run` wrappers; await the scanner directly.
+- Show the achieved rate (sweeps/s, and per-PID sample age) on the Live Data view so this is
+  measurable next session instead of impressionistic.
+
+### AF5 — Filter PIDs to those the vehicle supports
+
+`Obd2Scanner.ReadSupportedPidsAsync` already walks the `$00/$20/$40/...` support bitmaps correctly,
+but its only caller is `CheckTuneAsync`, which uses the result for tune analysis and throws it away.
+`SignalPickerViewModel` offers the whole `SignalLibrary` regardless.
+
+*Fix.* Read supported PIDs once on connect, cache on the view model, and expose it to the picker as
+a **filter with a toggle** — "Supported only" on by default, switchable to "All" — never a hard
+filter. Two reasons not to hard-filter: the support bitmap covers Mode 01 only, so Mode `$22` UDS
+signals have no bitmap to consult; and a PID absent from the bitmap is occasionally still readable.
+Rows that are known-supported, known-unsupported and unknown should be visually distinct, with the
+state spelled out in the row text — no tooltips, the panel is touch-only. Capture profiles must be
+able to reference an unsupported PID without being rewritten; they just show a warning badge.
+
+### AF6 — Capture review needs the full screen
+
+**Decision:** the top-level tab strip is full, so Capture gains *sub-tabs* rather than a second
+top-level tab.
+
+```
+[ Vehicle | Monitors | DTCs | UDS | Live Data | Capture | CAN | Updates ]
+                                      |
+                                      +-- ( Configure | Review )
+```
+
+- **Configure** — profile picker, signal selection, start/stop rules, arm / fire / stop, live
+  sample counter and status. Everything currently in `CaptureView.axaml` rows 0-2.
+- **Review** — recording picker, then `CaptureReviewPane` at full sub-tab height: lane toggles,
+  cursor readout, zoom/pan/fit controls, export. Rows 3-4 today.
+
+Arming from Configure switches automatically to Review, which is where the operator wants to be
+once a capture is running.
+
+On top of that, an **Expand** control on the review pane hosts `CaptureReviewPane` in a full-window
+overlay above the tab strip and header, with a close X in the top-right corner. `CaptureReviewPane`
+is already a self-contained `UserControl` bound to `CaptureVm`, so hosting the same instance in an
+overlay `Panel` — the pattern `SignalPickerView` and `TriggerEditorView` already use in
+`CaptureView.axaml:89-94` — is the whole mechanism. Zoom, pan and lane-toggle state must survive
+the transition in both directions.
+
+
+### AF7 — Remembered vehicles
+
+**Goal.** A vehicle seen before starts up warm: its module list, supported PIDs and last-known
+calibration are on screen before the first probe returns, and the scan that follows is a targeted
+sweep of a few dozen known addresses rather than the three-tier sweep of ~500 from AF2.
+
+Recall is a **hint, never an assertion**. A previous scan may have missed modules because of bus
+trouble, and a module may have been replaced or retrofitted since. Every remembered item is
+provisional until this session's bus confirms it, and the UI says which it is.
+
+#### Keying
+
+Two levels, both derived from the VIN with no decode and no network:
+
+| Level | Key | Source |
+|---|---|---|
+| Vehicle | the full 17-character VIN | exact match — this specific vehicle |
+| Class | `WMI` + `VDS` + year code = VIN chars 1-3, 4-8, 10 | e.g. a 2021 Explorer ST is `1FM` + `SK8G` + `M` |
+
+The class key is deliberately *not* make/model/trim. `VinDecoder` never sets `Trim` locally — it
+comes only from the NHTSA fallback — so on a Pi in a vehicle it is always null, and every 2021
+Explorer would collapse into one bucket regardless of series. The VDS is the manufacturer's own
+encoding of series, body and engine, it is present in the VIN itself, and it separates an Explorer
+ST from a base Explorer offline and for free. Make, model, year and trim are stored alongside as
+*display* text only, never as the lookup key.
+
+The VIN alphabet is alphanumeric minus I, O and Q, so the key is filename-safe as-is.
+
+#### Storage
+
+Under `DataDirectory` — the writable location that survives an A/B update, same rationale as
+`AppSettings`:
+
+```
+data/vehicles/
+  index.json                 lightweight list for the UI: key, display name, last seen, visit count
+  vin/<VIN>.json             one record per vehicle actually seen
+  class/<WMI><VDS><Y>.json   one profile per vehicle class, unioned across the VINs in it
+```
+
+Writes are atomic — temp file plus rename — so a power cut mid-write cannot corrupt a record. A
+corrupt or unreadable record is discarded and treated as a cold start, exactly as `AppSettings`
+already handles a bad settings file: recall is an optimisation and must never stop the tool
+starting.
+
+#### Record shape
+
+```
+VehicleRecord              vin, classKey, firstSeen, lastSeen, visitCount
+                           decode { make, model, year, trim, country, plantCity, engineType,
+                                    isFromNhtsa }
+                           modules[]            RememberedModule
+                           supportedPids        { mode01Bitmap, readAt }
+                           calibrations[]       { calId, cvn, ecuName, seenAt }   last 10
+                           dtcSnapshots[]       { seenAt, codes[] }               last 10
+                           lastCapture          { profileId, signalIds[] }
+
+ClassProfile               classKey, displayName, vinCount, lastSeen
+                           modules[]            RememberedModule, unioned across VINs
+                           supportedPids        { mode01Bitmap, agreementCount }
+
+RememberedModule           txId, rxId, addressing: Std11 | Ext29
+                           name, ecuName?, partNumber?, softwareVersion?, hardwareNumber?
+                           firstSeen, lastSeen, seenCount, missCount, vinsSeenOn (class only)
+```
+
+`txId` / `rxId` persist as raw integers plus an explicit addressing mode — **not** as hex strings.
+`UdsModuleInfo.TxIdHex` formats `:X3`, which silently truncates a 29-bit ID; AF2 has to fix that
+formatting anyway, and the on-disk format must not inherit the bug.
+
+#### Never forget on a single miss
+
+The operator's own point: a scan can miss a module because the bus was unhappy, not because the
+module is absent. So:
+
+- A module that does not answer increments `missCount`. It is **never removed** from the record.
+- A module is dropped from *pre-population* only after at least 3 consecutive full sweeps have
+  missed it and `missCount` exceeds `seenCount`. Even then the row survives, shown as "not seen
+  since <date>", so the operator can still probe it deliberately.
+- The class profile is a **union**, never an intersection. Each module carries `vinsSeenOn`, so the
+  UI can say "seen on 3 of 4 vehicles of this type" and the operator can judge it.
+
+#### Recall flow on connect
+
+1. `ConnectAsync` reads the VIN, as it does today.
+2. Look up `vin/<VIN>.json`. Hit — exact record, this vehicle has been here before.
+3. Miss — compute the class key and look up `class/<key>.json`. Hit — seed from the class,
+   labelled as typical for the vehicle type rather than as this vehicle's own history.
+4. Miss both — cold start, current behaviour, nothing else changes.
+5. On a hit, immediately populate: the module list marked **Remembered**; the supported-PID cache
+   (AF5's picker filter is then instant, with no support walk); and Cal ID / CVN shown as
+   "last visit" until AF3's live fingerprint read lands and replaces them.
+6. Fire a **targeted probe** of exactly the remembered addresses — the same burst-and-collect
+   primitive AF2 builds, handed an explicit address list instead of a tier range. Dozens of
+   addresses, not ~500. Each responder promotes to **Confirmed**; each non-responder stays
+   **Remembered, no response**.
+7. The full scan button is unchanged. A full sweep reconciles and writes back.
+
+Three module states, and per the touch-first rule each is spelled out in the visible row text, not
+carried by colour alone and never by a tooltip: **Confirmed** (answered this session),
+**Remembered** (from a previous visit, not yet confirmed), **Not seen since <date>**.
+
+#### What recall buys beyond modules
+
+- **Supported-PID bitmap.** Skips the Mode 01 `$00/$20/$40` support walk on reconnect entirely and
+  makes AF5's "Supported only" filter correct from the first frame.
+- **Calibration history.** Each visit appends `{calId, cvn, ecuName, seenAt}`. This turns into a
+  real diagnostic result on the Vehicle page — "Calibration changed since 2026-08-14 (was
+  `HU5A-14C204-BCB`)" — and feeds the existing `TuneAnalyzer` with a baseline it has never had.
+- **DTC snapshot per visit.** Lets the DTCs view separate codes that are new since the last visit
+  from codes that were already there.
+- **Last capture setup.** Reconnecting to a vehicle you were mid-diagnosis on restores the capture
+  profile and signal set you had chosen for it.
+
+#### UI
+
+- **Vehicle page** gains a recognition band above the VIN block: *"3rd visit — last seen
+  2026-08-14. Calibration unchanged."* or the changed-calibration line above. On a class-only hit:
+  *"First visit. 4 vehicles of this type seen; showing their typical module list."*
+- **UDS view** module rows carry the three states above, and the scan button reads "Full scan"
+  when a remembered list is already showing.
+- **Forget this vehicle** on the Vehicle page; **Forget all remembered vehicles** plus a record
+  count in Settings.
+
+#### Limits
+
+Records are VIN-keyed data on a shop device, so they stay bounded and erasable: 10 calibration
+entries and 10 DTC snapshots per vehicle, and an LRU cap on total vehicle records (500) with class
+profiles retained, since those are small and are the part that generalises.
+
+#### Dependencies
+
+AF7 splits across the AF2 boundary:
+
+- **AF7a — store, PID and calibration recall.** Depends only on AF3 (offline decode gives the
+  display text) and AF5 (the supported-PID cache is what gets persisted). Can land before AF2.
+- **AF7b — module recall and targeted probe.** Depends on AF2, both for the probe primitive and
+  for 29-bit addressing in the record format. Build AF2's probe to take an `IEnumerable` of
+  addresses rather than only a tier range, and AF7b is mostly persistence on top of it.
+### Sequencing
+
+Independent of each other; AF1 and AF4 are small and unblock the rest of the field testing.
+
+1. **AF1** — notification bug. Hours. Do first; it is a small fix that makes UDS testable at all.
+2. **AF4** — live data rate. Half a day. Makes every subsequent bench session faster to judge.
+3. **AF3** — VIN catalog + fingerprint on connect. One day, mostly catalog regeneration.
+4. **AF5** — supported-PID filter. Half a day; depends on the connect-time read added in AF3.
+5. **AF7a** — vehicle store, supported-PID and calibration recall. One day. Depends on AF3 and
+   AF5; independent of AF2, so it lands early and starts accumulating records from the next bench
+   and field sessions — which is what makes AF7b worth anything when it arrives.
+6. **AF6** — capture sub-tabs + expand overlay. One day, UI only.
+7. **AF2** — extended UDS discovery. Two to three days. Largest and riskiest: it reaches into the
+   Meadow `Telematics.Uds` library and needs 29-bit frame support through the bus layer. Build the
+   probe to take an explicit address list, not only a tier range — AF7b needs exactly that.
+8. **AF7b** — module recall and targeted probe. Half a day on top of AF2 and AF7a.
+
+### Verification
+
+Bench first, vehicle second. `ModuleSimulator` must grow simulated modules on 11-bit manufacturer
+addresses and on 29-bit normal-fixed addresses — config-only, via `SimulatorConfig.Uds` — so AF2 is
+provable without the Explorer. Unit tests: `FakeUdsScanner` gains extended-address cases,
+`Obd2ScannerTests` gains a per-PID timeout/backoff case, and `Neomotive.Vin.Tests` gains a
+`1FM`-prefixed Explorer VIN asserting Make *and* Model resolve with the NHTSA client disabled.
+
+For AF7 the store is pure logic and gets tested without a bus at all: class-key derivation from a
+set of real VINs (two Explorer STs match, a base Explorer does not); the union and miss-count rules
+(a missed scan never removes a module, three consecutive misses demote it from pre-population); the
+atomic-write and corrupt-record paths; and the LRU cap. The recall *flow* then needs the simulator:
+scan a simulated vehicle, restart the app, and confirm the module list appears before the probe
+completes and each row promotes from Remembered to Confirmed as the simulator answers. The
+calibration-change line is provable on the bench by editing the simulator's calibration ID between
+two runs against the same VIN.

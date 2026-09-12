@@ -1121,3 +1121,122 @@ gear been tapped on the panel, or a tooltip seen once the setting is on.
 count; the actual open time on the panel is untested, as is scrolling feel with virtualization
 on (row heights vary slightly, so the scrollbar thumb may resize as the operator scrolls).
 
+
+## Group AF — 2021 Ford Explorer field findings (planned 2026-09-11, not started)
+
+Six observations from the first real-vehicle session. Design and root causes are in Phase 7 of
+`ScanTool-Plan.md`; this is the work list. Ordered as sequenced there, not as numbered.
+
+### AF1 — UDS command gating never re-evaluates *(do first)*
+
+- [ ] `MainWindowViewModel.IsConnected` setter raises `CanScanUds` and `CanOperateUdsModule`.
+- [ ] Replace the hand-maintained notification lists in the gating setters (`IsConnected`,
+      `IsScanningUds`, `IsPolling`, `IsCheckingTune`) with a single `NotifyCommandStates()`.
+- [ ] Test: a view-model test that connects and asserts `CanScanUds` fired.
+
+### AF4 — Live data sweep rate
+
+- [ ] Replace the flat `Task.Delay(500)` in `RunPollingLoopAsync` with a target-period loop that
+      sleeps only the remainder of the period.
+- [ ] Add a configurable sweep period to `AppSettings` / Settings view (default ~100 ms).
+- [ ] Split `Obd2Scanner` timeouts: short (~150 ms) for Mode 01 current data, keep 3 s for
+      discovery and multi-frame reads.
+- [ ] Per-PID consecutive-failure backoff; drop from the sweep after N misses and show
+      "no response" on the row.
+- [ ] Demote per-frame `Resolver.Log.Info` hex dumps in `Obd2Scanner` (and `UdsScanner`) to
+      `Trace`, gated on the CAN-log setting.
+- [ ] Remove the redundant `Task.Run` wrappers around already-async scanner calls.
+- [ ] Show achieved sweep rate and per-PID sample age on the Live Data view.
+- [ ] Test: `Obd2ScannerTests` case covering timeout backoff.
+
+### AF3 — Vehicle page completeness
+
+- [ ] Regenerate `Neomotive.Vin/Resources/manufacturers.json` from the full NHTSA WMI list
+      (`1FM`, `1FT`, `1FD`, `2FM`, `3FA`, ... are missing) via `Neomotive.Vin.CatalogGenerator`.
+- [ ] Add local VDS-to-model resolution in `VinDecoder.DecodeLocal` using `model-catalog.json`,
+      so Model resolves with no network.
+- [ ] Cache NHTSA decode results to disk; enrichment only, never required.
+- [ ] Background fingerprint read on successful connect (Cal ID, CVN, ECU name, protocol,
+      readiness); Vehicle page shows "reading..." then a value or "not supported".
+- [ ] Relabel "Check Tune" so it reads as analysis, not as the only way to populate the page.
+- [ ] Vehicle page states plainly when only one module answered OBD-II.
+- [ ] Test: `Neomotive.Vin.Tests` case for a `1FM`-prefixed Explorer VIN, NHTSA client disabled,
+      asserting Make *and* Model.
+
+### AF5 — Supported-PID filter in the signal picker
+
+- [ ] Cache `ReadSupportedPidsAsync` result on the view model at connect time.
+- [ ] `SignalPickerViewModel` gains a "Supported only" / "All" toggle, default Supported only.
+- [ ] Rows carry a visible supported / unsupported / unknown state in the row text (no tooltips).
+- [ ] Mode `$22` UDS signals are always "unknown", never filtered out.
+- [ ] Capture profiles referencing an unsupported PID still load; show a warning badge.
+
+### AF6 — Capture sub-tabs and full-screen review
+
+- [ ] Split `CaptureView` into **Configure** and **Review** sub-tabs (no new top-level tab — the
+      tab strip is full).
+- [ ] Configure: profile, signals, start/stop rules, arm / fire / stop, sample counter, status.
+- [ ] Review: recording picker plus `CaptureReviewPane` at full sub-tab height.
+- [ ] Arming from Configure switches to Review automatically.
+- [ ] "Expand" hosts `CaptureReviewPane` in a full-window overlay with a close X in the corner,
+      using the overlay `Panel` pattern already in `CaptureView.axaml:89-94`.
+- [ ] Zoom, pan, cursor and lane-toggle state survive expand and collapse in both directions.
+
+### AF2 — Extended UDS module discovery *(largest; unblocks AF7b)*
+
+- [ ] `ICanBus` send/receive path in `UdsScanner` handles `ExtendedDataFrame` (29-bit) as well as
+      `StandardDataFrame`; RX filtering moves from a `0x7E8`-`0x7EF` range check to a predicate.
+- [ ] Three-tier discovery: legislated (`0x7DF` + `0x7E0`-`0x7E7`), 11-bit manufacturer
+      (`0x700`-`0x7DE`), 29-bit normal-fixed (`0x18DAxxF1` / `0x18DAF1xx`).
+- [ ] Burst-and-collect probing (TesterPresent `$3E 00` or `$10 01`), accepting negative responses
+      as proof of presence — no per-address timeout.
+- [ ] Tier definitions and friendly per-address names come from JSON config, not code. No Ford
+      addresses compiled in.
+- [ ] `UdsView` progress readout (tier / address / found) and a Cancel that works.
+- [ ] `ModuleSimulator` gains simulated modules on 11-bit manufacturer and 29-bit addresses via
+      `SimulatorConfig.Uds` — config only, so this is provable on the bench.
+- [ ] `FakeUdsScanner` gains extended-address cases.
+
+
+### AF7a — Remembered vehicles: store, PID and calibration recall *(after AF3 + AF5)*
+
+- [ ] `Neomotive.ScanTool.Core/Vehicles/` — `VehicleRecord`, `ClassProfile`, `RememberedModule`,
+      `VehicleStore`. Module addresses persist as raw ints plus an addressing mode
+      (`Std11` / `Ext29`), never as `:X3` hex strings.
+- [ ] Class key = VIN chars 1-3 + 4-8 + 10 (WMI + VDS + year code), derived with no decode and no
+      network. Make/model/trim are display text only, never the key.
+- [ ] Store under `DataDirectory/vehicles/` (`index.json`, `vin/<VIN>.json`,
+      `class/<key>.json`); atomic temp-plus-rename writes; a corrupt record is discarded and
+      treated as a cold start.
+- [ ] Recall on connect: exact VIN hit, else class hit, else cold start. Never blocks or fails the
+      connection.
+- [ ] Persist and recall the supported-PID bitmap; AF5's picker filter uses it with no support walk.
+- [ ] Persist calibration history (`calId`, `cvn`, `ecuName`, `seenAt`), last 10.
+- [ ] Persist a DTC snapshot per visit, last 10; DTCs view marks codes new since the last visit.
+- [ ] Persist the last capture profile and signal set per vehicle; restore on reconnect.
+- [ ] Vehicle page recognition band: visit count, last-seen date, and calibration
+      unchanged/changed-from line. Class-only hits say so explicitly.
+- [ ] "Forget this vehicle" on the Vehicle page; "Forget all remembered vehicles" plus a record
+      count in Settings.
+- [ ] LRU cap of 500 vehicle records; class profiles retained.
+- [ ] Tests: class-key derivation (two Explorer STs match, a base Explorer does not); atomic-write
+      and corrupt-record paths; LRU eviction; calibration-change detection.
+
+### AF7b — Remembered vehicles: module recall and targeted probe *(after AF2 + AF7a)*
+
+- [ ] Pre-populate the UDS module list from the record on connect, marked **Remembered**.
+- [ ] Targeted probe of exactly the remembered addresses, reusing AF2's burst-and-collect primitive
+      with an explicit address list. Responders promote to **Confirmed**.
+- [ ] Three module row states spelled out in visible text (no tooltips, no colour-only):
+      **Confirmed**, **Remembered**, **Not seen since &lt;date&gt;**.
+- [ ] Miss handling: a miss increments `missCount` and **never removes** a module. Demote from
+      pre-population only after 3 consecutive full-sweep misses *and* `missCount` > `seenCount`;
+      the row still survives, marked not-seen.
+- [ ] Class profile is a union across VINs, never an intersection; each module carries `vinsSeenOn`
+      and the UI reports "seen on 3 of 4 vehicles of this type".
+- [ ] Write back after any scan, targeted or full.
+- [ ] Scan button reads "Full scan" when a remembered list is already showing.
+- [ ] Simulator-backed test: scan, restart, confirm rows appear before the probe completes and
+      promote to Confirmed as the simulator answers.
+
+**Nothing in Group AF is implemented yet.** Every item is unverified on bench and on vehicle.
