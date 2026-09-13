@@ -49,7 +49,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         _udsScanner = udsScanner ?? (loggingBus != null ? new UdsScanner(loggingBus, UdsCatalog.Shared) : null);
 
         // Constructed after _udsScanner: capture needs the UDS client for Mode $22 channels.
-        CaptureVm = new CaptureViewModel(scanner, _udsScanner);
+        CaptureVm = new CaptureViewModel(scanner, _udsScanner, vinDecoder);
 
         // The tooltip switch is read by the shell, not by the Settings page, so the shell has to
         // hear about a change made on that page.

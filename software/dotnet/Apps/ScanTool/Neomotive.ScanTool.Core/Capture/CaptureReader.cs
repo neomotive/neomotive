@@ -95,6 +95,23 @@ public static class CaptureReader
             .ToArray();
     }
 
+    /// <summary>
+    /// Reads only the sidecar for a capture, without touching the CSV.
+    /// </summary>
+    /// <remarks>
+    /// The browse list needs the date, VIN and signal count for whichever file the operator has
+    /// highlighted. Loading the whole recording for that would parse every sample row of a capture
+    /// nobody has asked to see yet — on the Pi that is a visible stall on each arrow-key press.
+    /// </remarks>
+    public static CaptureMetadata? LoadMetadata(string path)
+    {
+        var stem = Path.Combine(
+            Path.GetDirectoryName(path) ?? string.Empty,
+            Path.GetFileNameWithoutExtension(path));
+
+        return TryLoadSidecar(stem + CaptureFile.SidecarExtension);
+    }
+
     private static CaptureMetadata? TryLoadSidecar(string sidecarPath)
     {
         if (!File.Exists(sidecarPath))

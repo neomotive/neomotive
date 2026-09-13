@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.CaptureBrowserView"
+             x:DataType="local:CaptureBrowserViewModel">
+
+    <!-- Hosted as an overlay rather than a Window, for the same reason as the signal picker: the
+         Pi runs a single-view DRM lifetime with no window manager. -->
+    <Border Background="#141820" BorderBrush="#2E3440" BorderThickness="1" CornerRadius="6"
+            Margin="24" Padding="0">
+        <Grid RowDefinitions="Auto, *, Auto, Auto">
+
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="10,10,10,6" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Classes="label" VerticalAlignment="Center"
+                           Text="Previous captures" />
+                <Button Grid.Column="1" Content="Refresh" Click="OnRefresh" />
+            </Grid>
+
+            <!-- The list is file names only. Every capture on the appliance lives in the same
+                 directory, so a path column would repeat the same prefix on every row and push the
+                 part that actually differs off the right edge of the panel. -->
+            <Border Grid.Row="1" Background="#0E1117" BorderBrush="#1E2530" BorderThickness="0,1,0,1">
+                <Grid>
+                    <ListBox ItemsSource="{Binding Items}"
+                             SelectedItem="{Binding SelectedItem}"
+                             IsVisible="{Binding HasItems}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="local:CaptureFileItem">
+                                <TextBlock Text="{Binding FileName}"
+                                           FontFamily="Consolas,Menlo,monospace"
+                                           TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock Classes="dim" Margin="12" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               IsVisible="{Binding IsEmpty}"
+                               Text="No captures saved on this device yet." />
+                </Grid>
+            </Border>
+
+            <!-- Details of the highlighted row. Fixed height so the list above does not jump as the
+                 operator arrows down it. -->
+            <Border Grid.Row="2" Background="#141820" Padding="10,8" MinHeight="86">
+                <StackPanel Spacing="3" IsVisible="{Binding HasSelection}">
+                    <Grid ColumnDefinitions="72, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="2">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="xs dim" Text="Captured" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="xs" Text="{Binding CapturedText}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="xs dim" Text="VIN" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Classes="xs"
+                                   FontFamily="Consolas,Menlo,monospace"
+                                   TextTrimming="CharacterEllipsis" Text="{Binding VinText}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="xs dim" Text="Vehicle" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Classes="xs"
+                                   TextTrimming="CharacterEllipsis" Text="{Binding VehicleText}" />
+                    </Grid>
+
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap" Text="{Binding DetailText}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Footer -->
+            <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto, Auto, Auto"
+                  Margin="10,8" ColumnSpacing="6">
+                <Button Grid.Column="0" Content="Close" Click="OnClose" />
+
+                <TextBlock Grid.Column="1" Classes="xs dim" VerticalAlignment="Center"
+                           Margin="8,0" TextTrimming="CharacterEllipsis"
+                           Text="{Binding Status}" />
+
+                <!-- Disabled until a stick is mounted. The label says USB rather than "Export" so
+                     that a greyed button explains itself on a panel with no hover to ask. -->
+                <Button Grid.Column="2" Content="Export to USB" Click="OnExportToUsb"
+                        IsEnabled="{Binding CanExportToUsb}" />
+
+                <!-- Not built yet. Shown rather than hidden so the capability is discoverable and
+                     the footer does not change shape when it ships. -->
+                <Button Grid.Column="3" Content="Push to cloud" IsEnabled="False" />
+
+                <Button Grid.Column="4" Content="View" Classes="action-primary"
+                        Click="OnView" IsEnabled="{Binding HasSelection}" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

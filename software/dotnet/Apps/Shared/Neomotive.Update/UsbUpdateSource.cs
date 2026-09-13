@@ -25,6 +25,19 @@ public sealed class UsbUpdateSource : IUpdateSource
         catch { return false; }
     }
 
+    /// <summary>
+    /// The removable roots currently mounted, most-specific first. Empty when no drive is present.
+    /// </summary>
+    /// <remarks>
+    /// Exposed because the drive is not only an update source: ScanTool also writes captures out to
+    /// it. Both need the same answer to "where is the stick mounted", and on the Pi that answer is
+    /// the udev rule's fixed mount point rather than anything a drive letter would tell you.
+    /// </remarks>
+    public static IReadOnlyList<string> GetRemovableRoots()
+        => (OperatingSystem.IsWindows() ? GetWindowsRemovableRoots() : GetLinuxMediaRoots())
+            .Where(Directory.Exists)
+            .ToArray();
+
     /// <summary>Returns ALL matching update packages on the drive (used to detect duplicates).</summary>
     public Task<IReadOnlyList<(UpdateManifest Manifest, string ZipPath)>> ScanAsync(
         string appId,

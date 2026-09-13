@@ -118,16 +118,17 @@
                      silently throw away where the operator had scrolled to. -->
                 <ContentControl Grid.Row="0" Name="InlineReviewHost" />
 
+                <!-- One button, not a picker plus Refresh plus Export. Choosing a saved run is a
+                     decision the operator makes from the file's date and vehicle, none of which a
+                     combo box of file names can show; the modal it opens has room for all of it. -->
                 <Border Grid.Row="1" Background="#141820" Padding="8,6"
                         BorderBrush="#1E2530" BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="Auto, *, Auto, Auto">
-                        <TextBlock Grid.Column="0" Classes="xs dim" VerticalAlignment="Center"
-                                   Margin="0,0,6,0" Text="Saved" />
-                        <ComboBox Grid.Column="1" HorizontalAlignment="Stretch"
-                                  ItemsSource="{Binding Recordings}"
-                                  SelectedItem="{Binding SelectedRecording}" />
-                        <Button Grid.Column="2" Content="Refresh" Margin="6,0,0,0" Click="OnRefresh" />
-                        <Button Grid.Column="3" Content="Export wide CSV" Margin="6,0,0,0"
+                    <Grid ColumnDefinitions="Auto, *, Auto">
+                        <Button Grid.Column="0" Content="Previous captures" Click="OnOpenBrowser" />
+                        <TextBlock Grid.Column="1" Classes="xs dim" VerticalAlignment="Center"
+                                   Margin="8,0" TextTrimming="CharacterEllipsis"
+                                   Text="{Binding LoadedSummary}" />
+                        <Button Grid.Column="2" Content="Export wide CSV"
                                 Click="OnExport" IsEnabled="{Binding HasLoadedRecording}" />
                     </Grid>
                 </Border>
@@ -154,6 +155,10 @@
 
         <Panel IsVisible="{Binding TriggerEditor.IsOpen}" Background="#CC0B0E13">
             <views:TriggerEditorView DataContext="{Binding TriggerEditor}" />
+        </Panel>
+
+        <Panel IsVisible="{Binding Browser.IsOpen}" Background="#CC0B0E13">
+            <views:CaptureBrowserView DataContext="{Binding Browser}" />
         </Panel>
     </Grid>
 </UserControl>

@@ -14,6 +14,7 @@ using Neomotive.ScanTool.Core.Capture;
 using Neomotive.ScanTool.Core.Diagnostics;
 using Neomotive.ScanTool.Core.Signals;
 using Meadow.Foundation.Telematics.Uds;
+using Neomotive.Vin.Contracts;
 
 namespace Neomotive.ScanTool.UI;
 
@@ -74,10 +75,13 @@ public class CaptureViewModel : INotifyPropertyChanged
     private string? _selectedRecording;
     private CaptureRecording? _loadedRecording;
 
-    public CaptureViewModel(IObd2Scanner scanner, IUdsScanner? udsScanner = null)
+    public CaptureViewModel(IObd2Scanner scanner, IUdsScanner? udsScanner = null, IVinDecoder? vinDecoder = null)
     {
         _scanner = scanner;
         _udsScanner = udsScanner;
+
+        Browser = new CaptureBrowserViewModel(vinDecoder);
+        Browser.ViewRequested += OnBrowserViewRequested;
 
         Picker = new SignalPickerViewModel { Table = Table };
         Picker.Confirmed += OnSignalsChosen;
@@ -102,6 +106,9 @@ public class CaptureViewModel : INotifyPropertyChanged
           + (SelectedKeys.Count > 4 ? $" +{SelectedKeys.Count - 4}" : string.Empty);
 
     /// <summary>Shared search-driven picker, opened as a modal overlay.</summary>
+    /// <summary>The "Previous captures" modal — the only way into a saved capture.</summary>
+    public CaptureBrowserViewModel Browser { get; }
+
     public SignalPickerViewModel Picker { get; }
 
     /// <summary>Modal editor for the trigger and stop conditions.</summary>
@@ -355,6 +362,7 @@ public class CaptureViewModel : INotifyPropertyChanged
         set
         {
             _dataDirectory = value;
+            Browser.DataDirectory = value;
             OnPropertyChanged();
             RefreshRecordings();
         }
@@ -1054,6 +1062,22 @@ public class CaptureViewModel : INotifyPropertyChanged
     {
         _statusTimer?.Stop();
         _statusTimer = null;
+    }
+
+    /// <summary>Opens the saved-capture browser.</summary>
+    public void OpenBrowser()
+    {
+        Browser.DataDirectory = DataDirectory;
+        Browser.Open();
+    }
+
+    /// <summary>
+    /// View from the browser: load the chosen file and land on Review with it drawn.
+    /// </summary>
+    private void OnBrowserViewRequested(string path)
+    {
+        SelectedRecording = path;
+        ShowReviewTab();
     }
 
     public void RefreshRecordings()

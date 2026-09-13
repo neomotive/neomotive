@@ -551,6 +551,20 @@ overlay `Panel` — the pattern `SignalPickerView` and `TriggerEditorView` alrea
 `CaptureView.axaml:89-94` — is the whole mechanism. Zoom, pan and lane-toggle state must survive
 the transition in both directions.
 
+**Choosing a saved capture** (shipped, T16). The Review bar's file picker was replaced by one
+**"Previous captures"** button opening a modal list of every capture on the device. Two things
+forced the change. A combo box of `capture-20250913-142211.csv` strings cannot answer the question
+an operator actually has — *which run was the one on the customer's truck?* — and the answer needs
+date, VIN and vehicle, which is three lines a combo row has no room for. And the modal is where
+per-file actions belong: **View**, **Export to USB** (disabled with no stick mounted), and **Push
+to cloud** (shown disabled; not built).
+
+The detail pane reads the JSON sidecar alone, never the recording. Loading samples for each
+highlighted row would parse a whole capture nobody has asked to see — imperceptible on the desktop,
+a stall per keypress on the Pi. Same reason the vehicle line uses `DecodeLocal`, not `DecodeAsync`:
+the tool is browsed while plugged into a car, which is precisely where the NHTSA call cannot
+resolve and only costs a timeout.
+
 
 ### AF7 — Remembered vehicles
 

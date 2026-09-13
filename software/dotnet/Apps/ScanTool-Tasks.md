@@ -505,6 +505,29 @@ crank in about four samples. Capture needs its own high-rate path.
   - Consequence worth remembering: a channel owns its scanner, so channels must be built from
     the same scanner instance the poll loop runs against.
 - [x] **T15** `ModuleSimulator` start-attempt scenarios — see Group U.
+- [x] **T16** Saved-capture browser — the Review tab's saved-file combo box, Refresh and path-less
+  file list were replaced by a single **"Previous captures"** button opening a modal
+  (`CaptureBrowserViewModel` + `CaptureBrowserView`, same overlay pattern as the signal picker,
+  because the Pi has no window manager).
+  - The list shows **file names only**. Every capture on the appliance lives in the same
+    directory, so a path column repeats one prefix on every row and pushes the part that differs
+    off the right edge of a 7" panel.
+  - Selecting a row shows date/time, VIN, vehicle and run size. It reads **only the sidecar**
+    (`CaptureReader.LoadMetadata`, added for this): loading the full recording per highlighted row
+    parses every sample of a capture nobody has asked to see, which is a visible stall on the Pi.
+  - Vehicle is `IVinDecoder.DecodeLocal`, never `DecodeAsync`. The tool is browsed plugged into a
+    car in a bay — exactly where there is no route to NHTSA — so a network decode would cost a
+    timeout per row. `CaptureViewModel` now takes the decoder as a third ctor argument.
+  - **Export to USB** copies the CSV *and* the sidecar to `NEOMOTIVE/captures` on the stick. The
+    CSV alone still loads, but arrives with no VIN, trigger description or sample rate. Needed
+    `UsbUpdateSource.GetRemovableRoots()` to be made public — the stick is no longer only an
+    update source. Disabled unless a drive is mounted; re-checked on open and Refresh, not on a
+    timer, since those are the two moments the operator has just plugged one in.
+  - **Push to cloud** is shown but disabled — future feature; hiding it would change the footer's
+    shape when it ships.
+  - **View** loads the file, closes the modal and lands on Review with the trace drawn.
+  - "Export wide CSV" stayed on the Review bar: it exports the *loaded* capture to the device, so
+    it belongs with the trace, not with the file browser.
 
 ## Group U — Simulator start-attempt scenarios (bench fixture for capture)
 
