@@ -22,8 +22,8 @@
                                 Click="OnShowReview" />
                     </StackPanel>
 
-                    <!-- Run state stays visible on both tabs: arming from Configure switches to
-                         Review, and an operator watching the trace still needs to see it running. -->
+                    <!-- Run state stays visible on both tabs: a capture armed from Configure keeps
+                         running while the operator reads an earlier trace on Review. -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                                 HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
                         <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="{Binding RateText}" />
@@ -86,19 +86,27 @@
                 <!-- Run controls -->
                 <Border Grid.Row="2" Background="#141820" Padding="8,6"
                         BorderBrush="#1E2530" BorderThickness="0,1,0,1">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Arm"     Click="OnArm"     IsEnabled="{Binding CanArm}" />
-                        <Button Content="Fire now" Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}"
+                    <!-- The three buttons this page exists for, sized accordingly. They are what
+                         an operator reaches for with the panel on a bench or a wing, often without
+                         looking straight at it, so they get the primary size rather than the
+                         setup rows above. -->
+                    <Grid ColumnDefinitions="Auto, Auto, Auto, *" ColumnSpacing="8">
+                        <Button Grid.Column="0" Content="Arm" Classes="action-primary"
+                                Click="OnArm" IsEnabled="{Binding CanArm}" />
+                        <Button Grid.Column="1" Content="Fire now" Classes="action-primary"
+                                Click="OnTrigger" IsEnabled="{Binding IsWaitingForTrigger}"
                                 ToolTip.Tip="Trigger the armed capture immediately, without waiting for the condition" />
-                        <Button Content="Stop"    Click="OnStop"    IsEnabled="{Binding IsArmed}" />
-                        <TextBlock Classes="xs" VerticalAlignment="Center" Text="{Binding Status}"
-                                   TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
+                        <Button Grid.Column="2" Content="Stop" Classes="action-primary danger"
+                                Click="OnStop" IsEnabled="{Binding IsArmed}" />
+                        <TextBlock Grid.Column="3" Classes="xs" VerticalAlignment="Center"
+                                   Margin="4,0,0,0" Text="{Binding Status}"
+                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
+                    </Grid>
                 </Border>
 
                 <TextBlock Grid.Row="3" Classes="xs dim" Margin="10" TextWrapping="Wrap"
                            VerticalAlignment="Top"
-                           Text="Arming switches to the Review tab, where the trace is drawn. Saved captures are picked there too." />
+                           Text="Arming leaves you here so you can fire or stop the run. The trace is drawn on the Review tab once the capture triggers; saved captures are picked there too." />
             </Grid>
 
             <!-- ── Review ───────────────────────────────────────────────────────────────── -->

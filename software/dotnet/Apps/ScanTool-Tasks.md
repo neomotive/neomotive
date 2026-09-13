@@ -1297,3 +1297,22 @@ sub-tabs. Tab label stayed "DTCs" — that is what techs say.
 - [ ] Collapse state is per-slot, and a slot carries two signals (primary plus the selection four
       later). Decide whether tracks should be one signal each, which would make collapse per-signal
       and drop the arbitrary index pairing — a bigger change, not taken here.
+
+## AJ — Capture run controls (2026-09-13)
+
+- [x] Arming no longer jumps to the Review tab. The trace does not exist until the trigger fires,
+      so the switch showed an empty pane and moved Fire now / Stop out of reach at the moment they
+      matter most. `OnArm` just arms; the tab is the operator's to change.
+- [x] Arm / Fire now / Stop promoted to `action-primary` (48px tall, 150px wide), Stop in the
+      danger variant. These are the buttons the page exists for and are pressed without looking
+      straight at the panel; the profile and signal pickers above stay at the default size.
+- [x] Configure-tab hint rewritten — it used to say arming switches tabs.
+- [ ] Eyeball on the 800x480 panel: three 150px buttons plus spacing is ~466px, leaving ~330px for
+      the status line. Confirm a long status string wraps rather than pushing the row.
+- [x] The view follows to Review when a capture *completes* — that is the moment there is
+      something to see. Done in the run loop's finally block, after `SelectedRecording` is set so
+      the pane already holds the trace. Gated on `count > 0`: a run stopped before the trigger
+      fired leaves Review with nothing new, and switching would only take away the controls needed
+      to arm the next attempt.
+- [ ] Eyeball: a manual Stop that did record samples also switches, since the outcome is the same
+      trace. Confirm that reads right to an operator who pressed Stop meaning "abandon this one".

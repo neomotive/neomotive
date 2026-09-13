@@ -51,14 +51,10 @@ public partial class CaptureView : UserControl
 
     private void OnOpenTrigger(object? sender, RoutedEventArgs e) => Vm.OpenTriggerEditor();
 
-    private void OnArm(object? sender, RoutedEventArgs e)
-    {
-        Vm.Arm();
-
-        // Arming is the moment the operator stops setting things up and starts watching, so the
-        // view follows them there instead of leaving them on a page of controls.
-        Vm.ShowReviewTab();
-    }
+    // Stays on Configure. Arming does not fill the Review tab with anything — the trace only
+    // exists once the trigger fires — so following the operator there showed them an empty pane
+    // and took away the Stop button they might want next.
+    private void OnArm(object? sender, RoutedEventArgs e) => Vm.Arm();
 
     private void OnTrigger(object? sender, RoutedEventArgs e) => Vm.TriggerNow();
 

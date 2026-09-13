@@ -1000,6 +1000,12 @@ public class CaptureViewModel : INotifyPropertyChanged
                 if (csvPath is not null && count > 0)
                 {
                     SelectedRecording = csvPath;
+
+                    // Now there is something to look at, so follow the operator to it. Gated on
+                    // having recorded something: a run stopped before the trigger fired leaves the
+                    // Review tab with nothing new, and switching to it would only take away the
+                    // controls needed to arm the next attempt.
+                    ShowReviewTab();
                 }
             });
         }
