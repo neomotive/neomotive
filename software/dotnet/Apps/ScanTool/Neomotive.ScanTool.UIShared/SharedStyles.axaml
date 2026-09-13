@@ -63,6 +63,15 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
 
+    <!-- The live number under a waveform track's signal name. Large enough to read from a step
+         back with the panel on a fender, since a collapsed track is nothing but this number. The
+         foreground is set per-track in the markup to match that signal's trace colour. -->
+    <Style Selector="TextBlock.track-value">
+        <Setter Property="FontFamily" Value="Consolas,Cascadia Code,monospace" />
+        <Setter Property="FontSize"   Value="17" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
     <Style Selector="TextBlock.vin">
         <Setter Property="FontSize"   Value="20" />
         <Setter Property="Foreground" Value="{StaticResource BrushFgValue}" />

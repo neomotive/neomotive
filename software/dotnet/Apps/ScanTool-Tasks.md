@@ -1280,3 +1280,20 @@ sub-tabs. Tab label stayed "DTCs" — that is what techs say.
 - [ ] Eyeball on the 800x480 Pi panel. Not yet done — build only.
 - [ ] Decide whether other screens have a single primary action worth promoting (Capture's
       start/stop is the obvious candidate).
+
+### AI — Waveform track numerics and collapse
+
+- [x] Current value shown under each signal name on every waveform track, coloured to match that
+      signal's trace so number and line pair up without a legend. Uses `DisplayValue` (value +
+      unit), since on a collapsed track the number is the entire readout.
+- [x] Per-track Collapse / Expand button. Spelled out rather than a chevron — touch panel, no hover.
+- [x] Collapsing gives the track's height to the tracks still drawing: `SlotGrid` rows are Star
+      when expanded, Auto when collapsed or unused. Slots carrying no signal hide entirely instead
+      of holding an empty chart open.
+- [x] Labels, numbers and layout refresh whether or not the poll loop is running; only the traces
+      are skipped when stopped, and a stopped pane keeps its last trace on screen.
+- [ ] Eyeball on the 800x480 Pi panel — build only so far. Check the header fits at 580px pane
+      width with two long PID names plus the button.
+- [ ] Collapse state is per-slot, and a slot carries two signals (primary plus the selection four
+      later). Decide whether tracks should be one signal each, which would make collapse per-signal
+      and drop the arbitrary index pairing — a bigger change, not taken here.

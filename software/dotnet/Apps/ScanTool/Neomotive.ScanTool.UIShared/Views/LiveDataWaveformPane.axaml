@@ -11,64 +11,157 @@
                Text="Select PIDs from the left panel to graph"
                HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-    <!-- 4 stacked waveform slots -->
-    <StackPanel IsVisible="{Binding HasSelectedPids}" Spacing="0">
+    <!-- Four tracks, each carrying up to two signals - the primary line plus the signal four
+         positions later in the selection, overlaid on the same canvas.
 
-        <Border Name="Slot0" Height="95" Background="#0E1117"
-                BorderBrush="#1E2530" BorderThickness="0,0,0,1" Margin="0">
-            <Grid>
-                <Canvas Name="Slot0Canvas" ClipToBounds="True">
-                    <Polyline Name="Slot0Primary"   Stroke="#4CAF50" StrokeThickness="1.5"/>
-                    <Polyline Name="Slot0Secondary" Stroke="#2196F3" StrokeThickness="1.5"/>
-                </Canvas>
-                <TextBlock Name="Slot0LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
-                <TextBlock Name="Slot0RightLabel" Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
-            </Grid>
-        </Border>
+         A Grid rather than the fixed-height StackPanel it was: collapsing a track has to give its
+         height to the tracks still drawing, or hiding a chart would only leave a gap. Expanded
+         rows are Star and share what is left; collapsed and unused ones are Auto and take only
+         what their header needs. Row heights are set in code-behind, where the collapse state
+         lives. -->
+    <Grid Name="SlotGrid" IsVisible="{Binding HasSelectedPids}"
+          RowDefinitions="*, *, *, *">
 
-        <Border Name="Slot1" Height="95" Background="#0E1117"
+        <Border Name="Slot0" Grid.Row="0" Background="#0E1117"
                 BorderBrush="#1E2530" BorderThickness="0,0,0,1">
-            <Grid>
-                <Canvas Name="Slot1Canvas" ClipToBounds="True">
-                    <Polyline Name="Slot1Primary"   Stroke="#FF9800" StrokeThickness="1.5"/>
-                    <Polyline Name="Slot1Secondary" Stroke="#9C27B0" StrokeThickness="1.5"/>
+            <Grid RowDefinitions="Auto, *">
+
+                <!-- Header: each signal's name with its current value directly beneath, coloured
+                     to match its trace so the number and the line it belongs to are readable as a
+                     pair without a legend. -->
+                <Grid Grid.Row="0" ColumnDefinitions="*, *, Auto" Margin="6,3,4,2">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Name="Slot0LeftLabel" Classes="xs dim"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot0LeftValue" Classes="track-value" Foreground="#4CAF50" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                        <TextBlock Name="Slot0RightLabel" Classes="xs dim"
+                                   HorizontalAlignment="Right"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot0RightValue" Classes="track-value" Foreground="#2196F3"
+                                   HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <!-- Spelled out rather than a chevron: the panel is touch-only, so there is no
+                         hover to explain an icon and the label has to carry the meaning itself. -->
+                    <Button Name="Slot0Toggle" Grid.Column="2" Tag="0"
+                            Classes="action-sm" Content="Collapse"
+                            VerticalAlignment="Center" Margin="8,0,0,0"
+                            Click="OnToggleSlot" />
+                </Grid>
+
+                <Canvas Name="Slot0Canvas" Grid.Row="1" MinHeight="56" ClipToBounds="True">
+                    <Polyline Name="Slot0Primary"   Stroke="#4CAF50" StrokeThickness="1.5" />
+                    <Polyline Name="Slot0Secondary" Stroke="#2196F3" StrokeThickness="1.5" />
                 </Canvas>
-                <TextBlock Name="Slot1LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
-                <TextBlock Name="Slot1RightLabel" Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
-        <Border Name="Slot2" Height="95" Background="#0E1117"
+        <Border Name="Slot1" Grid.Row="1" Background="#0E1117"
                 BorderBrush="#1E2530" BorderThickness="0,0,0,1">
-            <Grid>
-                <Canvas Name="Slot2Canvas" ClipToBounds="True">
-                    <Polyline Name="Slot2Primary"   Stroke="#E91E63" StrokeThickness="1.5"/>
-                    <Polyline Name="Slot2Secondary" Stroke="#00BCD4" StrokeThickness="1.5"/>
+            <Grid RowDefinitions="Auto, *">
+
+                <!-- Header: each signal's name with its current value directly beneath, coloured
+                     to match its trace so the number and the line it belongs to are readable as a
+                     pair without a legend. -->
+                <Grid Grid.Row="0" ColumnDefinitions="*, *, Auto" Margin="6,3,4,2">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Name="Slot1LeftLabel" Classes="xs dim"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot1LeftValue" Classes="track-value" Foreground="#FF9800" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                        <TextBlock Name="Slot1RightLabel" Classes="xs dim"
+                                   HorizontalAlignment="Right"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot1RightValue" Classes="track-value" Foreground="#9C27B0"
+                                   HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <!-- Spelled out rather than a chevron: the panel is touch-only, so there is no
+                         hover to explain an icon and the label has to carry the meaning itself. -->
+                    <Button Name="Slot1Toggle" Grid.Column="2" Tag="1"
+                            Classes="action-sm" Content="Collapse"
+                            VerticalAlignment="Center" Margin="8,0,0,0"
+                            Click="OnToggleSlot" />
+                </Grid>
+
+                <Canvas Name="Slot1Canvas" Grid.Row="1" MinHeight="56" ClipToBounds="True">
+                    <Polyline Name="Slot1Primary"   Stroke="#FF9800" StrokeThickness="1.5" />
+                    <Polyline Name="Slot1Secondary" Stroke="#9C27B0" StrokeThickness="1.5" />
                 </Canvas>
-                <TextBlock Name="Slot2LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
-                <TextBlock Name="Slot2RightLabel" Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
-        <Border Name="Slot3" Height="95" Background="#0E1117">
-            <Grid>
-                <Canvas Name="Slot3Canvas" ClipToBounds="True">
-                    <Polyline Name="Slot3Primary"   Stroke="#CDDC39" StrokeThickness="1.5"/>
-                    <Polyline Name="Slot3Secondary" Stroke="#FF5722" StrokeThickness="1.5"/>
+        <Border Name="Slot2" Grid.Row="2" Background="#0E1117"
+                BorderBrush="#1E2530" BorderThickness="0,0,0,1">
+            <Grid RowDefinitions="Auto, *">
+
+                <!-- Header: each signal's name with its current value directly beneath, coloured
+                     to match its trace so the number and the line it belongs to are readable as a
+                     pair without a legend. -->
+                <Grid Grid.Row="0" ColumnDefinitions="*, *, Auto" Margin="6,3,4,2">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Name="Slot2LeftLabel" Classes="xs dim"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot2LeftValue" Classes="track-value" Foreground="#E91E63" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                        <TextBlock Name="Slot2RightLabel" Classes="xs dim"
+                                   HorizontalAlignment="Right"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot2RightValue" Classes="track-value" Foreground="#00BCD4"
+                                   HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <!-- Spelled out rather than a chevron: the panel is touch-only, so there is no
+                         hover to explain an icon and the label has to carry the meaning itself. -->
+                    <Button Name="Slot2Toggle" Grid.Column="2" Tag="2"
+                            Classes="action-sm" Content="Collapse"
+                            VerticalAlignment="Center" Margin="8,0,0,0"
+                            Click="OnToggleSlot" />
+                </Grid>
+
+                <Canvas Name="Slot2Canvas" Grid.Row="1" MinHeight="56" ClipToBounds="True">
+                    <Polyline Name="Slot2Primary"   Stroke="#E91E63" StrokeThickness="1.5" />
+                    <Polyline Name="Slot2Secondary" Stroke="#00BCD4" StrokeThickness="1.5" />
                 </Canvas>
-                <TextBlock Name="Slot3LeftLabel"  Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="4,2,0,0"/>
-                <TextBlock Name="Slot3RightLabel" Classes="xs dim" TextWrapping="NoWrap"
-                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"/>
             </Grid>
         </Border>
 
-    </StackPanel>
+        <Border Name="Slot3" Grid.Row="3" Background="#0E1117"
+                BorderBrush="#1E2530" BorderThickness="0">
+            <Grid RowDefinitions="Auto, *">
+
+                <!-- Header: each signal's name with its current value directly beneath, coloured
+                     to match its trace so the number and the line it belongs to are readable as a
+                     pair without a legend. -->
+                <Grid Grid.Row="0" ColumnDefinitions="*, *, Auto" Margin="6,3,4,2">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Name="Slot3LeftLabel" Classes="xs dim"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot3LeftValue" Classes="track-value" Foreground="#CDDC39" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                        <TextBlock Name="Slot3RightLabel" Classes="xs dim"
+                                   HorizontalAlignment="Right"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Name="Slot3RightValue" Classes="track-value" Foreground="#FF5722"
+                                   HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <!-- Spelled out rather than a chevron: the panel is touch-only, so there is no
+                         hover to explain an icon and the label has to carry the meaning itself. -->
+                    <Button Name="Slot3Toggle" Grid.Column="2" Tag="3"
+                            Classes="action-sm" Content="Collapse"
+                            VerticalAlignment="Center" Margin="8,0,0,0"
+                            Click="OnToggleSlot" />
+                </Grid>
+
+                <Canvas Name="Slot3Canvas" Grid.Row="1" MinHeight="56" ClipToBounds="True">
+                    <Polyline Name="Slot3Primary"   Stroke="#CDDC39" StrokeThickness="1.5" />
+                    <Polyline Name="Slot3Secondary" Stroke="#FF5722" StrokeThickness="1.5" />
+                </Canvas>
+            </Grid>
+        </Border>
+
+    </Grid>
     </Grid>
 </UserControl>
