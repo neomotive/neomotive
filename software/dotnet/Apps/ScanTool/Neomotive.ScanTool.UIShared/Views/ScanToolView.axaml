@@ -90,6 +90,13 @@
             </Panel>
         </Grid>
 
+        <!-- Connection-failure help. Hosted at the shell so it covers the tab bar too: a failed
+             connect is not a per-tab condition, and the diagram wants the whole panel. -->
+        <Panel Grid.Row="0" Grid.RowSpan="2"
+               IsVisible="{Binding ShowNoVehicleHelp}" Background="#CC0B0E13">
+            <views:NoVehicleDialog />
+        </Panel>
+
     </Grid>
 
 </UserControl>

@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
+             x:Class="Neomotive.ScanTool.UI.Views.Obd2ConnectorDiagram"
+             x:DataType="views:Obd2ConnectorDiagram">
+
+    <StackPanel Spacing="6">
+
+        <!-- Scaled rather than fixed: the same drawing has to read on an 800x480 panel and in a
+             desktop window, and a bitmap would be soft on one of them. -->
+        <Viewbox Stretch="Uniform" MaxHeight="180" HorizontalAlignment="Center">
+            <Grid Width="440" Height="150">
+
+                <!-- The J1962 socket outline: a flat top edge with the latch, narrowing towards
+                     the bottom. Drawn behind the pins so the trapezoid reads as the housing. -->
+                <Path Fill="#11151C" Stroke="#3A4250" StrokeThickness="2"
+                      Data="M 10,4 L 430,4 L 430,26 L 414,140 L 26,140 L 10,26 Z" />
+
+                <!-- Latch tab, centred on the top edge — the feature that tells you which way up
+                     the socket is when you are lying under a dashboard. -->
+                <Path Fill="#1A1F28" Stroke="#3A4250" StrokeThickness="2"
+                      Data="M 180,4 L 260,4 L 260,20 L 180,20 Z" />
+
+                <Grid RowDefinitions="Auto, Auto" Margin="26,30,26,0" VerticalAlignment="Top">
+
+                    <!-- Top row: pins 1-8 -->
+                    <ItemsControl Grid.Row="0" ItemsSource="{Binding TopRow}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" Columns="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="views:Obd2Pin">
+                                <StackPanel Spacing="1" HorizontalAlignment="Center">
+                                    <Border Width="26" Height="26" CornerRadius="13"
+                                            Background="{Binding Fill}"
+                                            BorderBrush="{Binding Stroke}"
+                                            BorderThickness="{Binding StrokeWidth}"
+                                            HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding NumberText}" FontSize="12"
+                                                   FontWeight="{Binding Weight}"
+                                                   Foreground="{Binding Foreground}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <!-- The label is the point. A pin that is only a different
+                                         colour tells a tech nothing on a panel with no hover. -->
+                                    <TextBlock Text="{Binding Label}" FontSize="9"
+                                               FontWeight="{Binding Weight}"
+                                               Foreground="{Binding Foreground}"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Bottom row: pins 9-16 -->
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding BottomRow}" Margin="0,4,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" Columns="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="views:Obd2Pin">
+                                <StackPanel Spacing="1" HorizontalAlignment="Center">
+                                    <Border Width="26" Height="26" CornerRadius="13"
+                                            Background="{Binding Fill}"
+                                            BorderBrush="{Binding Stroke}"
+                                            BorderThickness="{Binding StrokeWidth}"
+                                            HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding NumberText}" FontSize="12"
+                                                   FontWeight="{Binding Weight}"
+                                                   Foreground="{Binding Foreground}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Label}" FontSize="9"
+                                               FontWeight="{Binding Weight}"
+                                               Foreground="{Binding Foreground}"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Grid>
+        </Viewbox>
+
+        <TextBlock Classes="xs dim" TextAlignment="Center" TextWrapping="Wrap"
+                   Text="Looking into the socket under the dashboard, latch tab upwards." />
+
+        <!-- Legend. Colour is a shortcut for someone who already knows; the words are for
+             everyone else, and they are what survives a bad viewing angle.
+             Wraps rather than scrolls: three entries side by side overrun the 800 px panel, and a
+             legend that runs off the edge explains nothing. -->
+        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="7,2">
+                <Border Width="12" Height="12" CornerRadius="6" Background="#16351F"
+                        BorderBrush="#22C55E" BorderThickness="2" VerticalAlignment="Center" />
+                <TextBlock Classes="xs" Foreground="#22C55E" VerticalAlignment="Center"
+                           Text="CAN — this tool reads these" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="7,2">
+                <Border Width="12" Height="12" CornerRadius="6" Background="#3A2E18"
+                        BorderBrush="#F5A524" BorderThickness="1" VerticalAlignment="Center" />
+                <TextBlock Classes="xs" Foreground="#F5A524" VerticalAlignment="Center"
+                           Text="Older protocols — not supported" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="7,2">
+                <Border Width="12" Height="12" CornerRadius="6" Background="#2A2F3A"
+                        BorderBrush="#6B7686" BorderThickness="1" VerticalAlignment="Center" />
+                <TextBlock Classes="xs dim" VerticalAlignment="Center" Text="Power and ground" />
+            </StackPanel>
+        </WrapPanel>
+
+    </StackPanel>
+</UserControl>

@@ -20,4 +20,5 @@ public partial class ConnectionView : UserControl
 
     private void OnConnect(object? sender, RoutedEventArgs e)    => _ = Vm.ConnectAsync();
     private void OnDisconnect(object? sender, RoutedEventArgs e) => Vm.Disconnect();
+    private void OnShowPinHelp(object? sender, RoutedEventArgs e) => Vm.OpenNoVehicleHelp();
 }

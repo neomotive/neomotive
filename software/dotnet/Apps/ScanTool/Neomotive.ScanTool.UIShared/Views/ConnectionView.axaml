@@ -39,6 +39,15 @@
                    IsVisible="{Binding IsNotConnected}"
                    Text="{Binding AdapterHint}" />
 
+        <!-- The same help the failure dialog shows, reachable without having to fail again.
+             Spelled out rather than a bare "Help": on a touch panel the label is the only thing
+             that says what the button will do. -->
+        <Button Content="Which pins should I check?"
+                Classes="action-sm"
+                HorizontalAlignment="Left"
+                IsVisible="{Binding IsNotConnected}"
+                Click="OnShowPinHelp" />
+
     </StackPanel>
 
 </UserControl>

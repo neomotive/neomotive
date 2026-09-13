@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
+             x:Class="Neomotive.ScanTool.UI.Views.NoVehicleDialog"
+             x:DataType="local:MainWindowViewModel">
+
+    <!-- Overlay content, not a Window: the Pi runs a single-view DRM lifetime with no window
+         manager, so a real dialog would have nowhere to go. Same pattern as the signal picker. -->
+    <Border Background="#141820" BorderBrush="#2E3440" BorderThickness="1" CornerRadius="6"
+            Margin="16" MaxWidth="640" VerticalAlignment="Center" HorizontalAlignment="Center">
+
+        <Grid RowDefinitions="Auto, *, Auto">
+
+            <Border Grid.Row="0" Background="#1A1F28" Padding="14,10"
+                    BorderBrush="#2E3440" BorderThickness="0,0,0,1" CornerRadius="6,6,0,0">
+                <TextBlock Classes="heading" Text="{Binding NoVehicleHeadline}" />
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12" Margin="14,12">
+
+                    <!-- What the tool actually observed, before any advice. A tech can judge the
+                         advice for themselves once they know which of the two cases this is. -->
+                    <TextBlock Classes="value" TextWrapping="Wrap" Text="{Binding NoVehicleDetail}" />
+
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap" Text="{Binding NoVehicleAdvice}" />
+
+                    <views:Obd2ConnectorDiagram />
+
+                    <!-- One line, not a paragraph. The advice above already covers the why; this
+                         is the single instruction to act on, and on a 480 px panel anything longer
+                         is pushed below the fold where it may as well not exist. -->
+                    <TextBlock Classes="xs dim" TextWrapping="Wrap"
+                               Text="If pins 6 and 14 are empty, this vehicle has no CAN bus to talk to." />
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2" Background="#1A1F28" Padding="14,10"
+                    BorderBrush="#2E3440" BorderThickness="0,1,0,0" CornerRadius="0,0,6,6">
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    <Button Grid.Column="0" Content="Try again" Classes="action-sm"
+                            IsEnabled="{Binding CanConnect}" Click="OnRetry" />
+                    <Button Grid.Column="2" Content="Close" Classes="action-sm" Click="OnClose" />
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Border>
+</UserControl>

@@ -701,9 +701,14 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         IsConnecting = true;
         StatusText = "Connecting…";
 
+        // Frames seen before the attempt, so the count below is what arrived *during* it.
+        var framesBefore = _loggingBus?.FramesReceived ?? 0;
+
         try
         {
             var ok = await Task.Run(() => _scanner.ConnectAsync(_opCts.Token));
+            var framesDuring = (_loggingBus?.FramesReceived ?? 0) - framesBefore;
+
             Dispatcher.UIThread.Post(() =>
             {
                 IsConnected = ok;
@@ -715,6 +720,10 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
                     IsSimulated = _scanner.IsSimulated;
                     ShowVehicle();
                     _ = RefreshAllAsync(_opCts.Token);
+                }
+                else
+                {
+                    ExplainNoVehicle(framesDuring);
                 }
             });
         }
@@ -735,6 +744,89 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             });
         }
     }
+
+    // ── "No vehicle detected" help ────────────────────────────────────────────
+
+    private bool _showNoVehicleHelp;
+
+    /// <summary>Whether the connection-failure dialog is up.</summary>
+    public bool ShowNoVehicleHelp
+    {
+        get => _showNoVehicleHelp;
+        private set { _showNoVehicleHelp = value; OnPropertyChanged(); }
+    }
+
+    private string _noVehicleHeadline = "No vehicle detected";
+    public string NoVehicleHeadline
+    {
+        get => _noVehicleHeadline;
+        private set { _noVehicleHeadline = value; OnPropertyChanged(); }
+    }
+
+    private string _noVehicleDetail = "";
+    public string NoVehicleDetail
+    {
+        get => _noVehicleDetail;
+        private set { _noVehicleDetail = value; OnPropertyChanged(); }
+    }
+
+    private string _noVehicleAdvice = "";
+    public string NoVehicleAdvice
+    {
+        get => _noVehicleAdvice;
+        private set { _noVehicleAdvice = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>
+    /// Works out why the connection failed and says so, rather than leaving "No vehicle detected"
+    /// to stand for two completely different faults.
+    /// </summary>
+    /// <remarks>
+    /// The distinction the frame count buys: a silent bus means nothing is transmitting on pins 6
+    /// and 14 — usually a vehicle too old for CAN, where no setting or bitrate will ever help. A
+    /// busy bus with no answer means CAN is working and the request was ignored, which is a
+    /// different problem with different remedies. Conflating the two sends a tech looking for a
+    /// wiring fault on a car that simply predates the protocol.
+    /// </remarks>
+    private void ExplainNoVehicle(long framesDuringAttempt)
+    {
+        if (framesDuringAttempt == 0)
+        {
+            NoVehicleHeadline = "No CAN activity on the bus";
+            NoVehicleDetail =
+                "Nothing at all was received on pins 6 and 14 during the attempt — not one frame. " +
+                "The tool transmitted and the bus stayed silent.";
+            NoVehicleAdvice =
+                "Most likely the vehicle has no CAN bus on its diagnostic socket. CAN became " +
+                "mandatory in the US for the 2008 model year and was phased in from 2003; before " +
+                "that most vehicles used J1850 (GM and Ford) or ISO 9141 / KWP2000, which this " +
+                "tool has no hardware for. Also worth ruling out: ignition not switched on, the " +
+                "adapter not seated in the socket, or a damaged cable.";
+        }
+        else
+        {
+            NoVehicleHeadline = "CAN is alive, but nothing answered";
+            NoVehicleDetail =
+                $"{framesDuringAttempt} CAN frame(s) arrived during the attempt, so the bus is " +
+                "working and wired correctly — but no module replied to the OBD-II request for the VIN.";
+            NoVehicleAdvice =
+                "Try: switching the ignition fully on (engine need not be running); waiting a few " +
+                "seconds after key-on for modules to wake; or checking whether this vehicle puts " +
+                "diagnostics on a second CAN bus. A gateway that filters unrecognised testers will " +
+                "also look exactly like this.";
+        }
+
+        ShowNoVehicleHelp = true;
+    }
+
+    /// <summary>Opens the same help on demand, so it is not a one-shot at the moment of failure.</summary>
+    public void OpenNoVehicleHelp()
+    {
+        if (string.IsNullOrEmpty(_noVehicleDetail)) ExplainNoVehicle(_loggingBus?.FramesReceived ?? 0);
+        ShowNoVehicleHelp = true;
+    }
+
+    public void DismissNoVehicleHelp() => ShowNoVehicleHelp = false;
 
     public void Disconnect()
     {
