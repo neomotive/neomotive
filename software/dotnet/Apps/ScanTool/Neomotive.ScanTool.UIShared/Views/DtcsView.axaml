@@ -2,105 +2,232 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
              xmlns:core="clr-namespace:Neomotive.ScanTool.Core;assembly=Neomotive.ScanTool.Core"
+             xmlns:veh="clr-namespace:Neomotive.ScanTool.Core.Vehicles;assembly=Neomotive.ScanTool.Core"
              x:Class="Neomotive.ScanTool.UI.Views.DtcsView"
              x:DataType="local:MainWindowViewModel"
-             Padding="20,16">
+             Padding="16,12">
 
-    <Grid RowDefinitions="Auto, *, Auto">
+    <!-- One page for every trouble code in the vehicle, whatever protocol produced it. A tech
+         asks what is wrong, not whether the answer arrived on $03 or $19, so OBD-II and UDS
+         modules share one list and the protocol rides along as a tag on the address line.
 
-        <!-- MIL status -->
-        <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,14">
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Classes="label" Text="MIL:" VerticalAlignment="Center" />
-                <TextBlock Classes="mil-on"  IsVisible="{Binding MilOn}"  Text="ON  (Check Engine)" />
-                <TextBlock Classes="mil-off" IsVisible="{Binding MilOff}" Text="OFF" />
-            </StackPanel>
+         Module introspection - identification DIDs, arbitrary DID reads - is deliberately not
+         here. That is bus work, and it lives on Diag > UDS. -->
+    <Grid RowDefinitions="*, Auto" ColumnDefinitions="260, *">
 
-            <!-- Which codes are new since the vehicle was last here. A different question from
-                 stored-versus-pending, and usually the one being asked. -->
-            <TextBlock Classes="value" TextWrapping="Wrap"
-                       IsVisible="{Binding HasNewCodesSinceLastVisit}"
-                       Text="{Binding NewCodesText}" />
-        </StackPanel>
+        <!-- Left column: vehicle summary, then every module that answered -->
+        <Border Grid.Row="0" Grid.Column="0"
+                Background="#141820"
+                BorderBrush="#2E3440"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="0,0,12,8">
+            <Grid RowDefinitions="Auto, Auto, *">
 
-        <!-- Per-module DTC groups -->
-        <ScrollViewer Grid.Row="1">
-            <ItemsControl ItemsSource="{Binding ModuleDtcGroups}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="core:ModuleDtcGroup">
-                        <StackPanel Margin="0,0,0,18">
+                <!-- Vehicle-level facts sit above the module list because that is what they are:
+                     MIL state and "new since last visit" are true of the vehicle, not of whichever
+                     module happens to be selected. -->
+                <StackPanel Grid.Row="0" Margin="10,8" Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Classes="label" Text="MIL:" VerticalAlignment="Center" />
+                        <TextBlock Classes="mil-on"  IsVisible="{Binding MilOn}"  Text="ON  (Check Engine)" />
+                        <TextBlock Classes="mil-off" IsVisible="{Binding MilOff}" Text="OFF" />
+                    </StackPanel>
+                    <TextBlock Classes="dim xs" Text="{Binding FaultSummaryText}" />
+                    <TextBlock Classes="value xs" TextWrapping="Wrap"
+                               IsVisible="{Binding HasNewCodesSinceLastVisit}"
+                               Text="{Binding NewCodesText}" />
+                </StackPanel>
 
-                            <!-- Module header -->
-                            <Grid ColumnDefinitions="*, Auto" Margin="0,0,0,4">
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                    <TextBlock Classes="value" FontWeight="SemiBold" Text="{Binding Module.Name}" />
-                                    <TextBlock Classes="dim xs" VerticalAlignment="Center" Text="{Binding Module.AddressHex}" />
-                                </StackPanel>
-                                <Button Grid.Column="1"
-                                        Content="Clear"
-                                        Classes="action-sm"
-                                        Click="OnClearModuleDtcs" />
-                            </Grid>
+                <Rectangle Grid.Row="1" Height="1" Fill="#2E3440" Margin="0,2,0,0" />
 
-                            <!-- Separator -->
-                            <Rectangle Height="1" Fill="#2E3440" Margin="0,0,0,8" />
+                <!-- Discovery lives here as well as on Diag > UDS: a tech who opens DTCs first
+                     should not have to learn that another tab exists before the list is complete. -->
+                <Grid Grid.Row="2" RowDefinitions="Auto, Auto, *">
+                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto" Margin="10,8,10,4" VerticalAlignment="Center">
+                        <TextBlock Grid.Column="0" Classes="heading" Text="MODULES" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Probe known" Classes="action-sm"
+                                Margin="0,0,4,0"
+                                IsVisible="{Binding HasRememberedModules}"
+                                IsEnabled="{Binding CanScanUds}"
+                                Click="OnProbeRemembered" />
+                        <Button Grid.Column="2" Content="Full scan" Classes="action-sm"
+                                IsVisible="{Binding !IsScanningUds}"
+                                IsEnabled="{Binding CanScanUds}"
+                                Click="OnScanModules" />
+                        <Button Grid.Column="2" Content="Cancel" Classes="action-sm"
+                                IsVisible="{Binding IsScanningUds}"
+                                Click="OnCancelScan" />
+                    </Grid>
 
-                            <!-- No faults -->
-                            <TextBlock Classes="dim"
-                                       IsVisible="{Binding !HasAny}"
-                                       Text="No DTCs" />
+                    <ProgressBar Grid.Row="1" Height="4" Minimum="0" Maximum="1" Margin="10,0"
+                                 IsVisible="{Binding IsScanningUds}"
+                                 Value="{Binding UdsScanProgress}" />
 
-                            <!-- Stored DTCs -->
-                            <TextBlock Classes="heading"
-                                       IsVisible="{Binding HasStoredDtcs}"
-                                       Text="STORED"
-                                       Margin="0,0,0,4" />
-                            <ItemsControl ItemsSource="{Binding StoredDtcs}"
-                                          IsVisible="{Binding HasStoredDtcs}">
+                    <ScrollViewer Grid.Row="2">
+                        <StackPanel>
+                            <TextBlock Classes="dim italic" Margin="10" TextWrapping="Wrap"
+                                       IsVisible="{Binding HasNoFaultModules}"
+                                       Text="No modules have answered yet. Refresh reads the legislated OBD-II modules; Full scan also sweeps the UDS address ranges." />
+
+                            <ItemsControl ItemsSource="{Binding FaultModules}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="core:DiagnosticTroubleCode">
-                                        <Grid ColumnDefinitions="80, *" Margin="0,2">
-                                            <TextBlock Grid.Column="0" Classes="error" Text="{Binding Code}" />
-                                            <TextBlock Grid.Column="1" Classes="muted" Text="{Binding Description}" />
-                                        </Grid>
+                                    <DataTemplate x:DataType="core:FaultModule">
+                                        <Button Classes="live-pid-row"
+                                                Click="OnSelectModule"
+                                                Tag="{Binding}">
+                                            <Grid ColumnDefinitions="*, Auto" Margin="4,2">
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Classes="value" FontWeight="SemiBold" Text="{Binding Name}" />
+                                                    <!-- Address and protocol on one line: the
+                                                         protocol is an attribute of the module,
+                                                         not a heading to group by. -->
+                                                    <TextBlock Classes="dim xs" Text="{Binding AddressLine}" />
+                                                </StackPanel>
+                                                <Border Grid.Column="1"
+                                                        CornerRadius="3"
+                                                        Padding="6,2"
+                                                        VerticalAlignment="Center"
+                                                        Background="{Binding HasFaults, Converter={x:Static local:Converters.FaultBackgroundConverter}}">
+                                                    <TextBlock FontSize="10" FontWeight="Bold"
+                                                               Foreground="{Binding HasFaults, Converter={x:Static local:Converters.FaultForegroundConverter}}"
+                                                               Text="{Binding CodeCount, StringFormat='{}{0} DTCs'}" />
+                                                </Border>
+                                            </Grid>
+                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Pending DTCs -->
-                            <TextBlock Classes="heading"
-                                       IsVisible="{Binding HasPendingDtcs}"
-                                       Text="PENDING"
-                                       Margin="0,8,0,4" />
-                            <ItemsControl ItemsSource="{Binding PendingDtcs}"
-                                          IsVisible="{Binding HasPendingDtcs}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="core:DiagnosticTroubleCode">
-                                        <Grid ColumnDefinitions="80, *" Margin="0,2">
-                                            <TextBlock Grid.Column="0" Classes="warn" Text="{Binding Code}" />
-                                            <TextBlock Grid.Column="1" Classes="muted" Text="{Binding Description}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
+                            <!-- Carried over from a previous visit and not yet confirmed by a
+                                 probe. Listed apart from the answered modules, because a previous
+                                 visit is not evidence about now. -->
+                            <StackPanel Margin="10,8" IsVisible="{Binding HasRememberedModules}">
+                                <TextBlock Classes="label" Text="REMEMBERED - NOT YET CONFIRMED" />
+                                <ItemsControl ItemsSource="{Binding RememberedModules}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="veh:RememberedModule">
+                                            <Grid ColumnDefinitions="*, Auto" Margin="0,2">
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Classes="value" Text="{Binding Name}" />
+                                                    <TextBlock Classes="dim xs" Text="{Binding AddressSummary}" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Classes="dim xs"
+                                                           VerticalAlignment="Center" Text="remembered" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+        </Border>
 
-        <!-- Bottom actions -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-            <Button Content="Refresh"
-                    Classes="action-sm"
-                    IsEnabled="{Binding CanRefresh}"
-                    Click="OnRefresh" />
-            <Button Content="Clear All DTCs"
-                    Classes="action-sm"
-                    IsEnabled="{Binding IsConnected}"
-                    Click="OnClearDtcs" />
-        </StackPanel>
+        <!-- Right column: the selected module's codes -->
+        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto, *" Margin="0,0,0,8">
+
+            <Border Grid.Row="0"
+                    Background="#161B22"
+                    BorderBrush="#2E3440"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,10"
+                    Margin="0,0,0,8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Classes="value" FontSize="15" FontWeight="Bold" Text="{Binding SelectedFaultModuleName}" />
+                        <TextBlock Classes="dim xs" Text="{Binding SelectedFaultModuleAddressLine}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button Content="Read codes" Classes="action-sm"
+                                IsEnabled="{Binding CanOperateFaultModule}"
+                                Click="OnReadModuleDtcs" />
+                        <Button Content="Clear module" Classes="action-sm"
+                                IsEnabled="{Binding CanOperateFaultModule}"
+                                Click="OnClearModuleDtcs" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1"
+                    Background="#141820"
+                    BorderBrush="#2E3440"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="10">
+                <Grid RowDefinitions="Auto, *">
+                    <TextBlock Grid.Row="0" Classes="heading" Text="TROUBLE CODES" Margin="0,0,0,6" />
+
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel>
+                            <TextBlock Classes="dim italic" Margin="4,8"
+                                       IsVisible="{Binding HasNoSelectedFaultCodes}"
+                                       Text="No codes reported for this module." />
+
+                            <ItemsControl ItemsSource="{Binding SelectedFaultCodes}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="core:FaultCode">
+                                        <Border BorderBrush="#242B38" BorderThickness="0,0,0,1" Padding="4,6">
+                                            <Grid ColumnDefinitions="110, *, Auto">
+                                                <TextBlock Grid.Column="0" Classes="error" FontWeight="Bold"
+                                                           Text="{Binding Code}" VerticalAlignment="Center" />
+
+                                                <StackPanel Grid.Column="1" Margin="8,0">
+                                                    <TextBlock Classes="value" Text="{Binding Description}" TextWrapping="Wrap" />
+                                                    <TextBlock Classes="dim xs" IsVisible="{Binding HasDetail}" Text="{Binding Detail}" />
+                                                </StackPanel>
+
+                                                <!-- Badges rather than STORED/PENDING section
+                                                     headings: one list now holds codes from two
+                                                     protocols, and a heading would be wrong for
+                                                     half its rows. -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                    <Border Background="#4A1818" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsActive}">
+                                                        <TextBlock Text="ACTIVE" Classes="xs" Foreground="#FF6B6B" FontWeight="Bold" />
+                                                    </Border>
+                                                    <Border Background="#4A3418" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsConfirmed}">
+                                                        <TextBlock Text="CONFIRMED" Classes="xs" Foreground="#FFB86B" FontWeight="Bold" />
+                                                    </Border>
+                                                    <Border Background="#3B3818" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsPending}">
+                                                        <TextBlock Text="PENDING" Classes="xs" Foreground="#FFEB6B" FontWeight="Bold" />
+                                                    </Border>
+                                                    <Border Background="#5A1010" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsMil}">
+                                                        <TextBlock Text="MIL" Classes="xs" Foreground="#FF4444" FontWeight="Bold" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Vehicle-wide actions span both columns: neither belongs to the selected module. -->
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                Background="#0D1117"
+                BorderBrush="#2E3440"
+                BorderThickness="1"
+                CornerRadius="3"
+                Padding="8,5">
+            <Grid ColumnDefinitions="*, Auto">
+                <TextBlock Grid.Column="0" Classes="dim xs" VerticalAlignment="Center"
+                           Text="{Binding UdsStatusText}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Refresh" Classes="action-sm"
+                            IsEnabled="{Binding CanRefresh}"
+                            Click="OnRefresh" />
+                    <Button Content="Clear all DTCs" Classes="action-sm"
+                            IsEnabled="{Binding IsConnected}"
+                            Click="OnClearDtcs" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
     </Grid>
 

@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
              xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
-             xmlns:canviews="clr-namespace:Neomotive.Can.UI.Views;assembly=Neomotive.Can.UI"
              x:Class="Neomotive.ScanTool.UI.Views.ScanToolView"
              x:DataType="local:MainWindowViewModel"
              ToolTip.ServiceEnabled="{Binding ShowToolTips}">
@@ -46,11 +45,13 @@
                     </Button>
                     <Button Content="Vehicle"    Classes="tab" Classes.active="{Binding IsVehicleView}"    Click="OnShowVehicle" />
                     <Button Content="Monitors"  Classes="tab" Classes.active="{Binding IsEmissionsView}"  Click="OnShowEmissions" />
+                    <!-- DTCs covers every trouble code in the vehicle now, OBD-II and UDS alike:
+                         a tech asks what is wrong, not which protocol answered. Diag is the
+                         bus-level tab the protocols retreated to, CAN and UDS as sub-tabs. -->
                     <Button Content="DTCs"       Classes="tab" Classes.active="{Binding IsDtcsView}"       Click="OnShowDtcs" />
-                    <Button Content="UDS"        Classes="tab" Classes.active="{Binding IsUdsView}"        Click="OnShowUds" />
                     <Button Content="Live Data"  Classes="tab" Classes.active="{Binding IsLiveDataView}"  Click="OnShowLiveData" />
                     <Button Content="Capture"    Classes="tab" Classes.active="{Binding IsCaptureView}"    Click="OnShowCapture" />
-                    <Button Content="CAN"        Classes="tab" Classes.active="{Binding IsCanLogView}"     Click="OnShowCanLog" />
+                    <Button Content="Diag"       Classes="tab" Classes.active="{Binding IsDiagView}"       Click="OnShowDiag" />
                     <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
 
@@ -76,8 +77,7 @@
             <views:VehicleView    IsVisible="{Binding IsVehicleView}" />
             <views:EmissionsView  IsVisible="{Binding IsEmissionsView}" />
             <views:DtcsView       IsVisible="{Binding IsDtcsView}" />
-            <views:UdsView        IsVisible="{Binding IsUdsView}" />
-            <canviews:CanView     IsVisible="{Binding IsCanLogView}" />
+            <views:DiagView       IsVisible="{Binding IsDiagView}" />
             <views:LiveDataView   IsVisible="{Binding IsLiveDataView}" />
             <!-- Wrapped: CaptureView swaps its own DataContext, so visibility has to be bound on
                  a container that still sees MainWindowViewModel. -->

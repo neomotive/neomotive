@@ -21,11 +21,13 @@ namespace Neomotive.ScanTool.UI;
 
 public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 {
-    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Uds, CanLog, LiveData, Capture, Updates, Settings }
+    private enum ScanView { Connection, Vehicle, Emissions, Dtcs, Diag, LiveData, Capture, Updates, Settings }
     private enum LiveSubView { Table, Gauges, Waveform }
+    private enum DiagSubView { Can, Uds }
 
     private ScanView _view = ScanView.Connection;
     private LiveSubView _liveSubView = LiveSubView.Table;
+    private DiagSubView _diagSubView = DiagSubView.Can;
     private readonly IObd2Scanner _scanner;
     private readonly IUdsScanner? _udsScanner;
     private readonly LoggingCanBus? _loggingBus;
@@ -252,8 +254,16 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public bool IsVehicleView => _view == ScanView.Vehicle;
     public bool IsEmissionsView => _view == ScanView.Emissions;
     public bool IsDtcsView => _view == ScanView.Dtcs;
-    public bool IsUdsView => _view == ScanView.Uds;
-    public bool IsCanLogView => _view == ScanView.CanLog;
+
+    /// <summary>
+    /// The protocol-level tab. CAN traffic and UDS module introspection are the two things a tech
+    /// looks at when they have stopped asking "what is wrong" and started asking "what is this bus
+    /// doing" — so they share a tab and differ by sub-tab, the way Live Data's panes do.
+    /// </summary>
+    public bool IsDiagView => _view == ScanView.Diag;
+    public bool IsDiagCanView => _view == ScanView.Diag && _diagSubView == DiagSubView.Can;
+    public bool IsDiagUdsView => _view == ScanView.Diag && _diagSubView == DiagSubView.Uds;
+
     public bool IsLiveDataView => _view == ScanView.LiveData;
     public bool IsCaptureView => _view == ScanView.Capture;
 
@@ -475,8 +485,9 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     public void ShowVehicle() { StopPolling(); _view = ScanView.Vehicle; NotifyViewChanged(); }
     public void ShowEmissions() { StopPolling(); _view = ScanView.Emissions; NotifyViewChanged(); }
     public void ShowDtcs() { StopPolling(); _view = ScanView.Dtcs; NotifyViewChanged(); }
-    public void ShowUds() { StopPolling(); _view = ScanView.Uds; NotifyViewChanged(); }
-    public void ShowCanLog() { StopPolling(); _view = ScanView.CanLog; NotifyViewChanged(); }
+    public void ShowDiag() { StopPolling(); _view = ScanView.Diag; NotifyViewChanged(); }
+    public void ShowDiagCan() { StopPolling(); _view = ScanView.Diag; _diagSubView = DiagSubView.Can; NotifyViewChanged(); }
+    public void ShowDiagUds() { StopPolling(); _view = ScanView.Diag; _diagSubView = DiagSubView.Uds; NotifyViewChanged(); }
     public void ShowLiveData() { _view = ScanView.LiveData; NotifyViewChanged(); }
     // Capture runs its own high-rate poll loop, so the 2 Hz live-data loop must be off first.
     public void ShowCapture() { StopPolling(); _view = ScanView.Capture; CaptureVm.RefreshRecordings(); NotifyViewChanged(); }
@@ -489,8 +500,9 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         OnPropertyChanged(nameof(IsVehicleView));
         OnPropertyChanged(nameof(IsEmissionsView));
         OnPropertyChanged(nameof(IsDtcsView));
-        OnPropertyChanged(nameof(IsUdsView));
-        OnPropertyChanged(nameof(IsCanLogView));
+        OnPropertyChanged(nameof(IsDiagView));
+        OnPropertyChanged(nameof(IsDiagCanView));
+        OnPropertyChanged(nameof(IsDiagUdsView));
         OnPropertyChanged(nameof(IsLiveDataView));
         OnPropertyChanged(nameof(IsCaptureView));
         OnPropertyChanged(nameof(IsUpdatesView));
@@ -654,6 +666,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         OnPropertyChanged(nameof(CanCheckTune));
         OnPropertyChanged(nameof(CanScanUds));
         OnPropertyChanged(nameof(CanOperateUdsModule));
+        OnPropertyChanged(nameof(CanOperateFaultModule));
         OnPropertyChanged(nameof(IsIdle));
         OnPropertyChanged(nameof(ShowFewModulesNote));
     }
@@ -876,6 +889,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasUdsModules));
             OnPropertyChanged(nameof(HasNoUdsModules));
+            RebuildFaultModules();
         }
     }
 
@@ -1403,11 +1417,152 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             OnPropertyChanged();
             OnPropertyChanged(nameof(MilOn));
             OnPropertyChanged(nameof(MilOff));
+            RebuildFaultModules();
         }
     }
 
     public bool MilOn => _moduleDtcGroups.Any(g => g.HasStoredDtcs);
     public bool MilOff => !MilOn;
+
+    // ── Unified fault list (OBD-II + UDS) ─────────────────────────────────────
+
+    private IReadOnlyList<FaultModule> _faultModules = [];
+
+    /// <summary>
+    /// Every module that answered, whichever protocol answered for it. This is what the DTCs page
+    /// lists; <see cref="ModuleDtcGroups"/> and <see cref="UdsModules"/> remain the protocol-level
+    /// truth behind it.
+    /// </summary>
+    public IReadOnlyList<FaultModule> FaultModules
+    {
+        get => _faultModules;
+        private set
+        {
+            _faultModules = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasFaultModules));
+            OnPropertyChanged(nameof(HasNoFaultModules));
+            OnPropertyChanged(nameof(TotalFaultCount));
+            OnPropertyChanged(nameof(FaultSummaryText));
+        }
+    }
+
+    public bool HasFaultModules => _faultModules.Count > 0;
+    public bool HasNoFaultModules => !HasFaultModules;
+    public int TotalFaultCount => _faultModules.Sum(m => m.CodeCount);
+
+    public string FaultSummaryText => TotalFaultCount switch
+    {
+        0 => "No codes",
+        1 => "1 code",
+        _ => $"{TotalFaultCount} codes across {_faultModules.Count(m => m.HasFaults)} modules",
+    };
+
+    private void RebuildFaultModules()
+    {
+        var merged = FaultModule.Merge(_moduleDtcGroups, _udsModules);
+        FaultModules = merged;
+
+        // Hold the selection across a refresh by address rather than by reference: the merge
+        // produces new records every time, so reference equality would drop the tech back to
+        // "no module selected" on every poll.
+        var keep = _selectedFaultModule == null
+            ? null
+            : merged.FirstOrDefault(m => m.AddressSummary == _selectedFaultModule.AddressSummary);
+
+        SelectedFaultModule = keep ?? merged.FirstOrDefault(m => m.HasFaults) ?? merged.FirstOrDefault();
+    }
+
+    private FaultModule? _selectedFaultModule;
+    public FaultModule? SelectedFaultModule
+    {
+        get => _selectedFaultModule;
+        set
+        {
+            _selectedFaultModule = value;
+
+            // Keep the UDS selection in step so the existing read/clear/DID paths, which are all
+            // written against UdsModuleInfo, operate on the module the tech is looking at. An
+            // OBD-II-only selection clears it, which is what disables the UDS-only actions.
+            SelectedUdsModule = value?.UdsModule;
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSelectedFaultModule));
+            OnPropertyChanged(nameof(SelectedFaultCodes));
+            OnPropertyChanged(nameof(HasSelectedFaultCodes));
+            OnPropertyChanged(nameof(HasNoSelectedFaultCodes));
+            OnPropertyChanged(nameof(SelectedFaultModuleName));
+            OnPropertyChanged(nameof(SelectedFaultModuleAddressLine));
+            NotifyCommandStates();
+        }
+    }
+
+    public bool HasSelectedFaultModule => _selectedFaultModule != null;
+
+    /// <summary>Read and clear work on an OBD-II-only module too, so this is not CanOperateUdsModule.</summary>
+    public bool CanOperateFaultModule => _isConnected && !_isScanningUds && !_isRefreshing && _selectedFaultModule != null;
+    public IReadOnlyList<FaultCode> SelectedFaultCodes => _selectedFaultModule?.Codes ?? [];
+    public bool HasSelectedFaultCodes => SelectedFaultCodes.Count > 0;
+    public bool HasNoSelectedFaultCodes => HasSelectedFaultModule && !HasSelectedFaultCodes;
+
+    /// <summary>
+    /// Selection entry point for the UDS page, which lists <see cref="UdsModuleInfo"/> rather than
+    /// <see cref="FaultModule"/>. Routing through the merged list keeps one selection across both
+    /// pages, so a tech who picks a module on Diag &gt; UDS finds that same module selected on DTCs.
+    /// </summary>
+    public void SelectModuleByUds(UdsModuleInfo module)
+    {
+        var match = _faultModules.FirstOrDefault(m => m.UdsModule == module)
+                 ?? _faultModules.FirstOrDefault(m => m.UdsModule?.TxId == module.TxId);
+
+        if (match != null)
+            SelectedFaultModule = match;
+        else
+            SelectedUdsModule = module;
+    }
+
+    public string SelectedFaultModuleName => _selectedFaultModule?.Name ?? "No module selected";
+    public string SelectedFaultModuleAddressLine => _selectedFaultModule?.AddressLine ?? "—";
+
+    /// <summary>
+    /// Clearing is per-protocol underneath: a module reached both ways needs both the $04 clear
+    /// and the UDS $14, or codes the other protocol still holds reappear on the next read.
+    /// </summary>
+    public async Task ClearSelectedFaultModuleAsync()
+    {
+        var module = _selectedFaultModule;
+        if (module == null) return;
+
+        if (module.UdsModule != null)
+            await ClearSelectedModuleDtcsAsync();
+
+        if (module.Obd2Module != null)
+            await ClearModuleDtcsAsync(module.Obd2Module);
+    }
+
+    /// <summary>
+    /// Vehicle-wide clear. Both protocols, for the same reason the per-module clear does both:
+    /// a $04 alone leaves UDS-side codes standing, and the tech reads the leftovers as a fault
+    /// that would not clear.
+    /// </summary>
+    public async Task ClearAllFaultsAsync()
+    {
+        await ClearDtcsAsync();
+
+        if (_udsScanner != null && _udsModules.Count > 0)
+            await ClearAllUdsDtcsAsync();
+    }
+
+    public async Task ReadSelectedFaultModuleAsync()
+    {
+        var module = _selectedFaultModule;
+        if (module == null) return;
+
+        if (module.UdsModule != null)
+            await ReadSelectedModuleDtcsAsync();
+        else
+            await RefreshAsync();
+    }
 
     public async Task ClearDtcsAsync()
     {

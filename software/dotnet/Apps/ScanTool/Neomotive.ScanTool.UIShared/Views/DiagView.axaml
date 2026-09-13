@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Neomotive.ScanTool.UI"
+             xmlns:views="clr-namespace:Neomotive.ScanTool.UI.Views"
+             xmlns:canviews="clr-namespace:Neomotive.Can.UI.Views;assembly=Neomotive.Can.UI"
+             x:Class="Neomotive.ScanTool.UI.Views.DiagView"
+             x:DataType="local:MainWindowViewModel">
+
+    <!-- The bus-level tab. Raw CAN traffic and UDS module introspection are the same kind of
+         work - looking at what the bus is doing rather than what is wrong with the vehicle - so
+         they share a tab and differ by sub-tab. Trouble codes are not here; they are on DTCs,
+         where they belong whatever protocol carried them. -->
+    <Grid RowDefinitions="36, *">
+
+        <Border Grid.Row="0" Background="#141820"
+                BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button Content="CAN" Classes="tab" Classes.active="{Binding IsDiagCanView}" Click="OnShowCan" />
+                <Button Content="UDS" Classes="tab" Classes.active="{Binding IsDiagUdsView}" Click="OnShowUds" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <canviews:CanView IsVisible="{Binding IsDiagCanView}" />
+            <views:UdsView    IsVisible="{Binding IsDiagUdsView}" />
+        </Grid>
+
+    </Grid>
+
+</UserControl>

@@ -29,7 +29,7 @@ Solution file: `ScanTool/neomotive scantool.slnx`
 - **`Obd2Scanner`** — implements `IObd2Scanner`; owns ISO-TP framing, flow control, timeout logic; depends on `ICanBus`
 - **`Obd2Protocol`** — pure static decoder: `ParseDtcs`, `ParseVin`, `ParseReadiness`, `DecodeDtcCode` — no side effects, easy to test
 - **`NullCanBus`** — no-op `ICanBus` for tests (never returns frames)
-- **`MainWindowViewModel`** — MVVM hub; enum-driven view switching (`Connection / Vehicle / Emissions / Dtcs`); calls `RefreshAllAsync` after connect or manual refresh
+- **`MainWindowViewModel`** — MVVM hub; enum-driven view switching (`Connection / Vehicle / Emissions / Dtcs / Diag / LiveData / Capture / Updates / Settings`, plus `DiagSubView` for Diag's CAN and UDS sub-tabs); calls `RefreshAllAsync` after connect or manual refresh
 
 ### UDS (ISO 14229)
 
@@ -66,7 +66,7 @@ functionally addressed request that would be rejected gets **silence**, not an N
 
 ### UI pattern
 
-Views are `UserControl` with `x:DataType="local:MainWindowViewModel"`. Click events go to code-behind → call async VM methods (`_ = Vm.FooAsync()`). No commands/bindings for click events — all are routed event handlers. View visibility is controlled by `IsConnectionView`, `IsVehicleView`, `IsEmissionsView`, `IsDtcsView` bool properties on the VM.
+Views are `UserControl` with `x:DataType="local:MainWindowViewModel"`. Click events go to code-behind → call async VM methods (`_ = Vm.FooAsync()`). No commands/bindings for click events — all are routed event handlers. View visibility is controlled by `IsConnectionView`, `IsVehicleView`, `IsEmissionsView`, `IsDtcsView`, `IsDiagView` (and `IsDiagCanView` / `IsDiagUdsView`) bool properties on the VM.
 
 ### Testing
 
@@ -122,7 +122,7 @@ array in `neoteric.config.json` and restart. DID values may carry an encoding pr
 1. Plug in Peak PCAN USB adapter
 2. Run **ModuleSimulator.Desktop** — starts PCM + TCU responding on CAN
 3. Run **ScanTool.Desktop** → Connect → reads VIN/DTCs/readiness from the simulator
-4. UDS view → Discover → finds the configured modules, their DIDs and their faults
+4. Diag > UDS → Full scan → finds the configured modules and their DIDs; their faults show on the DTCs page alongside the OBD-II ones
 
 No hardware? `UdsModuleHostTests` runs the same exchange over an in-memory loopback bus.
 
@@ -142,7 +142,7 @@ No hardware? `UdsModuleHostTests` runs the same exchange over an in-memory loopb
 | Project | Purpose |
 |---|---|
 | `Neomotive.Can.Hardware` | `WaveshareDualCanHat` — dual MCP2515 CAN HAT for the Pi (used by both RaspberryPi heads) |
-| `Neomotive.Can.UI` | `CanView` (CAN bus health + packet log tab), `CanLogItem`, `ICanViewModel` |
+| `Neomotive.Can.UI` | `CanView` (CAN bus health + packet log; hosted as the CAN sub-tab of ScanTool's Diag tab), `CanLogItem`, `ICanViewModel` |
 | `Neomotive.Obd2` | `DtcDescriptions` |
 | `Neomotive.Uds` | `UdsCatalog` — the file-backed UDS database (DID names/formatting, fault-type and NRC text) |
 | `Neomotive.UI.Styles` | Common Avalonia styles |

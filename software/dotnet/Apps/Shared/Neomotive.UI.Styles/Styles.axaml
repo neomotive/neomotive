@@ -30,6 +30,10 @@
             <SolidColorBrush x:Key="BrushBgDtcActiveHover">#4A2020</SolidColorBrush>
             <SolidColorBrush x:Key="BrushBgMonitorHover">#1A2030</SolidColorBrush>
             <SolidColorBrush x:Key="BrushBgActionHover">#2A1A1A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgActionPrimary">#17301A</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgActionPrimaryHover">#1F4023</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgActionDanger">#301818</SolidColorBrush>
+            <SolidColorBrush x:Key="BrushBgActionDangerHover">#402020</SolidColorBrush>
 
             <!-- Borders -->
             <SolidColorBrush x:Key="BrushBorder">#2E3440</SolidColorBrush>
@@ -154,6 +158,53 @@
     <Style Selector="Button.action-sm:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushBgActionHover}" />
         <Setter Property="Foreground" Value="{StaticResource BrushError}" />
+    </Style>
+
+    <!-- ── Primary action button ───────────────────────────────────────── -->
+
+    <!-- For the one action a screen exists to perform. action-sm is a 10pt outline about 28px
+         tall, which is fine for the half-dozen secondary buttons that share a row but too small
+         for the button a tech reaches for first, often standing at a vehicle with the panel at
+         arm's length. 48px clears the 44px touch minimum with room for a gloved thumb, and the
+         filled ground separates it from the outlined buttons around it without relying on colour
+         alone to say which one matters. -->
+    <Style Selector="Button.action-primary">
+        <Setter Property="Background"      Value="{StaticResource BrushBgActionPrimary}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushOk}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius"    Value="4" />
+        <Setter Property="Padding"         Value="28,12" />
+        <Setter Property="MinHeight"       Value="48" />
+        <Setter Property="MinWidth"        Value="150" />
+        <Setter Property="FontFamily"      Value="Consolas,Cascadia Code,monospace" />
+        <Setter Property="FontSize"        Value="16" />
+        <Setter Property="FontWeight"      Value="SemiBold" />
+        <Setter Property="Foreground"      Value="{StaticResource BrushOk}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment"   Value="Center" />
+    </Style>
+    <Style Selector="Button.action-primary:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgActionPrimaryHover}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushOk}" />
+    </Style>
+
+    <!-- Same size, different reading: the action that undoes rather than starts. -->
+    <Style Selector="Button.action-primary.danger">
+        <Setter Property="Background"  Value="{StaticResource BrushBgActionDanger}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushError}" />
+        <Setter Property="Foreground"  Value="{StaticResource BrushError}" />
+    </Style>
+    <Style Selector="Button.action-primary.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgActionDangerHover}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushError}" />
+    </Style>
+
+    <!-- Disabled has to read as disabled at arm's length too, or a tech taps a dead button and
+         concludes the panel has frozen. -->
+    <Style Selector="Button.action-primary:disabled /template/ ContentPresenter">
+        <Setter Property="Background"  Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAction}" />
+        <Setter Property="Foreground"  Value="{StaticResource BrushFgDim}" />
     </Style>
 
     <!-- ── Module tiles ─────────────────────────────────────────────────── -->

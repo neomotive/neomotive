@@ -1240,3 +1240,43 @@ Six observations from the first real-vehicle session. Design and root causes are
       promote to Confirmed as the simulator answers.
 
 **Nothing in Group AF is implemented yet.** Every item is unverified on bench and on vehicle.
+
+### AG — Unified DTCs page + Diag tab *(done, unverified on vehicle)*
+
+Design: `ScanTool/docs/unified-dtc-page-proposal.md`. The DTCs tab now shows every trouble code in
+the vehicle, OBD-II and UDS alike; the protocols moved to a bus-level **Diag** tab with CAN and UDS
+sub-tabs. Tab label stayed "DTCs" — that is what techs say.
+
+- [x] `FaultModule` / `FaultCode` in Core. `FaultModule.Merge` folds `ModuleDtcGroup` and
+      `UdsModuleInfo` into one list, matching on request address, unioning codes by code string and
+      preferring the UDS projection where both answered.
+- [x] `DtcsView` rebuilt on UdsView's two-column layout: vehicle summary strip (MIL, total, new
+      since last visit), one module list carrying both protocols, protocol as a dim tag on the
+      address line, per-module code list with status badges.
+- [x] Status badges replace the STORED/PENDING headings. Stored maps to CONFIRMED, not Active — a
+      stored code says the fault was confirmed on an earlier drive cycle, not that it is failing now.
+- [x] Per-module and vehicle-wide clear both fire $04 and UDS $14 where the module answers both, or
+      the leftovers read as a fault that would not clear.
+- [x] `DiagView` with CAN / UDS sub-tabs, following the Live Data sub-tab idiom.
+- [x] DID inspector moved to Diag > UDS, which keeps discovery, identification DIDs and DID reads.
+      No code read or clear there — two places to clear from and no way to tell which one ran.
+- [x] One selection across both pages: `SelectModuleByUds` routes the UDS page's pick through the
+      merged list. Selection survives a refresh by address, since the merge makes new records.
+- [x] `ScanView` enum: `Uds` and `CanLog` collapsed into `Diag` + `DiagSubView`. Tab row is one
+      button shorter, which relieves the 800px crowding.
+- [x] Tests: `FaultModuleMergeTests` — both-protocol modules appear once, duplicate codes collapse,
+      OBD-II-only codes survive, single-protocol modules keep their tag, faulted modules sort first,
+      stored projects as Confirmed rather than Active. 208 tests pass.
+
+**Not yet verified on bench or on vehicle.** Every claim above is from the build and unit tests.
+
+### AH — Primary action button
+
+- [x] `Button.action-primary` (+ `.danger`, `:disabled`) in `Shared/Neomotive.UI.Styles/Styles.axaml`:
+      48px min height, 150px min width, 16pt, filled ground. Clears the 44px touch minimum that
+      `action-sm` (10pt, ~28px) does not.
+- [x] Connect / Disconnect on `ConnectionView` use it — Connect green, Disconnect `danger` red.
+      Only one is visible at a time, so the pair reads as one large button that changes its label.
+- [ ] Eyeball on the 800x480 Pi panel. Not yet done — build only.
+- [ ] Decide whether other screens have a single primary action worth promoting (Capture's
+      start/stop is the obvious candidate).

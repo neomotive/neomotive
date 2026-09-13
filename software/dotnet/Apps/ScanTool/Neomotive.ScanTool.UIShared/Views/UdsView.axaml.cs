@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Neomotive.ScanTool.Core;
 using Meadow.Foundation.Telematics.Uds;
 
 namespace Neomotive.ScanTool.UI.Views;
@@ -30,28 +29,11 @@ public partial class UdsView : UserControl
 
     private void OnSelectModule(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: UdsModuleInfo module } && VM != null)
-        {
-            VM.SelectedUdsModule = module;
-        }
-    }
-
-    private async void OnReadModuleDtcs(object? sender, RoutedEventArgs e)
-    {
-        if (VM != null)
-            await VM.ReadSelectedModuleDtcsAsync();
-    }
-
-    private async void OnClearModuleDtcs(object? sender, RoutedEventArgs e)
-    {
-        if (VM != null)
-            await VM.ClearSelectedModuleDtcsAsync();
-    }
-
-    private async void OnClearAllDtcs(object? sender, RoutedEventArgs e)
-    {
-        if (VM != null)
-            await VM.ClearAllUdsDtcsAsync();
+        // Goes through the view model rather than setting SelectedUdsModule directly, so the DTCs
+        // page's selection follows along. Selecting a module here and finding a different one
+        // selected on the DTCs page would be a quiet way to read the wrong module's codes.
+        if (sender is Button { Tag: UdsModuleInfo module })
+            VM?.SelectModuleByUds(module);
     }
 
     private async void OnReadVinDid(object? sender, RoutedEventArgs e)

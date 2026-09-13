@@ -19,14 +19,17 @@
             <TextBlock Classes="value" Text="500 kbps (ISO 15765-4)" />
         </StackPanel>
 
+        <!-- The reason this screen exists, sized accordingly: action-primary rather than the
+             action-sm the secondary buttons use. Only ever one of the two is visible, so the pair
+             reads as a single large button that changes what it says. -->
         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
             <Button Content="Connect"
-                    Classes="action-sm"
+                    Classes="action-primary"
                     IsEnabled="{Binding CanConnect}"
                     IsVisible="{Binding IsNotConnected}"
                     Click="OnConnect" />
             <Button Content="Disconnect"
-                    Classes="action-sm"
+                    Classes="action-primary danger"
                     IsVisible="{Binding IsConnected}"
                     Click="OnDisconnect" />
         </StackPanel>

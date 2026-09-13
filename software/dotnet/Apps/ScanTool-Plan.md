@@ -233,7 +233,10 @@ What remains is bench and vehicle verification, which needs hardware:
    client and server now live in the Meadow library `Telematics.Uds` (assembly `Uds`, namespace
    `Meadow.Foundation.Telematics.Uds`); ScanTool references it. Services covered client-side:
    $10, $14, $19, $22, $3E. Still to add: $2E, $2F, $31.
-2. [x] `UdsView` — ECU selector, UDS DTC list, DID reads
+2. [x] `UdsView` — ECU selector, module identification, DID inspector. The UDS DTC list moved to
+   the DTCs page (group AG): a tech asks what is wrong, not which protocol answered, so OBD-II and
+   UDS codes share one list there and `UdsView` keeps only what is genuinely UDS-shaped. It now
+   lives as a sub-tab of **Diag** alongside `CanView`, both being bus-level views.
 3. Security access flow (seed/key) UI — not started; `UdsServer` answers $27 with NRC $11 today
 4. ODX/CDD file import for PID/DTC descriptions *(stretch goal)* — partly superseded: the
    `Neomotive.Uds` catalog already imports DID definitions from JSON or CSV at runtime, so an ODX

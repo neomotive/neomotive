@@ -8,6 +8,9 @@
              x:DataType="local:MainWindowViewModel"
              Padding="16,12">
 
+    <!-- Module introspection, not fault reading. Trouble codes moved to the DTCs page, where
+         they sit alongside the OBD-II ones; what is left here is what only UDS can answer -
+         which modules exist, what they identify themselves as, and what an arbitrary DID holds. -->
     <Grid RowDefinitions="*, Auto" ColumnDefinitions="260, *">
 
         <!-- Left Column: Discovered Modules List -->
@@ -18,7 +21,7 @@
                 CornerRadius="4"
                 Margin="0,0,12,8">
             <Grid RowDefinitions="Auto, *">
-                
+
                 <!-- Modules List Header -->
                 <StackPanel Grid.Row="0" Margin="10,8" Spacing="4">
                     <Grid ColumnDefinitions="*, Auto, Auto" VerticalAlignment="Center">
@@ -106,10 +109,10 @@
             </Grid>
         </Border>
 
-        <!-- Right Column: Module Details & Diagnostics -->
-        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto, *, Auto" Margin="0,0,0,8">
+        <!-- Right Column: Module Identification & DID Inspector -->
+        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto, *" Margin="0,0,0,8">
 
-            <!-- Selected Module Overview & Actions -->
+            <!-- Selected Module Overview & Identification DIDs -->
             <Border Grid.Row="0"
                     Background="#161B22"
                     BorderBrush="#2E3440"
@@ -118,24 +121,14 @@
                     Padding="12,10"
                     Margin="0,0,0,8">
                 <Grid RowDefinitions="Auto, Auto">
-                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Classes="value" FontSize="15" FontWeight="Bold" Text="{Binding SelectedModuleName}" />
-                            <TextBlock Classes="dim xs" Text="{Binding SelectedModuleAddressSummary}" Margin="0,2,0,0" />
-                        </StackPanel>
-                        
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <Button Content="Read DTCs" Classes="action-sm"
-                                    IsEnabled="{Binding CanOperateUdsModule}"
-                                    Click="OnReadModuleDtcs" />
-                            <Button Content="Clear Module" Classes="action-sm"
-                                    IsEnabled="{Binding CanOperateUdsModule}"
-                                    Click="OnClearModuleDtcs" />
-                            <Button Content="Clear All (Global)" Classes="action-sm"
-                                    IsEnabled="{Binding CanScanUds}"
-                                    Click="OnClearAllDtcs" />
-                        </StackPanel>
-                    </Grid>
+                    <!-- No code read or clear button here. Both live on the DTCs page; a second
+                         clear on a second tab gives a tech two places to clear from and no way to
+                         tell afterwards which one ran. The identification fields below are filled
+                         by discovery; the DID inspector is how you ask this module anything else. -->
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Classes="value" FontSize="15" FontWeight="Bold" Text="{Binding SelectedModuleName}" />
+                        <TextBlock Classes="dim xs" Text="{Binding SelectedModuleAddressSummary}" Margin="0,2,0,0" />
+                    </StackPanel>
 
                     <!-- Module Identification DIDs -->
                     <Grid Grid.Row="1" ColumnDefinitions="Auto, Auto, Auto, Auto" Margin="0,8,0,0"
@@ -160,77 +153,23 @@
                 </Grid>
             </Border>
 
-            <!-- DTCs List for Selected Module -->
+            <!-- DID Inspector -->
             <Border Grid.Row="1"
                     Background="#141820"
                     BorderBrush="#2E3440"
                     BorderThickness="1"
                     CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
-                <Grid RowDefinitions="Auto, *">
-                    <TextBlock Grid.Row="0" Classes="heading" Text="DIAGNOSTIC TROUBLE CODES (UDS $19)" Margin="0,0,0,6" />
-                    
-                    <ScrollViewer Grid.Row="1">
-                        <StackPanel>
-                            <TextBlock Classes="dim italic" Margin="4,8"
-                                       IsVisible="{Binding HasNoSelectedModuleDtcs}"
-                                       Text="No DTCs reported for this module." />
+                    Padding="10">
+                <Grid RowDefinitions="Auto, Auto, *">
+                    <TextBlock Grid.Row="0" Classes="heading" Text="DID INSPECTOR" Margin="0,0,0,8" />
 
-                            <ItemsControl ItemsSource="{Binding SelectedModuleDtcs}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="uds:UdsDtc">
-                                        <Border BorderBrush="#242B38" BorderThickness="0,0,0,1" Padding="4,6">
-                                            <Grid ColumnDefinitions="110, *, Auto">
-                                                <!-- DTC Full Code -->
-                                                <TextBlock Grid.Column="0" Classes="error" FontWeight="Bold" Text="{Binding FullCode}" VerticalAlignment="Center" />
-
-                                                <!-- Description & Failure Type -->
-                                                <StackPanel Grid.Column="1" Margin="8,0">
-                                                    <TextBlock Classes="value" Text="{Binding Description}" />
-                                                    <TextBlock Classes="dim xs" Text="{Binding FaultTypeDescription, StringFormat='FTB: {0}'}" />
-                                                </StackPanel>
-
-                                                <!-- Status Flags Badges -->
-                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                    <Border Background="#4A1818" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsActive}">
-                                                        <TextBlock Text="ACTIVE" Classes="xs" Foreground="#FF6B6B" FontWeight="Bold" />
-                                                    </Border>
-                                                    <Border Background="#4A3418" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsConfirmed}">
-                                                        <TextBlock Text="CONFIRMED" Classes="xs" Foreground="#FFB86B" FontWeight="Bold" />
-                                                    </Border>
-                                                    <Border Background="#3B3818" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsPending}">
-                                                        <TextBlock Text="PENDING" Classes="xs" Foreground="#FFEB6B" FontWeight="Bold" />
-                                                    </Border>
-                                                    <Border Background="#5A1010" CornerRadius="2" Padding="4,1" IsVisible="{Binding IsWarning}">
-                                                        <TextBlock Text="MIL" Classes="xs" Foreground="#FF4444" FontWeight="Bold" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
-
-            <!-- DID Inspector Section -->
-            <Border Grid.Row="2"
-                    Background="#161B22"
-                    BorderBrush="#2E3440"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    Padding="10,8">
-                <Grid RowDefinitions="Auto, Auto">
                     <!-- A WrapPanel, not a Grid: this row has no elastic member, so once the
                          fixed widths exceed the panel the last control is simply clipped. Wrapping
                          degrades instead, which matters at 800x480 where it cannot fit on one line.
                          The DID numbers are back in the labels. They had been moved to tooltips to
                          save width, but the panel is touch-only: a tooltip is unreachable there, so
                          that traded the number away for nothing. Wrapping absorbs the extra width. -->
-                    <WrapPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <WrapPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Classes="label" Text="Quick DID:" VerticalAlignment="Center" Margin="0,0,8,4" />
                         <Button Content="VIN $F190"   Classes="action-sm" Margin="0,0,4,4"
                                 ToolTip.Tip="Read the vehicle identification number"
@@ -248,10 +187,12 @@
                         <Button Content="Read Hex DID" Classes="action-sm" Margin="0,0,0,4"
                                 IsEnabled="{Binding CanOperateUdsModule}" Click="OnReadCustomDid" />
                     </WrapPanel>
-                    
-                    <TextBlock Grid.Row="1" Classes="value xs" Margin="0,6,0,0"
-                               IsVisible="{Binding HasDidResult}"
-                               Text="{Binding DidResultText}" />
+
+                    <ScrollViewer Grid.Row="2" Margin="0,8,0,0">
+                        <SelectableTextBlock Classes="value xs" TextWrapping="Wrap"
+                                             IsVisible="{Binding HasDidResult}"
+                                             Text="{Binding DidResultText}" />
+                    </ScrollViewer>
                 </Grid>
             </Border>
 

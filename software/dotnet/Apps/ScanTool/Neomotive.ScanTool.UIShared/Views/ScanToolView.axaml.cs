@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using Meadow.Foundation.Telematics.Uds;
 
 namespace Neomotive.ScanTool.UI.Views;
 
@@ -23,8 +22,7 @@ public partial class ScanToolView : UserControl
     private void OnShowVehicle(object? sender, RoutedEventArgs e)    => Vm.ShowVehicle();
     private void OnShowEmissions(object? sender, RoutedEventArgs e)  => Vm.ShowEmissions();
     private void OnShowDtcs(object? sender, RoutedEventArgs e)       => Vm.ShowDtcs();
-    private void OnShowUds(object? sender, RoutedEventArgs e)        => Vm.ShowUds();
-    private void OnShowCanLog(object? sender, RoutedEventArgs e)      => Vm.ShowCanLog();
+    private void OnShowDiag(object? sender, RoutedEventArgs e)       => Vm.ShowDiag();
     private void OnShowLiveData(object? sender, RoutedEventArgs e)   => Vm.ShowLiveData();
     private void OnShowCapture(object? sender, RoutedEventArgs e)    => Vm.ShowCapture();
     private void OnShowUpdates(object? sender, RoutedEventArgs e)    => Vm.ShowUpdates();
