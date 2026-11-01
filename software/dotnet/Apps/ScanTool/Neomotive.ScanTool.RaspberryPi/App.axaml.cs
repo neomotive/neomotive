@@ -154,6 +154,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.RaspberryPi>
         {
             if (_rootView != null)
                 _rootView.DataContext = vm;
+            vm.ShowConnection();
             vm.StartCanLogTimer();
         });
 

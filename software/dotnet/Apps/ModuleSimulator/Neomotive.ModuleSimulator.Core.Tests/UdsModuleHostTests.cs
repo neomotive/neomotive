@@ -49,8 +49,14 @@ public class UdsModuleHostTests
 
         var modules = await new UdsScanner(bus, UdsCatalog.Shared).DiscoverModulesAsync();
 
-        Assert.Equal([0x7E8, 0x7E9, 0x7EA, 0x7EC, 0x7ED], modules.Select(m => m.RxId).ToArray());
-        Assert.Equal("PCM (Powertrain)", modules[0].Name);
+        // The default config deliberately places the PSCM outside the legislated 0x7E0-0x7E7
+        // window and the IPC on 29-bit addressing, so this list is also the proof that all three
+        // discovery tiers ran — a legislated-only sweep would return the five 0x7Ex entries alone.
+        Assert.Equal(
+            [0x768u, 0x7E8u, 0x7E9u, 0x7EAu, 0x7ECu, 0x7EDu, 0x18DAF120u],
+            modules.Select(m => m.RxId).ToArray());
+        Assert.Equal("PSCM (Steering)", modules[0].Name);
+        Assert.Equal("PCM (Powertrain)", modules.Single(m => m.RxId == 0x7E8).Name);
         Assert.Equal("ABS (Brakes)", modules.Single(m => m.RxId == 0x7EC).Name);
     }
 

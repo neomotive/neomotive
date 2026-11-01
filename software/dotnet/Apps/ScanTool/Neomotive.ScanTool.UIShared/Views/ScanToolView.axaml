@@ -73,19 +73,19 @@
 
         <!-- Content area -->
         <Grid Grid.Row="1">
-            <views:ConnectionView IsVisible="{Binding IsConnectionView}" />
-            <views:VehicleView    IsVisible="{Binding IsVehicleView}" />
-            <views:EmissionsView  IsVisible="{Binding IsEmissionsView}" />
-            <views:DtcsView       IsVisible="{Binding IsDtcsView}" />
-            <views:DiagView       IsVisible="{Binding IsDiagView}" />
-            <views:LiveDataView   IsVisible="{Binding IsLiveDataView}" />
+            <views:ConnectionView IsVisible="{Binding IsConnectionView, FallbackValue=True}" />
+            <views:VehicleView    IsVisible="{Binding IsVehicleView, FallbackValue=False}" />
+            <views:EmissionsView  IsVisible="{Binding IsEmissionsView, FallbackValue=False}" />
+            <views:DtcsView       IsVisible="{Binding IsDtcsView, FallbackValue=False}" />
+            <views:DiagView       IsVisible="{Binding IsDiagView, FallbackValue=False}" />
+            <views:LiveDataView   IsVisible="{Binding IsLiveDataView, FallbackValue=False}" />
             <!-- Wrapped: CaptureView swaps its own DataContext, so visibility has to be bound on
                  a container that still sees MainWindowViewModel. -->
-            <Panel IsVisible="{Binding IsCaptureView}">
+            <Panel IsVisible="{Binding IsCaptureView, FallbackValue=False}">
                 <views:CaptureView DataContext="{Binding CaptureVm}" />
             </Panel>
-            <views:UpdatesView    IsVisible="{Binding IsUpdatesView}" />
-            <Panel IsVisible="{Binding IsSettingsView}">
+            <views:UpdatesView    IsVisible="{Binding IsUpdatesView, FallbackValue=False}" />
+            <Panel IsVisible="{Binding IsSettingsView, FallbackValue=False}">
                 <views:SettingsView DataContext="{Binding SettingsVm}" />
             </Panel>
         </Grid>

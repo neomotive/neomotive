@@ -110,6 +110,7 @@ public partial class App : AvaloniaMeadowApplication<Meadow.Windows>
         {
             if (_mainWindow != null)
                 _mainWindow.DataContext = vm;
+            vm.ShowConnection();
             vm.StartCanLogTimer();
         });
 

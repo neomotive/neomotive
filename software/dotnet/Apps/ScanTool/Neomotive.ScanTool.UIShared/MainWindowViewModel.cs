@@ -81,6 +81,9 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         // means the same thing in both places.
         LivePicker = new SignalPickerViewModel { Table = CaptureVm.Table };
         LivePicker.Confirmed += OnLiveSignalsChosen;
+
+        // Ensure the initial active screen is Connection / Connect on power up.
+        ShowConnection();
     }
 
     /// <summary>Signals chosen for live viewing, in table order.</summary>

@@ -62,7 +62,7 @@ public class SimulatorPcm : PcmBase
     protected override EmissionsReadinessStatus GetEmissionsReadiness()
         => _state.Readiness;
 
-    protected override TimeSpan GetTimeSinceEndineStarted()
+    protected override TimeSpan GetTimeSinceEngineStarted()
         => DateTime.UtcNow - _state.EngineStartedAt;
 
     protected override TimeSpan GetTimeWithMilOn()

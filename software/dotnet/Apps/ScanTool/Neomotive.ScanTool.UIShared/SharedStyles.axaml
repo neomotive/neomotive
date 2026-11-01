@@ -183,4 +183,15 @@
         <Setter Property="Background" Value="#31415A" />
     </Style>
 
+    <!-- Connect / Disconnect hero button on ConnectionView: 3x the standard action-primary button
+         (450x144 vs 150x48) for easy touch targeting at arm's length on the vehicle panel. -->
+    <Style Selector="Button.connect-hero">
+        <Setter Property="MinWidth"        Value="450" />
+        <Setter Property="MinHeight"       Value="144" />
+        <Setter Property="FontSize"        Value="36" />
+        <Setter Property="FontWeight"      Value="Bold" />
+        <Setter Property="CornerRadius"    Value="8" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
 </Styles>

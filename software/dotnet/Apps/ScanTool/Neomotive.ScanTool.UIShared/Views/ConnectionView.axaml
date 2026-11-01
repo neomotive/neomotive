@@ -5,7 +5,7 @@
              x:DataType="local:MainWindowViewModel"
              Padding="20,16">
 
-    <StackPanel Spacing="16" MaxWidth="400">
+    <StackPanel Spacing="16" MaxWidth="550">
 
         <TextBlock Classes="heading" Text="ADAPTER" />
 
@@ -24,12 +24,12 @@
              reads as a single large button that changes what it says. -->
         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
             <Button Content="Connect"
-                    Classes="action-primary"
+                    Classes="action-primary connect-hero"
                     IsEnabled="{Binding CanConnect}"
                     IsVisible="{Binding IsNotConnected}"
                     Click="OnConnect" />
             <Button Content="Disconnect"
-                    Classes="action-primary danger"
+                    Classes="action-primary danger connect-hero"
                     IsVisible="{Binding IsConnected}"
                     Click="OnDisconnect" />
         </StackPanel>
