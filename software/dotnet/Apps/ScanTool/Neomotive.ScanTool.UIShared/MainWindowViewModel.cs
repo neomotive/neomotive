@@ -2,6 +2,7 @@ using Avalonia.Threading;
 using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using Neomotive.Can.UI;
+using Neomotive.Obd2;
 using Neomotive.ScanTool.Core;
 using Neomotive.ScanTool.Core.Capture;
 using Neomotive.ScanTool.Core.Vehicles;
@@ -286,6 +287,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         set
         {
             CaptureVm.DataDirectory = value;
+            DtcDescriptions.OverlayDirectory = value;
 
             // Settings live beside the captures, so they load as soon as the host tells us where
             // that is. Assigning this is what reads settings.json off disk.
@@ -1411,6 +1413,10 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         private set
         {
             _vinDecode = value;
+            if (!string.IsNullOrWhiteSpace(value?.Make))
+            {
+                DtcDescriptions.CurrentMake = value.Make;
+            }
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasVinDecode));
             OnPropertyChanged(nameof(DisplayVinMake));
