@@ -95,6 +95,43 @@ public static class CaptureReader
             .ToArray();
     }
 
+    /// <summary>Lists all captures (live CSV, vehicle scan JSON, and screenshots) in a directory, newest first.</summary>
+    public static IReadOnlyList<string> ListAllCaptures(string directory)
+    {
+        if (!Directory.Exists(directory))
+        {
+            return Array.Empty<string>();
+        }
+
+        var live = Directory.GetFiles(directory, "capture-*" + CaptureFile.CsvExtension);
+        var scans = Directory.GetFiles(directory, "scan-*.json");
+        var screens = Directory.GetFiles(directory, "screenshot-*.png");
+
+        return live.Concat(scans).Concat(screens)
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .ToArray();
+    }
+
+    /// <summary>Loads a vehicle scan capture from its JSON file.</summary>
+    public static ScanCapture? LoadScanCapture(string jsonPath)
+    {
+        if (!File.Exists(jsonPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<ScanCapture>(
+                File.ReadAllText(jsonPath),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// Reads only the sidecar for a capture, without touching the CSV.
     /// </summary>

@@ -3,6 +3,7 @@ using Meadow.Foundation.Telematics.J1979;
 using Meadow.Hardware;
 using Neomotive.Can.UI;
 using Neomotive.ScanTool.Core;
+using Neomotive.ScanTool.Core.Capture;
 using Neomotive.ScanTool.Core.Vehicles;
 using Neomotive.Update;
 using Neomotive.Vin.Contracts;
@@ -10,6 +11,7 @@ using Neomotive.Vin.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -50,6 +52,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
         // Constructed after _udsScanner: capture needs the UDS client for Mode $22 channels.
         CaptureVm = new CaptureViewModel(scanner, _udsScanner, vinDecoder);
+        CaptureVm.OnCaptureScan = CaptureScan;
 
         // The tooltip switch is read by the shell, not by the Settings page, so the shell has to
         // hear about a change made on that page.
@@ -670,6 +673,7 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
         OnPropertyChanged(nameof(CanScanUds));
         OnPropertyChanged(nameof(CanOperateUdsModule));
         OnPropertyChanged(nameof(CanOperateFaultModule));
+        OnPropertyChanged(nameof(CanCaptureScan));
         OnPropertyChanged(nameof(IsIdle));
         OnPropertyChanged(nameof(ShowFewModulesNote));
     }
@@ -695,6 +699,36 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
     {
         get => _statusText;
         private set { _statusText = value; OnPropertyChanged(); }
+    }
+
+    private bool _showToast;
+    public bool ShowToast
+    {
+        get => _showToast;
+        private set { _showToast = value; OnPropertyChanged(); }
+    }
+
+    private string _toastMessage = "";
+    public string ToastMessage
+    {
+        get => _toastMessage;
+        private set { _toastMessage = value; OnPropertyChanged(); }
+    }
+
+    private DispatcherTimer? _toastTimer;
+
+    public void TriggerToast(string message, int durationMs = 3000)
+    {
+        ToastMessage = message;
+        ShowToast = true;
+        _toastTimer?.Stop();
+        _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(durationMs) };
+        _toastTimer.Tick += (s, e) =>
+        {
+            _toastTimer.Stop();
+            ShowToast = false;
+        };
+        _toastTimer.Start();
     }
 
     // Shown on the Connection view while disconnected. The CAN adapter is
@@ -1447,11 +1481,13 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
             OnPropertyChanged(nameof(HasNoFaultModules));
             OnPropertyChanged(nameof(TotalFaultCount));
             OnPropertyChanged(nameof(FaultSummaryText));
+            OnPropertyChanged(nameof(CanCaptureScan));
         }
     }
 
     public bool HasFaultModules => _faultModules.Count > 0;
     public bool HasNoFaultModules => !HasFaultModules;
+    public bool CanCaptureScan => HasFaultModules || _isConnected;
     public int TotalFaultCount => _faultModules.Sum(m => m.CodeCount);
 
     public string FaultSummaryText => TotalFaultCount switch
@@ -1554,6 +1590,86 @@ public class MainWindowViewModel : INotifyPropertyChanged, ICanViewModel
 
         if (_udsScanner != null && _udsModules.Count > 0)
             await ClearAllUdsDtcsAsync();
+    }
+
+    /// <summary>
+    /// Captures all current DTCs across modules, vehicle details, and readiness monitors into
+    /// a timestamped JSON snapshot, formatted text diagnostic report, and CSV code table in the
+    /// data directory. If a USB drive is attached, copies the scan capture to the USB drive as well.
+    /// </summary>
+    public void CaptureScan()
+    {
+        try
+        {
+            var capture = new ScanCapture
+            {
+                CapturedUtc = DateTime.UtcNow,
+                Vin = _vin,
+                Make = _vinDecode?.Make,
+                Model = _vinDecode?.Model,
+                Year = _vinDecode?.Year,
+                Country = _vinDecode?.Country,
+                Protocol = string.IsNullOrWhiteSpace(Protocol) ? null : Protocol,
+                EcuName = string.IsNullOrWhiteSpace(_ecuName) ? null : _ecuName,
+                CalibrationId = CaptureVm.VehicleCalibrationId,
+                Cvn = CaptureVm.VehicleCvn,
+                MilOn = MilOn,
+                TotalFaultCount = TotalFaultCount,
+                Modules = FaultModules.Select(m => new ScanModuleRecord
+                {
+                    Name = m.Name,
+                    Address = m.AddressSummary,
+                    Protocol = m.ProtocolText,
+                    CodeCount = m.CodeCount,
+                    Codes = m.Codes.Select(c =>
+                    {
+                        var statusParts = new List<string>();
+                        if (c.IsActive) statusParts.Add("Active");
+                        if (c.IsConfirmed) statusParts.Add("Confirmed");
+                        if (c.IsPending) statusParts.Add("Pending");
+                        if (c.IsMil) statusParts.Add("MIL");
+                        return new ScanDtcRecord
+                        {
+                            Code = c.Code,
+                            Description = c.Description,
+                            Detail = c.Detail,
+                            Status = statusParts.Count > 0 ? string.Join(", ", statusParts) : "None",
+                            Protocol = m.ProtocolText
+                        };
+                    }).ToList()
+                }).ToList(),
+                ReadinessMonitors = ReadinessMonitors.Select(r => new ScanReadinessRecord
+                {
+                    Name = r.Name,
+                    Status = !r.Supported ? "Not Supported" : (r.Ready ? "Ready" : "Incomplete")
+                }).ToList()
+            };
+
+            var dataDir = !string.IsNullOrWhiteSpace(DataDirectory)
+                ? DataDirectory
+                : Path.Combine(AppContext.BaseDirectory, "data");
+
+            var (jsonPath, txtPath, csvPath) = ScanCaptureWriter.Write(capture, dataDir);
+
+            var usbRoot = UsbUpdateSource.GetRemovableRoots().FirstOrDefault();
+            var usbNote = "";
+            if (!string.IsNullOrWhiteSpace(usbRoot) && Directory.Exists(usbRoot))
+            {
+                var usbDir = Path.Combine(usbRoot, "NEOMOTIVE", "scans");
+                if (ScanCaptureWriter.ExportToUsb(jsonPath, usbDir))
+                {
+                    usbNote = " (+ USB)";
+                }
+            }
+
+            var fileName = Path.GetFileName(jsonPath);
+            TriggerToast($"Scan captured: {fileName}{usbNote}");
+            CaptureVm?.Browser?.Refresh();
+        }
+        catch (Exception ex)
+        {
+            TriggerToast($"Scan capture failed: {ex.Message}");
+        }
     }
 
     public async Task ReadSelectedFaultModuleAsync()

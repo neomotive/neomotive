@@ -60,6 +60,8 @@ public partial class CaptureView : UserControl
 
     private void OnStop(object? sender, RoutedEventArgs e) => Vm.Stop();
 
+    private void OnCaptureScan(object? sender, RoutedEventArgs e) => Vm.CaptureScan();
+
     private void OnOpenBrowser(object? sender, RoutedEventArgs e) => Vm.OpenBrowser();
 
     private void OnExport(object? sender, RoutedEventArgs e) => Vm.ExportWideCsv();

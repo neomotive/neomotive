@@ -114,6 +114,11 @@ public class CaptureViewModel : INotifyPropertyChanged
     /// <summary>Modal editor for the trigger and stop conditions.</summary>
     public TriggerEditorViewModel TriggerEditor { get; }
 
+    /// <summary>Action invoked to capture all current diagnostic trouble codes and scan state.</summary>
+    public Action? OnCaptureScan { get; set; }
+
+    public void CaptureScan() => OnCaptureScan?.Invoke();
+
     public void OpenPicker() => Picker.Open(SelectedKeys);
 
     public void OpenTriggerEditor()

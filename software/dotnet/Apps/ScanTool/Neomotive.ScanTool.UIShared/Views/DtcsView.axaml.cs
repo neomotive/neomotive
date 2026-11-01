@@ -47,6 +47,11 @@ public partial class DtcsView : UserControl
         if (Vm != null) await Vm.ClearSelectedFaultModuleAsync();
     }
 
+    private void OnCaptureScan(object? sender, RoutedEventArgs e)
+    {
+        Vm?.CaptureScan();
+    }
+
     private async void OnRefresh(object? sender, RoutedEventArgs e)
     {
         if (Vm != null) await Vm.RefreshAsync();

@@ -55,18 +55,26 @@
                     <Button Content="Updates"    Classes="tab" Classes.active="{Binding IsUpdatesView}"    Click="OnShowUpdates" />
                 </StackPanel>
 
-                <!-- Settings sits apart from the tabs, right-aligned: it is not a diagnostic
-                     view, and putting it at the end of the tab run would push the row wider than
-                     the 800 px panel. -->
-                <Button Classes="tab tab-icon" Classes.active="{Binding IsSettingsView}"
-                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                        Click="OnShowSettings"
-                        AutomationProperties.Name="Settings"
-                        ToolTip.Tip="Settings">
-                    <Panel Width="20" Height="20">
-                        <Path Data="{StaticResource IconSettings}" Stretch="Uniform" Fill="#C8D0DA" />
-                    </Panel>
-                </Button>
+                <!-- Right-aligned action buttons: Screen capture and Settings -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Button Classes="tab tab-icon"
+                            Click="OnScreenCapture"
+                            AutomationProperties.Name="Screen capture"
+                            ToolTip.Tip="Capture screen (save screenshot)">
+                        <Panel Width="20" Height="20">
+                            <Path Data="{StaticResource IconCamera}" Stretch="Uniform" Fill="#C8D0DA" />
+                        </Panel>
+                    </Button>
+
+                    <Button Classes="tab tab-icon" Classes.active="{Binding IsSettingsView}"
+                            Click="OnShowSettings"
+                            AutomationProperties.Name="Settings"
+                            ToolTip.Tip="Settings">
+                        <Panel Width="20" Height="20">
+                            <Path Data="{StaticResource IconSettings}" Stretch="Uniform" Fill="#C8D0DA" />
+                        </Panel>
+                    </Button>
+                </StackPanel>
 
             </Grid>
         </Border>
@@ -89,6 +97,24 @@
                 <views:SettingsView DataContext="{Binding SettingsVm}" />
             </Panel>
         </Grid>
+
+        <!-- Toast notification. Shown briefly after screen capture or scan capture. -->
+        <Border Grid.Row="1"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,16"
+                Background="#E61A2030"
+                BorderBrush="#4CAF50"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="16,8"
+                IsVisible="{Binding ShowToast}"
+                IsHitTestVisible="False">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Classes="value" Text="✓" Foreground="#4CAF50" FontWeight="Bold" />
+                <TextBlock Classes="value" Text="{Binding ToastMessage}" FontWeight="SemiBold" />
+            </StackPanel>
+        </Border>
 
         <!-- Connection-failure help. Hosted at the shell so it covers the tab bar too: a failed
              connect is not a per-tab condition, and the diagram wants the whole panel. -->

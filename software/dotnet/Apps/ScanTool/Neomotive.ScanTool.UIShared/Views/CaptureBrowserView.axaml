@@ -81,7 +81,7 @@
                 <Button Grid.Column="3" Content="Push to cloud" IsEnabled="False" />
 
                 <Button Grid.Column="4" Content="View" Classes="action-primary"
-                        Click="OnView" IsEnabled="{Binding HasSelection}" />
+                        Click="OnView" IsEnabled="{Binding CanView}" />
             </Grid>
         </Grid>
     </Border>

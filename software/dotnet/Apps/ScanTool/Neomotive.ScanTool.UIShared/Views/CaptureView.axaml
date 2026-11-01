@@ -86,11 +86,11 @@
                 <!-- Run controls -->
                 <Border Grid.Row="2" Background="#141820" Padding="8,6"
                         BorderBrush="#1E2530" BorderThickness="0,1,0,1">
-                    <!-- The three buttons this page exists for, sized accordingly. They are what
+                    <!-- The buttons this page exists for, sized accordingly. They are what
                          an operator reaches for with the panel on a bench or a wing, often without
                          looking straight at it, so they get the primary size rather than the
                          setup rows above. -->
-                    <Grid ColumnDefinitions="Auto, Auto, Auto, *" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="Auto, Auto, Auto, Auto, *" ColumnSpacing="8">
                         <Button Grid.Column="0" Content="Arm" Classes="action-primary"
                                 Click="OnArm" IsEnabled="{Binding CanArm}" />
                         <Button Grid.Column="1" Content="Fire now" Classes="action-primary"
@@ -98,7 +98,10 @@
                                 ToolTip.Tip="Trigger the armed capture immediately, without waiting for the condition" />
                         <Button Grid.Column="2" Content="Stop" Classes="action-primary danger"
                                 Click="OnStop" IsEnabled="{Binding IsArmed}" />
-                        <TextBlock Grid.Column="3" Classes="xs" VerticalAlignment="Center"
+                        <Button Grid.Column="3" Content="Capture codes" Classes="action-primary"
+                                Click="OnCaptureScan"
+                                ToolTip.Tip="Capture all current diagnostic trouble codes, module details, and readiness monitors" />
+                        <TextBlock Grid.Column="4" Classes="xs" VerticalAlignment="Center"
                                    Margin="4,0,0,0" Text="{Binding Status}"
                                    TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
                     </Grid>
@@ -123,12 +126,14 @@
                      combo box of file names can show; the modal it opens has room for all of it. -->
                 <Border Grid.Row="1" Background="#141820" Padding="8,6"
                         BorderBrush="#1E2530" BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="Auto, *, Auto">
+                    <Grid ColumnDefinitions="Auto, *, Auto, Auto">
                         <Button Grid.Column="0" Content="Previous captures" Click="OnOpenBrowser" />
                         <TextBlock Grid.Column="1" Classes="xs dim" VerticalAlignment="Center"
                                    Margin="8,0" TextTrimming="CharacterEllipsis"
                                    Text="{Binding LoadedSummary}" />
-                        <Button Grid.Column="2" Content="Export wide CSV"
+                        <Button Grid.Column="2" Content="Capture scan codes" Margin="0,0,8,0"
+                                Click="OnCaptureScan" />
+                        <Button Grid.Column="3" Content="Export wide CSV"
                                 Click="OnExport" IsEnabled="{Binding HasLoadedRecording}" />
                     </Grid>
                 </Border>
